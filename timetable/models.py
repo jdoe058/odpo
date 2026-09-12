@@ -205,11 +205,12 @@ class Cycle(models.Model):
     )
     start_date = models.DateField(verbose_name="Дата начала")
     end_date = models.DateField(verbose_name="Дата окончания")
-    approved_by = models.ForeignKey(
-        Employee, on_delete=models.PROTECT,
-        related_name="approved_cycles",
-        limit_choices_to={"position__can_approve": True},
-        verbose_name="Утвердил",
+
+    compiled_by = models.ForeignKey(
+        "Employee",
+        on_delete=models.PROTECT,
+        related_name="compiled_cycles",
+        verbose_name="Составил",
     )
 
     class Meta:
@@ -228,10 +229,6 @@ class Cycle(models.Model):
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValidationError({
                 "end_date": "Дата окончания не может быть раньше даты начала."
-            })
-        if self.approved_by_id and not self.approved_by.can_approve:
-            raise ValidationError({
-                "approved_by": "Выбранный сотрудник не имеет права утверждать циклы."
             })
 
     @property

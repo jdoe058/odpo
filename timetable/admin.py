@@ -173,13 +173,13 @@ class LessonAdmin(admin.ModelAdmin):
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
-        "name", "start_date", "end_date", "approved_by",
+        "name", "start_date", "end_date", "compiled_by",
         "total_hours", "breakdown_short",
     )
     list_filter = ("name",)
-    search_fields = ("name__name", "approved_by__short_name")
+    search_fields = ("name__name", "compiled_by__short_name")
     date_hierarchy = "start_date"
-    autocomplete_fields = ("name", "approved_by")
+    autocomplete_fields = ("name", "compiled_by")
 
     readonly_fields = ("hours_summary",)
 
