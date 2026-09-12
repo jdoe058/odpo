@@ -1,6 +1,70 @@
 from django.contrib import admin
+from django.utils.html import format_html, format_html_join
 from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
-    
+from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
+from .services.employee_hours import calculate_employee_hours_all
+
+PERIOD_LABELS = {
+    "week": "Текущая неделя",
+    "month": "Текущий месяц",
+}
+
+def _render_hours_report(employee) -> str:
+    data = calculate_employee_hours_all(employee)
+
+    if data.days:
+        rows = format_html_join(
+            "",
+            '<tr style="{}">'
+            '  <td style="padding:4px 8px; white-space:nowrap">{}</td>'
+            '  <td style="padding:4px 8px; text-align:right">{}</td>'
+            '  <td style="padding:4px 8px; color:#b00020; white-space:nowrap">{}</td>'
+            '</tr>',
+            (
+                (
+                    "background:#ffe5e5; color:#000" if d.over_limit else "",
+                    f"{d.date:%d.%m.%Y} ({d.weekday_ru})",
+                    d.hours,
+                    "⚠ превышение" if d.over_limit else "",
+                )
+                for d in data.days
+            ),
+        )
+    else:
+        rows = format_html(
+            '<tr><td colspan="3" style="padding:4px 8px; color:#888">'
+            'Занятий нет.</td></tr>'
+        )
+
+    if data.max_per_day > 0:
+        summary = format_html(
+            "Лимит: <b>{}</b> ч/день. Превышений: <b>{}</b>.",
+            data.max_per_day, data.days_over_limit,
+        )
+    else:
+        summary = "Сотрудник не ведёт занятия (лимит 0 ч/день)."
+
+    return format_html(
+        '<div style="margin-top:0.5em">'
+        '  <p style="color:#666; margin:0.5em 0">{}</p>'
+        '  <table style="border-collapse:collapse; min-width:420px">'
+        '    <thead><tr>'
+        '      <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #ccc">Дата</th>'
+        '      <th style="text-align:right; padding:4px 8px; border-bottom:1px solid #ccc">Часов</th>'
+        '      <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #ccc"></th>'
+        '    </tr></thead>'
+        '    <tbody>{}</tbody>'
+        '    <tfoot><tr>'
+        '      <th style="text-align:left; padding:4px 8px; border-top:1px solid #ccc">'
+        '        Итого</th>'
+        '      <th style="text-align:right; padding:4px 8px; border-top:1px solid #ccc">{}</th>'
+        '      <th style="border-top:1px solid #ccc"></th>'
+        '    </tr></tfoot>'
+        '  </table>'
+        '</div>',
+        summary, rows, data.total,
+    )
+
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
     list_display = (
@@ -45,6 +109,15 @@ class EmployeeAdmin(admin.ModelAdmin):
     def can_approve(self, obj):
         return obj.can_approve
 
+    readonly_fields = ("hours_report",)
+
+    @admin.display(description="Часы по дням")
+    def hours_report(self, obj):
+        if obj is None or obj.pk is None:
+            return "Сохраните сотрудника, чтобы увидеть отчёт."
+        return _render_hours_report(obj)
+
+
 @admin.register(Base)
 class BaseAdmin(admin.ModelAdmin):
     list_display = ("name",)
@@ -78,11 +151,6 @@ class LessonAdmin(admin.ModelAdmin):
     search_fields = ("topic", "employee__short_name")
     date_hierarchy = "date"
     autocomplete_fields = ("cycle", "lesson_type", "employee")
-
-from django.utils.html import format_html, format_html_join
-
-from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
-
 
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
