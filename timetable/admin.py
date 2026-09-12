@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle
+from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
     
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -22,6 +22,16 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_filter = ("position",)
     search_fields = ("short_name",)
     ordering = ("short_name",)
+
+    autocomplete_fields = ("position",)
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        initial.setdefault(
+            "position",
+            Position.objects.filter(name="преподаватель-совместитель").first(),
+        )
+        return initial
 
     @admin.display(description="Макс. часов/день")
     def max_hours_per_day(self, obj):
@@ -64,3 +74,12 @@ class CycleAdmin(admin.ModelAdmin):
     search_fields = ("name__name", "approved_by__short_name")
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "approved_by")
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ("date", "time_start", "time_end", "hours",
+                    "lesson_type", "topic", "employee", "cycle")
+    list_filter = ("cycle", "lesson_type", "employee")
+    search_fields = ("topic", "employee__short_name")
+    date_hierarchy = "date"
+    autocomplete_fields = ("cycle", "lesson_type", "employee")    

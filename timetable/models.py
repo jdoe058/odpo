@@ -192,23 +192,24 @@ class CycleName(models.Model):
 
 class Cycle(models.Model):
     name = models.ForeignKey(
-        CycleName,
-        on_delete=models.PROTECT,
-        related_name="cycles",
-        verbose_name="Название цикла"
+        CycleName, on_delete=models.PROTECT,
+        related_name="cycles", verbose_name="Название цикла",
     )
-    start_date = models.DateField(
-        verbose_name="Дата начала"
+    funding_type = models.ForeignKey(
+        FundingType, on_delete=models.PROTECT,
+        related_name="cycles", verbose_name="Вид финансирования",
     )
-    end_date = models.DateField(
-        verbose_name="Дата окончания"
+    base = models.ForeignKey(
+        Base, on_delete=models.PROTECT,
+        related_name="cycles", verbose_name="База",
     )
+    start_date = models.DateField(verbose_name="Дата начала")
+    end_date = models.DateField(verbose_name="Дата окончания")
     approved_by = models.ForeignKey(
-        "Employee",
-        on_delete=models.PROTECT,
+        Employee, on_delete=models.PROTECT,
         related_name="approved_cycles",
         limit_choices_to={"position__can_approve": True},
-        verbose_name="Утвердил"
+        verbose_name="Утвердил",
     )
 
     class Meta:
@@ -223,6 +224,7 @@ class Cycle(models.Model):
         ]
 
     def clean(self):
+        super().clean()
         if self.start_date and self.end_date and self.end_date < self.start_date:
             raise ValidationError({
                 "end_date": "Дата окончания не может быть раньше даты начала."
@@ -235,3 +237,32 @@ class Cycle(models.Model):
     def __str__(self):
         return f"{self.name} ({self.start_date:%d.%m.%Y} — {self.end_date:%d.%m.%Y})"
 
+
+class Lesson(models.Model):
+    cycle = models.ForeignKey(
+        Cycle, on_delete=models.CASCADE,
+        related_name="lessons", verbose_name="Цикл",
+    )
+    date = models.DateField(verbose_name="Дата")
+    time_start = models.TimeField(verbose_name="Начало")
+    time_end = models.TimeField(verbose_name="Окончание")
+    hours = models.PositiveSmallIntegerField(verbose_name="Часы")
+    lesson_type = models.ForeignKey(
+        LessonType, on_delete=models.PROTECT,
+        related_name="lessons", verbose_name="Тип занятия",
+    )
+    topic = models.CharField(
+        max_length=255, blank=True, verbose_name="Тема",
+    )
+    employee = models.ForeignKey(
+        Employee, on_delete=models.PROTECT,
+        related_name="lessons", verbose_name="Преподаватель",
+    )
+
+    class Meta:
+        verbose_name = "Занятие"
+        verbose_name_plural = "Занятия"
+        ordering = ["date", "time_start"]
+
+    def __str__(self):
+        return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
