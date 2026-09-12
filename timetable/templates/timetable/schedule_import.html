@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Главная</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:timetable_cycle_changelist' %}">Циклы</a>
+  &rsaquo; Импорт из XLSX
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Импорт расписания из XLSX</h1>
+
+<p style="color:#666">
+  Перед загрузкой убедись, что справочники заполнены: базы, виды
+  финансирования, названия циклов, типы занятий и все сотрудники,
+  встречающиеся в файле.
+</p>
+
+{% if messages %}
+  <ul class="messagelist">
+    {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+  </ul>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <fieldset class="module aligned">
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.errors }}
+        <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+        {{ field }}
+        {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  </fieldset>
+  <div class="submit-row">
+    <input type="submit" value="Загрузить" class="default">
+    <a href="{% url 'admin:timetable_cycle_changelist' %}" class="button cancel-link">Отмена</a>
+  </div>
+</form>
+{% endblock %}

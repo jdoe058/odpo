@@ -5,67 +5,7 @@ from .models import Employee, Position, Base, LessonType, FundingType, CycleName
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
 from .views import cycle_hours_report, employee_hours_report
-
-PERIOD_LABELS = {
-    "week": "Текущая неделя",
-    "month": "Текущий месяц",
-}
-
-def _render_hours_report(employee) -> str:
-    data = calculate_employee_hours_all(employee)
-
-    if data.days:
-        rows = format_html_join(
-            "",
-            '<tr style="{}">'
-            '  <td style="padding:4px 8px; white-space:nowrap">{}</td>'
-            '  <td style="padding:4px 8px; text-align:right">{}</td>'
-            '  <td style="padding:4px 8px; color:#b00020; white-space:nowrap">{}</td>'
-            '</tr>',
-            (
-                (
-                    "background:#ffe5e5; color:#000" if d.over_limit else "",
-                    f"{d.date:%d.%m.%Y} ({d.weekday_ru})",
-                    d.hours,
-                    "⚠ превышение" if d.over_limit else "",
-                )
-                for d in data.days
-            ),
-        )
-    else:
-        rows = format_html(
-            '<tr><td colspan="3" style="padding:4px 8px; color:#888">'
-            'Занятий нет.</td></tr>'
-        )
-
-    if data.max_per_day > 0:
-        summary = format_html(
-            "Лимит: <b>{}</b> ч/день. Превышений: <b>{}</b>.",
-            data.max_per_day, data.days_over_limit,
-        )
-    else:
-        summary = "Сотрудник не ведёт занятия (лимит 0 ч/день)."
-
-    return format_html(
-        '<div style="margin-top:0.5em">'
-        '  <p style="color:#666; margin:0.5em 0">{}</p>'
-        '  <table style="border-collapse:collapse; min-width:420px">'
-        '    <thead><tr>'
-        '      <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #ccc">Дата</th>'
-        '      <th style="text-align:right; padding:4px 8px; border-bottom:1px solid #ccc">Часов</th>'
-        '      <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #ccc"></th>'
-        '    </tr></thead>'
-        '    <tbody>{}</tbody>'
-        '    <tfoot><tr>'
-        '      <th style="text-align:left; padding:4px 8px; border-top:1px solid #ccc">'
-        '        Итого</th>'
-        '      <th style="text-align:right; padding:4px 8px; border-top:1px solid #ccc">{}</th>'
-        '      <th style="border-top:1px solid #ccc"></th>'
-        '    </tr></tfoot>'
-        '  </table>'
-        '</div>',
-        summary, rows, data.total,
-    )
+from .views import schedule_import_view
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -183,6 +123,8 @@ class CycleAdmin(admin.ModelAdmin):
 
     readonly_fields = ("hours_summary",)
 
+    change_list_template = "admin/timetable/cycle/change_list.html"
+    
     def get_queryset(self, request):
         return prefetch_lessons_for_hours(super().get_queryset(request))
 
@@ -206,3 +148,16 @@ class CycleAdmin(admin.ModelAdmin):
             return "Занятий с учётом часов пока нет."
         parts = ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
         return f"{parts}. Итого: {summary.total} ч."
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "import/",
+                self.admin_site.admin_view(
+                    lambda request: schedule_import_view(request, self.admin_site)
+                ),
+                name="timetable_cycle_import",
+            ),
+        ]
+        return custom + urls
