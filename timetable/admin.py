@@ -1,8 +1,13 @@
+from django.urls import path, reverse
 from django.contrib import admin
 from django.utils.html import format_html, format_html_join
 from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
+
+
+
+from .views import employee_hours_report
 
 PERIOD_LABELS = {
     "week": "Текущая неделя",
@@ -86,15 +91,33 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_filter = ("position",)
     search_fields = ("short_name",)
     ordering = ("short_name",)
-
     autocomplete_fields = ("position",)
+
+    readonly_fields = ("hours_report_link",)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "<path:object_id>/hours/",
+                self.admin_site.admin_view(
+                    lambda request, object_id: employee_hours_report(
+                        request, object_id, self.admin_site,
+                    )
+                ),
+                name="timetable_employee_hours",
+            ),
+        ]
+        return custom + urls
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
-        initial.setdefault(
-            "position",
-            Position.objects.filter(name="преподаватель-совместитель").first(),
-        )
+        if "position" not in initial:
+            default_position = Position.objects.filter(
+                name="Преподаватель-совместитель"
+            ).first()
+            if default_position is not None:
+                initial["position"] = default_position.pk
         return initial
 
     @admin.display(description="Макс. часов/день")
@@ -109,14 +132,15 @@ class EmployeeAdmin(admin.ModelAdmin):
     def can_approve(self, obj):
         return obj.can_approve
 
-    readonly_fields = ("hours_report",)
-
     @admin.display(description="Часы по дням")
-    def hours_report(self, obj):
+    def hours_report_link(self, obj):
         if obj is None or obj.pk is None:
             return "Сохраните сотрудника, чтобы увидеть отчёт."
-        return _render_hours_report(obj)
-
+        url = reverse("admin:timetable_employee_hours", args=[obj.pk])
+        return format_html(
+            '<a class="button" href="{}">Открыть отчёт по часам</a>',
+            url,
+        )
 
 @admin.register(Base)
 class BaseAdmin(admin.ModelAdmin):
