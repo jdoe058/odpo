@@ -4,8 +4,7 @@ from django.utils.html import format_html, format_html_join
 from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
-from .views import cycle_hours_report, employee_hours_report
-from .views import schedule_import_view
+from .views import employee_hours_report, schedule_import_view
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):

@@ -53,6 +53,7 @@ def cycle_hours_report(request, cycle_id, admin_site):
 
 def schedule_import_view(request, admin_site):
     form = ScheduleImportForm()
+    import_errors: list[str] = []
 
     if request.method == "POST":
         form = ScheduleImportForm(request.POST, request.FILES)
@@ -60,14 +61,12 @@ def schedule_import_view(request, admin_site):
             try:
                 result = import_schedule(form.cleaned_data["file"])
             except ScheduleImportError as e:
-                messages.error(request, str(e))
+                import_errors = e.errors
             else:
                 messages.success(
                     request,
-                    f"Импортировано занятий: {result.lessons_created}."
+                    f"Импортировано занятий: {result.lessons_created}.",
                 )
-                for w in result.warnings:
-                    messages.warning(request, w)
                 return redirect(
                     "admin:timetable_cycle_change", result.cycle.pk
                 )
@@ -77,8 +76,8 @@ def schedule_import_view(request, admin_site):
         "title": "Импорт расписания из XLSX",
         "opts": Cycle._meta,
         "form": form,
+        "import_errors": import_errors,
     }
-    from django.template.response import TemplateResponse
     return TemplateResponse(
         request, "timetable/schedule_import.html", context
     )

@@ -24,6 +24,20 @@
   </ul>
 {% endif %}
 
+{% if import_errors %}
+  <div class="errornote" style="background:#fdd; padding:12px; border-left:4px solid #c00; margin-bottom:1em">
+    <p style="margin:0 0 0.5em 0"><b>Импорт отменён — найдены ошибки:</b></p>
+    <ul style="margin:0; padding-left:1.5em">
+      {% for err in import_errors %}
+        <li>{{ err }}</li>
+      {% endfor %}
+    </ul>
+    <p style="margin:0.5em 0 0 0; color:#666">
+      В базу ничего не записано. Исправьте ошибки и загрузите файл заново.
+    </p>
+  </div>
+{% endif %}
+
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
   <fieldset class="module aligned">

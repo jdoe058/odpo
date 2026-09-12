@@ -10,6 +10,9 @@ SHORT_NAME_RE = re.compile(
     r"^[А-ЯЁA-Z][А-ЯЁA-Z\-']+(\s[А-ЯЁA-Z]\.(\s?[А-ЯЁA-Z]\.)?)?$"
 )
 
+def normalize_name(value) -> str:
+    """Схлопывает пробелы и приводит к верхнему регистру."""
+    return " ".join(str(value or "").split()).upper()
 
 def normalize_short_name(value: str) -> str:
     """Верхний регистр + нормализация пробелов."""
