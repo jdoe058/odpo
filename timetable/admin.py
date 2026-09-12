@@ -4,10 +4,7 @@ from django.utils.html import format_html, format_html_join
 from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
-
-
-
-from .views import employee_hours_report
+from .views import cycle_hours_report, employee_hours_report
 
 PERIOD_LABELS = {
     "week": "Текущая неделя",
@@ -164,9 +161,6 @@ class CycleNameAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
-from django.db.models import Sum, Q
-
-
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("date", "time_start", "time_end", "hours",
@@ -187,12 +181,10 @@ class CycleAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "approved_by")
 
-    readonly_fields = ("hours_breakdown",)
+    readonly_fields = ("hours_summary",)
 
     def get_queryset(self, request):
         return prefetch_lessons_for_hours(super().get_queryset(request))
-
-    # --- Колонки в списке ---
 
     @admin.display(description="Всего часов")
     def total_hours(self, obj):
@@ -203,36 +195,14 @@ class CycleAdmin(admin.ModelAdmin):
         summary = calculate_cycle_hours(obj)
         if not summary.by_type:
             return "—"
-        return ", ".join(f"{b.code}: {b.hours}" for b in summary.by_type)
-
-    # --- Таблица на странице редактирования ---
+        return ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
 
     @admin.display(description="Часы по типам занятий")
-    def hours_breakdown(self, obj):
+    def hours_summary(self, obj):
         if obj is None or not obj.pk:
             return "—"
-
         summary = calculate_cycle_hours(obj)
         if not summary.by_type:
             return "Занятий с учётом часов пока нет."
-
-        rows = format_html_join(
-            "",
-            "<tr><td>{}</td><td style='text-align:right; padding-left:1em'>{}</td></tr>",
-            ((b.name, b.hours) for b in summary.by_type),
-        )
-        return format_html(
-            "<table style='border-collapse:collapse'>"
-            "  <thead><tr>"
-            "    <th style='text-align:left'>Тип занятия</th>"
-            "    <th style='text-align:right'>Часов</th>"
-            "  </tr></thead>"
-            "  <tbody>{}</tbody>"
-            "  <tfoot><tr>"
-            "    <th style='text-align:left'>Итого</th>"
-            "    <th style='text-align:right'>{}</th>"
-            "  </tr></tfoot>"
-            "</table>",
-            rows,
-            summary.total,
-        )
+        parts = ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
+        return f"{parts}. Итого: {summary.total} ч."

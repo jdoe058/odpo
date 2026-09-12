@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 
-from .models import Employee
+from .models import Cycle, Employee
 from .services.employee_hours import calculate_employee_hours_all
+from .services.cycle_hours import calculate_cycle_hours
 
 
 def employee_hours_report(request, employee_id, admin_site):
@@ -20,5 +21,27 @@ def employee_hours_report(request, employee_id, admin_site):
     return TemplateResponse(
         request,
         "timetable/employee_hours_report.html",
+        context,
+    )
+
+
+
+
+
+def cycle_hours_report(request, cycle_id, admin_site):
+    """Отдельная страница отчёта по часам цикла."""
+    cycle = get_object_or_404(Cycle, pk=cycle_id)
+    data = calculate_cycle_hours(cycle)
+
+    context = {
+        **admin_site.each_context(request),
+        "title": f"Часы: {cycle.name}",
+        "opts": Cycle._meta,
+        "cycle": cycle,
+        "data": data,
+    }
+    return TemplateResponse(
+        request,
+        "timetable/cycle_hours_report.html",
         context,
     )
