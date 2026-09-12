@@ -234,6 +234,16 @@ class Cycle(models.Model):
                 "approved_by": "Выбранный сотрудник не имеет права утверждать циклы."
             })
 
+    @property
+    def total_hours(self):
+        """Сумма часов по занятиям, у типов которых counts_in_hours=True."""
+        return (
+            self.lessons
+            .filter(lesson_type__counts_in_hours=True)
+            .aggregate(total=Sum("hours"))["total"]
+            or 0
+        )
+
     def __str__(self):
         return f"{self.name} ({self.start_date:%d.%m.%Y} — {self.end_date:%d.%m.%Y})"
 
