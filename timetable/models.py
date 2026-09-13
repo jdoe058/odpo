@@ -73,7 +73,6 @@ class Employee(models.Model):
         "Короткое имя",
         max_length=50,
         unique=True,
-        validators=[validate_short_name],
         help_text="Фамилия и инициалы, например: ИВАНОВ И.И. "
                   "Регистр и пробелы нормализуются автоматически.",
     )
@@ -95,6 +94,7 @@ class Employee(models.Model):
     def clean(self) -> None:
         super().clean()
         self.short_name = normalize_short_name(self.short_name)
+        validate_short_name(self.short_name)
 
     def save(self, *args, **kwargs):
         self.short_name = normalize_short_name(self.short_name)
@@ -275,13 +275,6 @@ class Lesson(models.Model):
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
 
-def template_upload_path(instance, filename):
-    # templates_docx/schedule/2026-09-13_15-30-00_schedule.docx
-    from datetime import datetime
-    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    ext = filename.rsplit(".", 1)[-1].lower()
-    return f"templates_docx/{instance.kind}/{ts}_{instance.kind}.{ext}"
-
 class DocumentKind(models.Model):
     code = models.SlugField(
         max_length=32, unique=True,
@@ -307,13 +300,22 @@ class DocumentKind(models.Model):
         super().clean()
         self.code = self.code.strip().lower().replace(" ", "_")
 
-class DocumentTemplate(models.Model):
-    class Kind(models.TextChoices):
-        SCHEDULE = "schedule", "Расписание цикла"
-        LOAD_SUMMARY = "load_summary", "Сводка нагрузки"
-        # добавляй сюда по мере появления новых выгрузок
+def template_upload_path(instance, filename):
+    # templates_docx/schedule/2026-09-13_15-30-00_schedule.docx
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    ext = filename.rsplit(".", 1)[-1].lower()
+    code = instance.kind.code if instance.kind_id else "unknown"
+    return f"templates_docx/{code}/{ts}_{code}.{ext}"
 
-    kind = models.ForeignKey(DocumentKind, on_delete=models.PROTECT, null=False) 
+
+class DocumentTemplate(models.Model):
+    kind = models.ForeignKey(
+        DocumentKind,
+        on_delete=models.PROTECT,
+        null=False,
+        verbose_name="Тип документа",
+    )
 
     file = models.FileField(
         upload_to=template_upload_path,
@@ -349,7 +351,6 @@ class DocumentTemplate(models.Model):
         super().clean()
         if self.file and not self.file.name.lower().endswith(".docx"):
             raise ValidationError("Поддерживается только формат .docx")
-        # пробуем открыть — чтобы отловить битый файл сразу
         if self.file:
             try:
                 from docxtpl import DocxTemplate
@@ -362,7 +363,7 @@ class DocumentTemplate(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.is_active:
-            # гасим остальные активные шаблоны этого типа
             DocumentTemplate.objects.filter(
                 kind=self.kind, is_active=True
             ).exclude(pk=self.pk).update(is_active=False)
+

@@ -1,14 +1,11 @@
-from collections import Counter
-from dataclasses import dataclass, field
+from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date, datetime, time
 from io import BytesIO
+import re
 
 from django.db import transaction
 from openpyxl import load_workbook
-
-import re
-from collections import defaultdict
-
 
 from timetable.models import (
     Base, Cycle, CycleName, Employee, FundingType, Lesson, LessonType,
@@ -48,6 +45,7 @@ class ImportResult:
 
 _LINE_RE = re.compile(r"^Строка (\d+): (.*)$")
 
+
 def _as_date(value, row_idx: int):
     if isinstance(value, datetime):
         return value.date()
@@ -69,8 +67,6 @@ def _parse_range(value, row_idx: int):
         raise ValueError(f"Строка {row_idx}: неверный диапазон времени {value!r}")
     a, b = str(value).split("-", 1)
     return _parse_time(a, row_idx), _parse_time(b, row_idx)
-
-_LINE_RE = re.compile(r"^Строка (\d+): (.*)$")
 
 
 def _compress_ranges(numbers: list[int]) -> str:
