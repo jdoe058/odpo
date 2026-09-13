@@ -93,23 +93,25 @@ def schedule_grid_view(request):
     end_str = request.GET.get("end")
     base_id = request.GET.get("base")
 
+    base = None
+    if base_id:
+        base = Base.objects.filter(pk=base_id).first()
+
     try:
         if period == "custom":
             start = date.fromisoformat(start_str) if start_str else None
             end = date.fromisoformat(end_str) if end_str else None
             start, end = resolve_period("custom", start=start, end=end)
+        elif period == "all":
+            start, end = resolve_period("all", base=base)
         else:
             start, end = resolve_period(period)
     except (TypeError, ValueError):
         period = "week"
         start, end = resolve_period(period)
 
-    base = None
-    if base_id:
-        base = Base.objects.filter(pk=base_id).first()
-
     grid = calculate_grid(start, end, base=base)
-    overtime = calculate_overtime()  # за всё время, по выбранной базе
+    overtime = calculate_overtime()
     bases = Base.objects.order_by("name")
 
     return render(request, "timetable/schedule_grid.html", {

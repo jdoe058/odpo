@@ -33,18 +33,6 @@
 {% include "timetable/_overtime_block.html" %}
 
 <form method="get" class="filters">
-  <label>Период:</label>
-  <select name="period">
-    <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
-    <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
-    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
-  </select>
-
-  <label>с</label>
-  <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
-  <label>по</label>
-  <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
-
   <label style="margin-left:12px">База:</label>
   <select name="base">
     <option value="">— все —</option>
@@ -54,6 +42,22 @@
       </option>
     {% endfor %}
   </select>
+  <br/>
+
+  <label>Период:</label>
+  <select name="period">
+    <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
+    <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
+    <option value="all" {% if period == 'all' %}selected{% endif %}>Весь период</option>
+    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
+  </select>
+
+  <label>с</label>
+  <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
+  <label>по</label>
+  <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
+
+  <br/>
 
   <button type="submit" class="button">Показать</button>
 </form>

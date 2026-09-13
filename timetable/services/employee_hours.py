@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from collections import defaultdict
 from datetime import date, timedelta
-
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
 
@@ -30,8 +29,22 @@ class EmployeeHours:
     days_over_limit: int
 
 
-def resolve_period(kind, today=None, start=None, end=None):
-    """kind: 'week' | 'month' | 'custom' → (start, end)."""
+def resolve_period(kind, today=None, start=None, end=None, base=None):
+    """kind: 'week' | 'month' | 'custom' | 'all' → (start, end)."""
+    from timetable.models import Lesson
+
+    if kind == "all":
+        qs = Lesson.objects.all()
+        if base is not None:
+            qs = qs.filter(cycle__base=base)
+        agg = qs.aggregate(first=Min("date"), last=Max("date"))
+        if agg["first"] and agg["last"]:
+            return agg["first"], agg["last"]
+        # если занятий нет — вернём текущую неделю, чтобы страница не падала
+        today = today or timezone.localdate()
+        start = today - timedelta(days=today.weekday())
+        return start, start + timedelta(days=6)
+
     today = today or timezone.localdate()
 
     if kind == "week":
