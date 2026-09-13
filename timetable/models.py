@@ -276,3 +276,72 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
+
+def template_upload_path(instance, filename):
+    # templates_docx/schedule/2026-09-13_15-30-00_schedule.docx
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    ext = filename.rsplit(".", 1)[-1].lower()
+    return f"templates_docx/{instance.kind}/{ts}_{instance.kind}.{ext}"
+
+
+class DocumentTemplate(models.Model):
+    class Kind(models.TextChoices):
+        SCHEDULE = "schedule", "Расписание цикла"
+        LOAD_SUMMARY = "load_summary", "Сводка нагрузки"
+        # добавляй сюда по мере появления новых выгрузок
+
+    kind = models.CharField(
+        max_length=32, choices=Kind.choices,
+        verbose_name="Тип документа",
+    )
+    file = models.FileField(
+        upload_to=template_upload_path,
+        verbose_name="Файл шаблона (.docx)",
+    )
+    is_active = models.BooleanField(
+        default=True, verbose_name="Активный",
+        help_text="Используется для выгрузки. Для каждого типа активен только один.",
+    )
+    uploaded_by = models.ForeignKey(
+        "auth.User", null=True, blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Загрузил",
+    )
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Загружен",
+    )
+    comment = models.CharField(
+        max_length=255, blank=True, verbose_name="Комментарий",
+    )
+
+    class Meta:
+        verbose_name = "Шаблон документа"
+        verbose_name_plural = "Шаблоны документов"
+        ordering = ["kind", "-uploaded_at"]
+
+    def __str__(self):
+        status = "активен" if self.is_active else "архив"
+        return f"{self.get_kind_display()} — {self.uploaded_at:%d.%m.%Y} ({status})"
+
+    def clean(self):
+        super().clean()
+        if self.file and not self.file.name.lower().endswith(".docx"):
+            raise ValidationError("Поддерживается только формат .docx")
+        # пробуем открыть — чтобы отловить битый файл сразу
+        if self.file:
+            try:
+                from docxtpl import DocxTemplate
+                self.file.seek(0)
+                DocxTemplate(self.file)
+                self.file.seek(0)
+            except Exception as e:
+                raise ValidationError(f"Не удалось прочитать шаблон: {e}")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_active:
+            # гасим остальные активные шаблоны этого типа
+            DocumentTemplate.objects.filter(
+                kind=self.kind, is_active=True
+            ).exclude(pk=self.pk).update(is_active=False)

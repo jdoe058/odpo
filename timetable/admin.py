@@ -1,10 +1,22 @@
 from django.urls import path, reverse
 from django.contrib import admin
 from django.utils.html import format_html, format_html_join
-from .models import Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
 from .views import employee_hours_report, schedule_import_view
+
+
+from .models import (
+    Employee,
+    Position, 
+    Base, 
+    LessonType, 
+    FundingType, 
+    CycleName, 
+    Cycle, 
+    Lesson,
+    DocumentTemplate,
+)
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -16,7 +28,6 @@ class PositionAdmin(admin.ModelAdmin):
     list_editable = ("max_hours_per_day", "can_sign", "can_approve", "sort_order")
     search_fields = ("name",)
     ordering = ("sort_order", "name")
-
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -160,3 +171,24 @@ class CycleAdmin(admin.ModelAdmin):
             ),
         ]
         return custom + urls
+
+@admin.register(DocumentTemplate)
+class DocumentTemplateAdmin(admin.ModelAdmin):
+    list_display = ("kind", "uploaded_at", "uploaded_by", "is_active", "download_link", "comment")
+    list_filter = ("kind", "is_active")
+    search_fields = ("comment",)
+    readonly_fields = ("uploaded_at", "uploaded_by", "download_link")
+    fields = ("kind", "file", "is_active", "comment", "download_link", "uploaded_by", "uploaded_at")
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.uploaded_by = request.user
+        super().save_model(request, obj, form, change)
+
+    @admin.display(description="Скачать")
+    def download_link(self, obj):
+        if not obj.pk or not obj.file:
+            return "—"
+        return format_html(
+            '<a href="{}" target="_blank">Скачать</a>', obj.file.url
+        )

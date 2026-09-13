@@ -6,10 +6,8 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 
 from .forms import ScheduleImportForm
-from .models import Cycle, Employee
+from .models import Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
-#from .services.employee_hours import calculate_employee_hours_all
-#from .services.employee_hours import calculate_grid, resolve_period
 from .services.schedule_import import ScheduleImportError, import_schedule
 
 from .services.employee_hours import (
@@ -21,6 +19,9 @@ from .services.employee_hours import (
     resolve_period,
 )
 
+from io import BytesIO
+from django.http import HttpResponse
+from docxtpl import DocxTemplate
 
 def employee_hours_report(request, employee_id, admin_site):
     """Отдельная страница отчёта по часам сотрудника."""
@@ -39,7 +40,6 @@ def employee_hours_report(request, employee_id, admin_site):
         "timetable/employee_hours_report.html",
         context,
     )
-
 
 def cycle_hours_report(request, cycle_id, admin_site):
     """Отдельная страница отчёта по часам цикла."""
@@ -153,3 +153,32 @@ def overtime_view(request):
         "period": period,
     })
 
+def cycle_export_docx(request, cycle_id):
+    cycle = get_object_or_404(Cycle, pk=cycle_id)
+
+    tpl_record = DocumentTemplate.objects.filter(
+        kind=DocumentTemplate.Kind.SCHEDULE,
+        is_active=True,
+    ).first()
+    if tpl_record is None:
+        raise Http404("Активный шаблон расписания не загружен")
+
+    tpl = DocxTemplate(tpl_record.file.path)
+    tpl.render({
+        "cycle": cycle,
+        "lessons": cycle.lessons.select_related(
+            "lesson_type", "employee"
+        ).order_by("date", "time_start"),
+    })
+
+    buf = BytesIO()
+    tpl.save(buf)
+    buf.seek(0)
+
+    filename = f"Расписание_{cycle.name}_{cycle.start_date:%Y-%m-%d}.docx"
+    response = HttpResponse(
+        buf.read(),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

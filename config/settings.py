@@ -22,6 +22,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Application definition
 
@@ -121,11 +123,11 @@ MAILERS = {
     },
 }
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "loggers": {
-        "django.db.backends": {"handlers": ["console"], "level": "DEBUG"},
-    },
-}
+#LOGGING = {
+#    "version": 1,
+#    "disable_existing_loggers": False,
+#    "handlers": {"console": {"class": "logging.StreamHandler"}},
+#    "loggers": {
+#        "django.db.backends": {"handlers": ["console"], "level": "DEBUG"},
+#    },
+#}
