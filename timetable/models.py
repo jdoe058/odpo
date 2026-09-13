@@ -284,6 +284,30 @@ def template_upload_path(instance, filename):
     ext = filename.rsplit(".", 1)[-1].lower()
     return f"templates_docx/{instance.kind}/{ts}_{instance.kind}.{ext}"
 
+class DocumentKind(models.Model):
+    code = models.SlugField(
+        max_length=32, unique=True,
+        verbose_name="Код",
+        help_text="Латиницей, без пробелов. Например: schedule, teacher_load.",
+    )
+    name = models.CharField(
+        max_length=100, unique=True, verbose_name="Название",
+    )
+    sort_order = models.PositiveIntegerField(
+        default=100, verbose_name="Порядок сортировки",
+    )
+
+    class Meta:
+        verbose_name = "Тип документа"
+        verbose_name_plural = "Типы документов"
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        super().clean()
+        self.code = self.code.strip().lower().replace(" ", "_")
 
 class DocumentTemplate(models.Model):
     class Kind(models.TextChoices):
@@ -291,10 +315,8 @@ class DocumentTemplate(models.Model):
         LOAD_SUMMARY = "load_summary", "Сводка нагрузки"
         # добавляй сюда по мере появления новых выгрузок
 
-    kind = models.CharField(
-        max_length=32, choices=Kind.choices,
-        verbose_name="Тип документа",
-    )
+    kind = models.ForeignKey(DocumentKind, on_delete=models.PROTECT, null=False) 
+
     file = models.FileField(
         upload_to=template_upload_path,
         verbose_name="Файл шаблона (.docx)",

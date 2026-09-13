@@ -16,6 +16,7 @@ from .models import (
     Cycle, 
     Lesson,
     DocumentTemplate,
+    DocumentKind,
 )
 
 @admin.register(Position)
@@ -192,3 +193,10 @@ class DocumentTemplateAdmin(admin.ModelAdmin):
         return format_html(
             '<a href="{}" target="_blank">Скачать</a>', obj.file.url
         )
+
+@admin.register(DocumentKind)
+class DocumentKindAdmin(admin.ModelAdmin):
+    list_display = ("sort_order", "code", "name")
+    list_editable = ("name",)
+    search_fields = ("code", "name")
+    ordering = ("sort_order", "name")
