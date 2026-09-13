@@ -1,5 +1,5 @@
 import re
-
+from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.db import models
 
