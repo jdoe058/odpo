@@ -32,16 +32,31 @@
 
 {% include "timetable/_overtime_block.html" %}
 
-<div class="filters">
-  <a class="button {% if period == 'week' %}active{% endif %}" href="?period=week">Неделя</a>
-  <a class="button {% if period == 'month' %}active{% endif %}" href="?period=month">Месяц</a>
-  <form method="get" style="display:inline">
-    <input type="hidden" name="period" value="custom">
-    <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
-    <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
-    <button type="submit" class="button">Показать</button>
-  </form>
-</div>
+<form method="get" class="filters">
+  <label>Период:</label>
+  <select name="period">
+    <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
+    <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
+    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
+  </select>
+
+  <label>с</label>
+  <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
+  <label>по</label>
+  <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
+
+  <label style="margin-left:12px">База:</label>
+  <select name="base">
+    <option value="">— все —</option>
+    {% for b in bases %}
+      <option value="{{ b.pk }}" {% if selected_base.pk == b.pk %}selected{% endif %}>
+        {{ b.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <button type="submit" class="button">Показать</button>
+</form>
 
 <table class="grid">
   <thead>

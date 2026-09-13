@@ -165,9 +165,11 @@ class Grid:
     rows: tuple[GridRow, ...]
 
 
-def calculate_grid(start: date, end: date) -> Grid:
+def calculate_grid(start: date, end: date, base=None) -> Grid:
     """
     Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
+    Если base задан — только занятия этой базы, и только преподаватели,
+    у которых в периоде есть занятия.
     """
     from timetable.models import Employee, Lesson
 
@@ -181,8 +183,6 @@ def calculate_grid(start: date, end: date) -> Grid:
         ))
         d += timedelta(days=1)
 
-    employees = list(Employee.objects.order_by("short_name"))
-
     qs = (
         Lesson.objects
         .filter(
@@ -190,16 +190,24 @@ def calculate_grid(start: date, end: date) -> Grid:
             date__lte=end,
             lesson_type__counts_in_hours=True,
         )
-        .values("employee_id", "date")
-        .annotate(h=Sum("hours"))
+    )
+    if base is not None:
+        qs = qs.filter(cycle__base=base)
+
+    rows_raw = list(
+        qs.values("employee_id", "date").annotate(h=Sum("hours"))
+    )
+
+    emp_ids = {r["employee_id"] for r in rows_raw}
+    employees = list(
+        Employee.objects.filter(pk__in=emp_ids).order_by("short_name")
     )
 
     agg: dict[int, dict[date, int]] = defaultdict(dict)
-    for row in qs:
+    for row in rows_raw:
         agg[row["employee_id"]][row["date"]] = row["h"]
 
     rows: list[GridRow] = []
-
     for emp in employees:
         cells = []
         total = 0

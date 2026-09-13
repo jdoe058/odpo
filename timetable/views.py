@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
 
 from .forms import ScheduleImportForm
-from .models import Cycle, Employee, DocumentTemplate
+from .models import Base, Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
 from .services.teacher_load import calculate_teacher_load
 from .services.schedule_import import ScheduleImportError, import_schedule
@@ -91,6 +91,7 @@ def schedule_grid_view(request):
     period = request.GET.get("period", "week")
     start_str = request.GET.get("start")
     end_str = request.GET.get("end")
+    base_id = request.GET.get("base")
 
     try:
         if period == "custom":
@@ -103,13 +104,20 @@ def schedule_grid_view(request):
         period = "week"
         start, end = resolve_period(period)
 
-    grid = calculate_grid(start, end)
-    overtime = calculate_overtime()         # за всё время, без привязки к периоду
+    base = None
+    if base_id:
+        base = Base.objects.filter(pk=base_id).first()
+
+    grid = calculate_grid(start, end, base=base)
+    overtime = calculate_overtime()  # за всё время, по выбранной базе
+    bases = Base.objects.order_by("name")
 
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
         "overtime": overtime,
         "period": period,
+        "bases": bases,
+        "selected_base": base,
     })
 
 def cycle_export_docx(request, cycle_id, admin_site):
