@@ -5,20 +5,19 @@ from urllib.parse import quote
 
 from django.http import HttpResponse, Http404
 from django.contrib import messages
-from django.shortcuts import render
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
 
 from .forms import ScheduleImportForm
 from .models import Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
-from .services.schedule_import import ScheduleImportError, import_schedule
 from .services.teacher_load import calculate_teacher_load
-
+from .services.schedule_import import ScheduleImportError, import_schedule
 from .services.employee_hours import (
-    calculate_employee_hours_all, calculate_grid, 
-    resolve_period, calculate_overtime, resolve_period,
+    resolve_period, 
+    calculate_grid,   
+    calculate_overtime, 
+    calculate_employee_hours_all, 
 )
 
 def employee_hours_report(request, employee_id, admin_site):
@@ -105,47 +104,10 @@ def schedule_grid_view(request):
         start, end = resolve_period(period)
 
     grid = calculate_grid(start, end)
+    overtime = calculate_overtime()         # за всё время, без привязки к периоду
 
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
-        "period": period,
-    })
-
-def _resolve_request_period(request):
-    period = request.GET.get("period", "week")
-    start_str = request.GET.get("start")
-    end_str = request.GET.get("end")
-
-    try:
-        if period == "custom":
-            start = date.fromisoformat(start_str) if start_str else None
-            end = date.fromisoformat(end_str) if end_str else None
-            start, end = resolve_period("custom", start=start, end=end)
-        else:
-            start, end = resolve_period(period)
-    except (TypeError, ValueError):
-        period = "week"
-        start, end = resolve_period(period)
-
-    return start, end, period
-
-def schedule_grid_view(request):
-    start, end, period = _resolve_request_period(request)
-    grid = calculate_grid(start, end)
-    overtime = calculate_overtime()
-
-    return render(request, "timetable/schedule_grid.html", {
-        "grid": grid,
-        "overtime": overtime,
-        "period": period,
-    })
-
-def overtime_view(request):
-    """Отдельная страница только с переработками."""
-    start, end, period = _resolve_request_period(request)
-    overtime = calculate_overtime(start, end)
-
-    return render(request, "timetable/_overtime_block.html", {
         "overtime": overtime,
         "period": period,
     })
