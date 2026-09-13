@@ -8,9 +8,18 @@ from django.template.response import TemplateResponse
 from .forms import ScheduleImportForm
 from .models import Cycle, Employee
 from .services.cycle_hours import calculate_cycle_hours
-from .services.employee_hours import calculate_employee_hours_all
-from .services.employee_hours import calculate_grid, resolve_period
+#from .services.employee_hours import calculate_employee_hours_all
+#from .services.employee_hours import calculate_grid, resolve_period
 from .services.schedule_import import ScheduleImportError, import_schedule
+
+from .services.employee_hours import (
+    calculate_employee_hours_all, 
+    calculate_grid, 
+    calculate_grid, 
+    resolve_period,
+    calculate_overtime,
+    resolve_period,
+)
 
 
 def employee_hours_report(request, employee_id, admin_site):
@@ -101,6 +110,46 @@ def schedule_grid_view(request):
 
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
+        "period": period,
+    })
+
+def _resolve_request_period(request):
+    period = request.GET.get("period", "week")
+    start_str = request.GET.get("start")
+    end_str = request.GET.get("end")
+
+    try:
+        if period == "custom":
+            start = date.fromisoformat(start_str) if start_str else None
+            end = date.fromisoformat(end_str) if end_str else None
+            start, end = resolve_period("custom", start=start, end=end)
+        else:
+            start, end = resolve_period(period)
+    except (TypeError, ValueError):
+        period = "week"
+        start, end = resolve_period(period)
+
+    return start, end, period
+
+def schedule_grid_view(request):
+    start, end, period = _resolve_request_period(request)
+    grid = calculate_grid(start, end)
+    overtime = calculate_overtime()
+
+    return render(request, "timetable/schedule_grid.html", {
+        "grid": grid,
+        "overtime": overtime,
+        "period": period,
+    })
+
+
+def overtime_view(request):
+    """Отдельная страница только с переработками."""
+    start, end, period = _resolve_request_period(request)
+    overtime = calculate_overtime(start, end)
+
+    return render(request, "timetable/_overtime_block.html", {
+        "overtime": overtime,
         "period": period,
     })
 

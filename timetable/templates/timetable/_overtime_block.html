@@ -1,0 +1,27 @@
+{% if overtime %}
+<div class="overtime-box">
+<h2>⚠ Переработки за всё время</h2>
+  {% for o in overtime %}
+    <div class="overtime-emp">
+      <div class="overtime-header">
+        <b>{{ o.employee.short_name }}</b>
+        — суммарная переработка <b class="excess">+{{ o.total_excess }} ч</b>
+        за {{ o.days_count }} дн. (лимит {{ o.limit }} ч/день)
+      </div>
+      <ul class="overtime-days">
+        {% for d in o.days %}
+          <li>
+            {{ d.date|date:"d.m.Y" }} ({{ d.date|date:"D" }}) —
+            {{ d.hours }} ч, <span class="excess">+{{ d.excess }} ч</span> сверх лимита
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="overtime-box overtime-ok">
+  <h2>✓ Переработок за период нет</h2>
+</div>
+{% endif %}
+

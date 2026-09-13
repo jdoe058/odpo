@@ -17,6 +17,35 @@
                cursor: pointer; font-size: 13px; }
     a.button:hover { background: #163a5a; }
     .muted { color: #777; }
+
+    .overtime-box {
+      background: #fff3f3;
+      border-left: 4px solid #c00;
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+    .overtime-box.overtime-ok {
+      background: #f1f8f1;
+      border-left-color: #2e7d32;
+    }
+    .overtime-box h2 {
+      font-size: 16px;
+      margin: 0 0 12px;
+      color: #b00020;
+    }
+    .overtime-box.overtime-ok h2 { color: #2e7d32; }
+    .overtime-emp { margin-bottom: 14px; }
+    .overtime-emp:last-child { margin-bottom: 0; }
+    .overtime-header { margin-bottom: 4px; }
+    .overtime-days {
+      margin: 0;
+      padding-left: 22px;
+      color: #444;
+      font-size: 13px;
+    }
+    .excess { color: #b00020; }
+
   </style>
   {% block extra_head %}{% endblock %}
 </head>

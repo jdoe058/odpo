@@ -30,6 +30,8 @@
 {% block content %}
 <h1>Расписание: {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}</h1>
 
+{% include "timetable/_overtime_block.html" %}
+
 <div class="filters">
   <a class="button {% if period == 'week' %}active{% endif %}" href="?period=week">Неделя</a>
   <a class="button {% if period == 'month' %}active{% endif %}" href="?period=month">Месяц</a>
@@ -68,15 +70,4 @@
   </tbody>
 </table>
 
-{% if grid.over_events %}
-  <div class="over-box">
-    <h2>⚠ Переработки</h2>
-    <ul>
-      {% for e in grid.over_events %}
-        <li>{{ e.employee.short_name }} — {{ e.date|date:"d.m.Y" }}
-            ({{ e.date|date:"D" }}): {{ e.hours }} ч при лимите {{ e.limit }} ч</li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
 {% endblock %}

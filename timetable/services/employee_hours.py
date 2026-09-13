@@ -163,7 +163,6 @@ class Grid:
     end: date
     days: tuple[GridDay, ...]
     rows: tuple[GridRow, ...]
-    over_events: tuple[OverEvent, ...]
 
 
 def calculate_grid(start: date, end: date) -> Grid:
@@ -200,7 +199,6 @@ def calculate_grid(start: date, end: date) -> Grid:
         agg[row["employee_id"]][row["date"]] = row["h"]
 
     rows: list[GridRow] = []
-    over_events: list[OverEvent] = []
 
     for emp in employees:
         cells = []
@@ -210,19 +208,96 @@ def calculate_grid(start: date, end: date) -> Grid:
             over = emp.max_hours_per_day > 0 and h > emp.max_hours_per_day
             cells.append(GridCell(date=day.date, hours=h, over_limit=over))
             total += h
-            if over:
-                over_events.append(OverEvent(
-                    employee=emp,
-                    date=day.date,
-                    hours=h,
-                    limit=emp.max_hours_per_day,
-                ))
         rows.append(GridRow(employee=emp, cells=tuple(cells), total=total))
 
     return Grid(
         start=start, end=end,
         days=tuple(days_list),
         rows=tuple(rows),
-        over_events=tuple(over_events),
     )
+
+@dataclass(frozen=True)
+class OverDay:
+    date: date
+    hours: int
+    excess: int
+
+
+@dataclass(frozen=True)
+class OvertimeEmployee:
+    employee: object
+    limit: int
+    days: tuple[OverDay, ...]
+    total_excess: int
+
+    @property
+    def days_count(self) -> int:
+        return len(self.days)
+
+
+def calculate_overtime(start: date | None = None, end: date | None = None) -> tuple[OvertimeEmployee, ...]:
+    """
+    Переработки: только типы занятий с counts_in_hours=True,
+    только сотрудники с max_hours_per_day > 0.
+    Если start/end не заданы — считает за всё время.
+    Возвращает список, отсортированный по убыванию суммарной переработки.
+    """
+    from timetable.models import Employee, Lesson
+
+    qs = Lesson.objects.filter(lesson_type__counts_in_hours=True)
+    if start is not None:
+        qs = qs.filter(date__gte=start)
+    if end is not None:
+        qs = qs.filter(date__lte=end)
+
+    rows = (
+        qs.values("employee_id", "date")
+        .annotate(h=Sum("hours"))
+    )
+    # ... дальше без изменений ...
+
+#    rows = (
+#        Lesson.objects
+#        .filter(
+#            date__gte=start,
+#            date__lte=end,
+#            lesson_type__counts_in_hours=True,
+#        )
+#        .values("employee_id", "date")
+#        .annotate(h=Sum("hours"))
+#    )
+
+    by_emp: dict[int, list[tuple[date, int]]] = defaultdict(list)
+    for row in rows:
+        by_emp[row["employee_id"]].append((row["date"], row["h"]))
+
+    if not by_emp:
+        return ()
+
+    employees = {e.pk: e for e in Employee.objects.filter(pk__in=by_emp.keys())}
+
+    result: list[OvertimeEmployee] = []
+    for emp_id, items in by_emp.items():
+        emp = employees.get(emp_id)
+        if emp is None or emp.max_hours_per_day <= 0:
+            continue
+
+        days: list[OverDay] = []
+        total_excess = 0
+        for d, h in sorted(items, key=lambda x: x[0]):
+            if h > emp.max_hours_per_day:
+                excess = h - emp.max_hours_per_day
+                days.append(OverDay(date=d, hours=h, excess=excess))
+                total_excess += excess
+
+        if days:
+            result.append(OvertimeEmployee(
+                employee=emp,
+                limit=emp.max_hours_per_day,
+                days=tuple(days),
+                total_excess=total_excess,
+            ))
+
+    result.sort(key=lambda o: (-o.total_excess, o.employee.short_name))
+    return tuple(result)
 
