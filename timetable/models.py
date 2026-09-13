@@ -22,14 +22,12 @@ def normalize_short_name(value: str) -> str:
     value = re.sub(r"\s+", " ", value)
     return value.upper()
 
-
 def validate_short_name(value: str) -> None:
     """Проверить формат после нормализации."""
     if not SHORT_NAME_RE.match(value):
         raise ValidationError(
             "Укажите фамилию и инициалы в верхнем регистре, например: ИВАНОВ И.И."
         )
-
 
 class Position(models.Model):
     """Должность сотрудника."""
@@ -67,7 +65,6 @@ class Position(models.Model):
     @property
     def can_teach(self) -> bool:
         return self.max_hours_per_day > 0
-
 
 class Employee(models.Model):
     """Сотрудник."""
@@ -136,23 +133,25 @@ class Base(models.Model):
         return self.name
 
 class LessonType(models.Model):
-    name = models.CharField(
-        max_length=255,
-        unique=True,
-        verbose_name="Название"
-    )
-    code = models.CharField(
+    class Category(models.TextChoices):
+        LECTURE = "lecture", "Лекции"
+        SEMINAR = "seminar", "Занятия семинарского типа"
+        PRACTICE = "practice", "Практика"
+
+    name = models.CharField(max_length=255, unique=True, verbose_name="Название")
+    code = models.CharField(max_length=20, unique=True, verbose_name="Код")
+    sort_order = models.PositiveIntegerField(unique=True, verbose_name="Порядок сортировки")
+    counts_in_hours = models.BooleanField(default=True, verbose_name="Участвует в подсчёте часов")
+    category = models.CharField(
         max_length=20,
-        unique=True,
-        verbose_name="Код"
-    )
-    sort_order = models.PositiveIntegerField(
-        unique=True,
-        verbose_name="Порядок сортировки"
-    )
-    counts_in_hours = models.BooleanField(
-        default=True,
-        verbose_name="Участвует в подсчёте часов"
+        choices=Category.choices,
+        blank=True,
+        verbose_name="Категория в отчёте",
+        help_text=(
+            "Используется в отчёте «Распределение часов преподавателей». "
+            "Оставьте пустым, если тип занятия не должен попадать в этот отчёт "
+            "(например, экзамен или консультация)."
+        ),
     )
 
     class Meta:
@@ -246,7 +245,6 @@ class Cycle(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.start_date:%d.%m.%Y} — {self.end_date:%d.%m.%Y})"
-
 
 class Lesson(models.Model):
     cycle = models.ForeignKey(

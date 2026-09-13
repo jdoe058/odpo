@@ -3,7 +3,13 @@ from django.contrib import admin
 from django.utils.html import format_html, format_html_join
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 from .services.employee_hours import calculate_employee_hours_all
-from .views import employee_hours_report, schedule_import_view, cycle_export_docx
+#from .views import employee_hours_report, schedule_import_view, cycle_export_docx
+from .views import (
+    employee_hours_report,
+    cycle_export_docx,
+    cycle_export_teacher_load_docx,
+    schedule_import_view,
+)
 
 from io import BytesIO
 from urllib.parse import quote
@@ -97,8 +103,9 @@ class BaseAdmin(admin.ModelAdmin):
 
 @admin.register(LessonType)
 class LessonTypeAdmin(admin.ModelAdmin):
-    list_display = ("code", "name", "sort_order", "counts_in_hours")
-    list_editable = ("sort_order", "counts_in_hours")
+    list_display = ("code", "name", "category", "sort_order", "counts_in_hours")
+    list_editable = ("name", "category", "sort_order", "counts_in_hours")
+    list_filter = ("category", "counts_in_hours")
     search_fields = ("code", "name")
     ordering = ("sort_order",)
 
@@ -125,14 +132,13 @@ class LessonAdmin(admin.ModelAdmin):
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
         "start_date", "total_hours", "base", "name",
-        # "end_date", "compiled_by", "breakdown_short",
     )
     list_filter = ("name", "base")
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
 
-    readonly_fields = ("hours_summary", "export_docx_link")
+    readonly_fields = ("hours_summary", "export_docx_link", "export_teacher_load_link")
 
     change_list_template = "admin/timetable/cycle/change_list.html"
 
@@ -159,6 +165,15 @@ class CycleAdmin(admin.ModelAdmin):
                     )
                 ),
                 name="timetable_cycle_export_docx",
+            ),
+            path(
+                "<path:object_id>/export-teacher-load/",
+                self.admin_site.admin_view(
+                    lambda request, object_id: cycle_export_teacher_load_docx(
+                        request, object_id, self.admin_site,
+                    )
+                ),
+                name="timetable_cycle_export_teacher_load",
             ),
         ]
         return custom + urls
@@ -188,13 +203,24 @@ class CycleAdmin(admin.ModelAdmin):
         parts = ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
         return f"{parts}. Итого: {summary.total} ч."
 
-    @admin.display(description="Экспорт в DOCX")
+    @admin.display(description="Расписание")
     def export_docx_link(self, obj):
         if obj is None or not obj.pk:
             return "Сохраните цикл."
         url = reverse("admin:timetable_cycle_export_docx", args=[obj.pk])
         return format_html(
             '<a class="button" href="{}">Выгрузить в DOCX</a>', url
+        )
+
+    @admin.display(description="Распределение часов")
+    def export_teacher_load_link(self, obj):
+        if obj is None or not obj.pk:
+            return "Сохраните цикл."
+        url = reverse(
+            "admin:timetable_cycle_export_teacher_load", args=[obj.pk]
+        )
+        return format_html(
+            '<a class="button" href="{}">Выгрузить распределение часов</a>', url
         )
 
 @admin.register(DocumentTemplate)

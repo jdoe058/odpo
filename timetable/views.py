@@ -14,6 +14,7 @@ from .forms import ScheduleImportForm
 from .models import Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
 from .services.schedule_import import ScheduleImportError, import_schedule
+from .services.teacher_load import calculate_teacher_load
 
 from .services.employee_hours import (
     calculate_employee_hours_all, calculate_grid, 
@@ -213,4 +214,64 @@ def cycle_export_docx(request, cycle_id, admin_site):
         ),
     )
     response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(filename)}"
+    return response
+
+def cycle_export_teacher_load_docx(request, cycle_id, admin_site):
+    cycle = get_object_or_404(
+        Cycle.objects.select_related("name", "base", "compiled_by"),
+        pk=cycle_id,
+    )
+
+    tpl_record = DocumentTemplate.objects.filter(
+        kind__code="teacher_load",
+        is_active=True,
+    ).first()
+    if tpl_record is None:
+        raise Http404(
+            "Активный шаблон «Распределение часов» не загружен."
+        )
+
+    load = calculate_teacher_load(cycle)
+
+    tpl = DocxTemplate(tpl_record.file.path)
+    tpl.render({
+        "cycle_name": cycle.name.name,
+        "start": cycle.start_date.strftime("%d.%m.%Y"),
+        "end": cycle.end_date.strftime("%d.%m.%Y"),
+        "base": cycle.base.name,
+        "rows": [
+            {
+                "n": r.n,
+                "teacher": r.teacher,
+                "lecture": r.lecture,
+                "seminar": r.seminar,
+                "practice": r.practice,
+                "total": r.total,
+            }
+            for r in load.rows
+        ],
+        "total_lecture": load.total_lecture,
+        "total_seminar": load.total_seminar,
+        "total_practice": load.total_practice,
+        "grand_total": load.grand_total,
+        "signer": cycle.compiled_by.short_name,
+    })
+
+    buf = BytesIO()
+    tpl.save(buf)
+    buf.seek(0)
+
+    filename = (
+        f"Распределение часов_{cycle.name.name}_{cycle.start_date:%Y-%m-%d}.docx"
+    )
+    response = HttpResponse(
+        buf.read(),
+        content_type=(
+            "application/vnd.openxmlformats-officedocument"
+            ".wordprocessingml.document"
+        ),
+    )
+    response["Content-Disposition"] = (
+        f"attachment; filename*=UTF-8''{quote(filename)}"
+    )
     return response
