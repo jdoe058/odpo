@@ -29,18 +29,20 @@ class EmployeeHours:
     days_over_limit: int
 
 
-def resolve_period(kind, today=None, start=None, end=None, base=None):
+def resolve_period(kind, today=None, start=None, end=None, cycle=None):
     """kind: 'week' | 'month' | 'custom' | 'all' → (start, end)."""
     from timetable.models import Lesson
 
     if kind == "all":
+        if cycle is not None:
+            return cycle.start_date, cycle.end_date
+
         qs = Lesson.objects.all()
-        if base is not None:
-            qs = qs.filter(cycle__base=base)
         agg = qs.aggregate(first=Min("date"), last=Max("date"))
         if agg["first"] and agg["last"]:
             return agg["first"], agg["last"]
-        # если занятий нет — вернём текущую неделю, чтобы страница не падала
+
+        # если занятий нет — текущая неделя
         today = today or timezone.localdate()
         start = today - timedelta(days=today.weekday())
         return start, start + timedelta(days=6)
@@ -178,11 +180,10 @@ class Grid:
     rows: tuple[GridRow, ...]
 
 
-def calculate_grid(start: date, end: date, base=None) -> Grid:
+def calculate_grid(start: date, end: date, cycle=None) -> Grid:
     """
     Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
-    Если base задан — только занятия этой базы, и только преподаватели,
-    у которых в периоде есть занятия.
+    Если cycle задан — только занятия этого цикла.
     """
     from timetable.models import Employee, Lesson
 
@@ -196,20 +197,15 @@ def calculate_grid(start: date, end: date, base=None) -> Grid:
         ))
         d += timedelta(days=1)
 
-    qs = (
-        Lesson.objects
-        .filter(
-            date__gte=start,
-            date__lte=end,
-            lesson_type__counts_in_hours=True,
-        )
+    qs = Lesson.objects.filter(
+        date__gte=start,
+        date__lte=end,
+        lesson_type__counts_in_hours=True,
     )
-    if base is not None:
-        qs = qs.filter(cycle__base=base)
+    if cycle is not None:
+        qs = qs.filter(cycle=cycle)
 
-    rows_raw = list(
-        qs.values("employee_id", "date").annotate(h=Sum("hours"))
-    )
+    rows_raw = list(qs.values("employee_id", "date").annotate(h=Sum("hours")))
 
     emp_ids = {r["employee_id"] for r in rows_raw}
     employees = list(
@@ -231,11 +227,7 @@ def calculate_grid(start: date, end: date, base=None) -> Grid:
             total += h
         rows.append(GridRow(employee=emp, cells=tuple(cells), total=total))
 
-    return Grid(
-        start=start, end=end,
-        days=tuple(days_list),
-        rows=tuple(rows),
-    )
+    return Grid(start=start, end=end, days=tuple(days_list), rows=tuple(rows))
 
 @dataclass(frozen=True)
 class OverDay:

@@ -33,18 +33,17 @@
 {% include "timetable/_overtime_block.html" %}
 
 <form method="get" class="filters">
-  <label style="margin-left:12px">База:</label>
-  <select name="base">
+  <label>Цикл:</label>
+  <select name="cycle">
     <option value="">— все —</option>
-    {% for b in bases %}
-      <option value="{{ b.pk }}" {% if selected_base.pk == b.pk %}selected{% endif %}>
-        {{ b.name }}
+    {% for c in cycles %}
+      <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
+        {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name }}
       </option>
     {% endfor %}
   </select>
-  <br/>
 
-  <label>Период:</label>
+  <label style="margin-left:12px">Период:</label>
   <select name="period">
     <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
     <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
@@ -56,9 +55,8 @@
   <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
   <label>по</label>
   <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
-
+  
   <br/>
-
   <button type="submit" class="button">Показать</button>
 </form>
 

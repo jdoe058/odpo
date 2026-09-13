@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
 
 from .forms import ScheduleImportForm
-from .models import Base, Cycle, Employee, DocumentTemplate
+from .models import Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
 from .services.teacher_load import calculate_teacher_load
 from .services.schedule_import import ScheduleImportError, import_schedule
@@ -91,11 +91,16 @@ def schedule_grid_view(request):
     period = request.GET.get("period", "week")
     start_str = request.GET.get("start")
     end_str = request.GET.get("end")
-    base_id = request.GET.get("base")
+    cycle_id = request.GET.get("cycle")
 
-    base = None
-    if base_id:
-        base = Base.objects.filter(pk=base_id).first()
+    cycle = None
+    if cycle_id:
+        cycle = (
+            Cycle.objects
+            .select_related("name", "base", "funding_type")
+            .filter(pk=cycle_id)
+            .first()
+        )
 
     try:
         if period == "custom":
@@ -103,23 +108,23 @@ def schedule_grid_view(request):
             end = date.fromisoformat(end_str) if end_str else None
             start, end = resolve_period("custom", start=start, end=end)
         elif period == "all":
-            start, end = resolve_period("all", base=base)
+            start, end = resolve_period("all", cycle=cycle)
         else:
             start, end = resolve_period(period)
     except (TypeError, ValueError):
         period = "week"
         start, end = resolve_period(period)
 
-    grid = calculate_grid(start, end, base=base)
+    grid = calculate_grid(start, end, cycle=cycle)
     overtime = calculate_overtime()
-    bases = Base.objects.order_by("name")
+    cycles = Cycle.objects.select_related("name", "base").order_by("-start_date")
 
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
         "overtime": overtime,
         "period": period,
-        "bases": bases,
-        "selected_base": base,
+        "cycles": cycles,
+        "selected_cycle": cycle,
     })
 
 def cycle_export_docx(request, cycle_id, admin_site):
