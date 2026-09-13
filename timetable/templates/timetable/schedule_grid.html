@@ -60,6 +60,19 @@
   <button type="submit" class="button">Показать</button>
 </form>
 
+{% if selected_cycle %}
+  <div class="cycle-actions" style="margin: 12px 0;">
+    <a class="button"
+       href="{% url 'admin:timetable_cycle_export_docx' selected_cycle.pk %}">
+      📄 Расписание
+    </a>
+    <a class="button"
+       href="{% url 'admin:timetable_cycle_export_teacher_load' selected_cycle.pk %}">
+      📊 Нагрузка
+    </a>
+  </div>
+{% endif %}
+
 <table class="grid">
   <thead>
     <tr>
