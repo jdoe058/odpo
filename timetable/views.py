@@ -3,7 +3,7 @@ from docxtpl import DocxTemplate
 from datetime import date
 from urllib.parse import quote
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
