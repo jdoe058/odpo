@@ -15,12 +15,27 @@ def normalize_name(value) -> str:
     return " ".join(str(value or "").split()).upper()
 
 def normalize_short_name(value: str) -> str:
-    """Верхний регистр + нормализация пробелов."""
+    """
+    Приводит ФИО к виду «ФАМИЛИЯ И.И.»:
+    - верхний регистр;
+    - схлопывание повторных пробелов;
+    - убирает повторные точки и пробелы между инициалами;
+    - добавляет точку после инициала, если её забыли.
+    """
     if not value:
         return value
-    value = value.strip()
-    value = re.sub(r"\s+", " ", value)
-    return value.upper()
+
+    value = re.sub(r"\s+", " ", str(value).strip()).upper()
+    parts = value.split(" ")
+
+    last_name = parts[0]
+    # Всё после фамилии — инициалы: "И. И." → "ИИ"
+    initials_letters = re.sub(r"[^А-ЯЁA-Z]", "", "".join(parts[1:]))
+
+    if not initials_letters:
+        return last_name
+
+    return last_name + " " + "".join(f"{ch}." for ch in initials_letters)
 
 def validate_short_name(value: str) -> None:
     """Проверить формат после нормализации."""
