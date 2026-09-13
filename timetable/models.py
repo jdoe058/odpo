@@ -344,7 +344,8 @@ class DocumentTemplate(models.Model):
 
     def __str__(self):
         status = "активен" if self.is_active else "архив"
-        return f"{self.get_kind_display()} — {self.uploaded_at:%d.%m.%Y} ({status})"
+        kind = self.kind.name if self.kind_id else "—"
+        return f"{kind} — {self.uploaded_at:%d.%m.%Y} ({status})"
 
     def clean(self):
         super().clean()
