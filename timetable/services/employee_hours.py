@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections import defaultdict
 from datetime import date, timedelta
 
 from django.db.models import Sum
@@ -125,3 +126,103 @@ def calculate_employee_hours_all(employee) -> EmployeeHours:
         max_per_day=max_per_day,
         days_over_limit=over_count,
     )
+
+
+@dataclass(frozen=True)
+class GridDay:
+    date: date
+    weekday_ru: str
+    is_weekend: bool
+
+
+@dataclass(frozen=True)
+class GridCell:
+    date: date
+    hours: int
+    over_limit: bool
+
+
+@dataclass(frozen=True)
+class GridRow:
+    employee: object
+    cells: tuple[GridCell, ...]
+    total: int
+
+
+@dataclass(frozen=True)
+class OverEvent:
+    employee: object
+    date: date
+    hours: int
+    limit: int
+
+
+@dataclass(frozen=True)
+class Grid:
+    start: date
+    end: date
+    days: tuple[GridDay, ...]
+    rows: tuple[GridRow, ...]
+    over_events: tuple[OverEvent, ...]
+
+
+def calculate_grid(start: date, end: date) -> Grid:
+    """
+    Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
+    """
+    from timetable.models import Employee, Lesson
+
+    days_list = []
+    d = start
+    while d <= end:
+        days_list.append(GridDay(
+            date=d,
+            weekday_ru=WEEKDAYS_RU[d.weekday()],
+            is_weekend=d.weekday() >= 5,
+        ))
+        d += timedelta(days=1)
+
+    employees = list(Employee.objects.order_by("short_name"))
+
+    qs = (
+        Lesson.objects
+        .filter(
+            date__gte=start,
+            date__lte=end,
+            lesson_type__counts_in_hours=True,
+        )
+        .values("employee_id", "date")
+        .annotate(h=Sum("hours"))
+    )
+
+    agg: dict[int, dict[date, int]] = defaultdict(dict)
+    for row in qs:
+        agg[row["employee_id"]][row["date"]] = row["h"]
+
+    rows: list[GridRow] = []
+    over_events: list[OverEvent] = []
+
+    for emp in employees:
+        cells = []
+        total = 0
+        for day in days_list:
+            h = agg.get(emp.pk, {}).get(day.date, 0)
+            over = emp.max_hours_per_day > 0 and h > emp.max_hours_per_day
+            cells.append(GridCell(date=day.date, hours=h, over_limit=over))
+            total += h
+            if over:
+                over_events.append(OverEvent(
+                    employee=emp,
+                    date=day.date,
+                    hours=h,
+                    limit=emp.max_hours_per_day,
+                ))
+        rows.append(GridRow(employee=emp, cells=tuple(cells), total=total))
+
+    return Grid(
+        start=start, end=end,
+        days=tuple(days_list),
+        rows=tuple(rows),
+        over_events=tuple(over_events),
+    )
+

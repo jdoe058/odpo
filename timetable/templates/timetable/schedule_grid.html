@@ -1,0 +1,82 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}Расписание — {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filters { margin-bottom: 16px; }
+  .filters a { margin-right: 6px; }
+  .filters a.active { font-weight: bold; }
+
+  table.grid { border-collapse: collapse; background: #fff; }
+  table.grid th, table.grid td {
+    border: 1px solid #ddd; padding: 4px 8px; font-size: 13px;
+  }
+  table.grid thead th { background: #eef3f8; font-weight: 600; }
+  table.grid th.employee { text-align: left; position: sticky; left: 0; background: #eef3f8; }
+  table.grid td.hours { text-align: center; min-width: 38px; }
+  table.grid td.empty { color: #ccc; }
+  table.grid td.over { background: #ffe5e5; color: #b00020; font-weight: 600; }
+  table.grid th.weekend, table.grid td.weekend { background: #fafafa; }
+  table.grid tfoot th { background: #eef3f8; }
+
+  .over-box { margin-top: 20px; padding: 12px 16px; background: #fff3f3;
+              border-left: 4px solid #c00; border-radius: 3px; }
+  .over-box h2 { font-size: 16px; margin: 0 0 8px; color: #b00020; }
+  .over-box ul { margin: 0; padding-left: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Расписание: {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}</h1>
+
+<div class="filters">
+  <a class="button {% if period == 'week' %}active{% endif %}" href="?period=week">Неделя</a>
+  <a class="button {% if period == 'month' %}active{% endif %}" href="?period=month">Месяц</a>
+  <form method="get" style="display:inline">
+    <input type="hidden" name="period" value="custom">
+    <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
+    <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
+    <button type="submit" class="button">Показать</button>
+  </form>
+</div>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="employee">Преподаватель</th>
+      {% for day in grid.days %}
+        <th class="{% if day.is_weekend %}weekend{% endif %}">
+          {{ day.weekday_ru }}<br>{{ day.date|date:"d.m" }}
+        </th>
+      {% endfor %}
+      <th>Итого</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in grid.rows %}
+      <tr>
+        <th class="employee">{{ row.employee.short_name }}</th>
+        {% for cell in row.cells %}
+          <td class="hours {% if cell.over_limit %}over{% elif not cell.hours %}empty{% endif %} {% if cell.date.weekday >= 5 %}weekend{% endif %}">
+            {% if cell.hours %}{{ cell.hours }}{% else %}—{% endif %}
+          </td>
+        {% endfor %}
+        <td class="hours"><b>{{ row.total }}</b></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if grid.over_events %}
+  <div class="over-box">
+    <h2>⚠ Переработки</h2>
+    <ul>
+      {% for e in grid.over_events %}
+        <li>{{ e.employee.short_name }} — {{ e.date|date:"d.m.Y" }}
+            ({{ e.date|date:"D" }}): {{ e.hours }} ч при лимите {{ e.limit }} ч</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+{% endblock %}
