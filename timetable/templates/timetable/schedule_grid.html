@@ -63,11 +63,11 @@
 {% if selected_cycle %}
   <div class="cycle-actions" style="margin: 12px 0;">
     <a class="button"
-       href="{% url 'admin:timetable_cycle_export_docx' selected_cycle.pk %}">
+       href="{% url 'timetable:cycle_export_schedule_docx' selected_cycle.pk %}">
       📄 Расписание
     </a>
     <a class="button"
-       href="{% url 'admin:timetable_cycle_export_teacher_load' selected_cycle.pk %}">
+       href="{% url 'timetable:cycle_export_teacher_load_docx' selected_cycle.pk %}">
       📊 Нагрузка
     </a>
   </div>

@@ -6,8 +6,8 @@ from .services.employee_hours import calculate_employee_hours_all
 #from .views import employee_hours_report, schedule_import_view, cycle_export_docx
 from .views import (
     employee_hours_report,
-    cycle_export_docx,
-    cycle_export_teacher_load_docx,
+    schedule_export_view,
+    teacher_load_export_view,
     schedule_import_view,
 )
 
@@ -158,20 +158,16 @@ class CycleAdmin(admin.ModelAdmin):
                 name="timetable_cycle_import",
             ),
             path(
-                "<path:object_id>/export-docx/",
+                "<path:object_id>/export-schedule/",
                 self.admin_site.admin_view(
-                    lambda request, object_id: cycle_export_docx(
-                        request, object_id, self.admin_site,
-                    )
+                    lambda request, object_id: schedule_export_view(request, object_id)
                 ),
-                name="timetable_cycle_export_docx",
+                name="timetable_cycle_export_schedule",
             ),
             path(
                 "<path:object_id>/export-teacher-load/",
                 self.admin_site.admin_view(
-                    lambda request, object_id: cycle_export_teacher_load_docx(
-                        request, object_id, self.admin_site,
-                    )
+                    lambda request, object_id: teacher_load_export_view(request, object_id)
                 ),
                 name="timetable_cycle_export_teacher_load",
             ),
@@ -207,9 +203,9 @@ class CycleAdmin(admin.ModelAdmin):
     def export_docx_link(self, obj):
         if obj is None or not obj.pk:
             return "Сохраните цикл."
-        url = reverse("admin:timetable_cycle_export_docx", args=[obj.pk])
+        url = reverse("admin:timetable_cycle_export_schedule", args=[obj.pk])
         return format_html(
-            '<a class="button" href="{}">Выгрузить в DOCX</a>', url
+            '<a class="button" href="{}">Расписание</a>', url
         )
 
     @admin.display(description="Распределение часов")

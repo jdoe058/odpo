@@ -25,6 +25,10 @@ ALLOWED_HOSTS = []
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "timetable:schedule_grid"
+LOGOUT_REDIRECT_URL = "login"
+
 # Application definition
 
 INSTALLED_APPS = [

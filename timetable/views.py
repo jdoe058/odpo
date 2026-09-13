@@ -7,9 +7,8 @@ from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
+from django.contrib.auth.decorators import login_required
 
-from .forms import ScheduleImportForm
-from .models import Cycle, Employee, DocumentTemplate
 from .services.cycle_hours import calculate_cycle_hours
 from .services.teacher_load import calculate_teacher_load
 from .services.schedule_import import ScheduleImportError, import_schedule
@@ -19,6 +18,8 @@ from .services.employee_hours import (
     calculate_overtime, 
     calculate_employee_hours_all, 
 )
+from .forms import ScheduleImportForm
+from .models import Cycle, Employee, DocumentTemplate
 
 def employee_hours_report(request, employee_id, admin_site):
     """Отдельная страница отчёта по часам сотрудника."""
@@ -87,6 +88,7 @@ def schedule_import_view(request, admin_site):
         request, "timetable/schedule_import.html", context
     )
 
+@login_required
 def schedule_grid_view(request):
     period = request.GET.get("period", "week")
     start_str = request.GET.get("start")
@@ -127,7 +129,8 @@ def schedule_grid_view(request):
         "selected_cycle": cycle,
     })
 
-def cycle_export_docx(request, cycle_id, admin_site):
+@login_required
+def schedule_export_view(request, cycle_id):
     cycle = get_object_or_404(
         Cycle.objects.select_related(
             "name", "funding_type", "base", "compiled_by"
@@ -193,7 +196,8 @@ def cycle_export_docx(request, cycle_id, admin_site):
     response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(filename)}"
     return response
 
-def cycle_export_teacher_load_docx(request, cycle_id, admin_site):
+@login_required
+def teacher_load_export_view(request, cycle_id):
     cycle = get_object_or_404(
         Cycle.objects.select_related("name", "base", "compiled_by"),
         pk=cycle_id,
