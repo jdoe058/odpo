@@ -44,6 +44,7 @@ class ImportResult:
 # ---------------------------------------------------------------------------
 
 _LINE_RE = re.compile(r"^Строка (\d+): (.*)$")
+_DATE_FORMATS = ("%d.%m.%Y", "%d.%m.%y", "%Y-%m-%d", "%d/%m/%Y")
 
 
 def _as_date(value, row_idx: int):
@@ -51,6 +52,13 @@ def _as_date(value, row_idx: int):
         return value.date()
     if isinstance(value, date):
         return value
+    if isinstance(value, str):
+        s = value.strip()
+        for fmt in _DATE_FORMATS:
+            try:
+                return datetime.strptime(s, fmt).date()
+            except ValueError:
+                continue
     raise ValueError(f"Строка {row_idx}: не распознана дата {value!r}")
 
 
