@@ -5,7 +5,6 @@ from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
 from .services.cycle_hours import calculate_cycle_hours
-from .services.schedule_import import ScheduleImportError, import_schedule
 from .services.employee_hours import (
     resolve_period, 
     calculate_grid,   
@@ -14,6 +13,7 @@ from .services.employee_hours import (
 )
 from .forms import ScheduleImportForm
 from .models import Cycle, Employee
+from .imports import ScheduleImportError, import_schedule
 
 def employee_hours_report(request, employee_id, admin_site):
     """Отдельная страница отчёта по часам сотрудника."""
