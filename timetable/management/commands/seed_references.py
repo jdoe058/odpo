@@ -4,14 +4,14 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from timetable.models import (
-    DocumentKind, FundingType, LessonType, Position, normalize_name,
+    FundingType, LessonType, Position, normalize_name,
 )
 from timetable.reference_data import (
-    DOCUMENT_KINDS, FUNDING_TYPES, LESSON_TYPES, POSITIONS,
+    FUNDING_TYPES, LESSON_TYPES, POSITIONS,
 )
 
 
-GROUPS = ("funding", "positions", "document_kinds", "lesson_types")
+GROUPS = ("funding", "positions", "lesson_types")
 
 
 class Command(BaseCommand):
@@ -55,8 +55,6 @@ class Command(BaseCommand):
                 self._seed_funding(stats["funding"])
             if "positions" in groups:
                 self._seed_positions(stats["positions"])
-            if "document_kinds" in groups:
-                self._seed_document_kinds(stats["document_kinds"])
             if "lesson_types" in groups:
                 self._seed_lesson_types(stats["lesson_types"])
 
@@ -87,15 +85,6 @@ class Command(BaseCommand):
                 },
             )
             self._record(stat, obj.name, created)
-
-    def _seed_document_kinds(self, stat):
-        self.stdout.write("\nТипы документов:")
-        for spec in DOCUMENT_KINDS:
-            obj, created = DocumentKind.objects.get_or_create(
-                code=spec.code,
-                defaults={"name": spec.name, "sort_order": spec.sort_order},
-            )
-            self._record(stat, f"{obj.code} — {obj.name}", created)
 
     def _seed_lesson_types(self, stat):
         self.stdout.write("\nТипы занятий:")

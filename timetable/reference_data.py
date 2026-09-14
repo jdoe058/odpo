@@ -21,13 +21,6 @@ class PositionSpec:
 
 
 @dataclass(frozen=True)
-class DocumentKindSpec:
-    code: str
-    name: str
-    sort_order: int = 100
-
-
-@dataclass(frozen=True)
 class LessonTypeSpec:
     code: str
     name: str
@@ -55,18 +48,6 @@ POSITIONS: tuple[PositionSpec, ...] = (
                  can_sign=True, can_approve=False, sort_order=30),
     PositionSpec("преподаватель", max_hours_per_day=6, sort_order=50),
     PositionSpec("преподаватель-совместитель", max_hours_per_day=4, sort_order=60),
-)
-
-
-# --- Типы документов ----------------------------------------------------
-
-# code должен совпадать с тем, что ищут экспортёры:
-# timetable/exports/schedule.py::get_active_template("schedule")
-# timetable/exports/teacher_load.py::get_active_template("teacher_load")
-DOCUMENT_KINDS: tuple[DocumentKindSpec, ...] = (
-    DocumentKindSpec("schedule",        "Расписание",                           sort_order=10),
-    DocumentKindSpec("teacher_load",    "Распределение часов преподавателей",   sort_order=20),
-    DocumentKindSpec("timesheet",       "Табель учета рабочего времени",        sort_order=30),
 )
 
 

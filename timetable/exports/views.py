@@ -2,11 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 
 from timetable.models import Cycle
-from timetable.exports.base import (
-    get_active_template, render_docx, docx_response,
-)
+from timetable.exports.base import render_docx, docx_response
 from timetable.exports.kinds import get as get_spec
-
+from timetable.exports.library import get_active_template 
 
 def _export_cycle(request, cycle_id: int, kind_code: str):
     cycle = get_object_or_404(
