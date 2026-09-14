@@ -1,29 +1,13 @@
 from django.urls import path, reverse
 from django.contrib import admin
 from django.utils.html import format_html, format_html_join
-from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
-from .services.employee_hours import calculate_employee_hours_all
-#from .views import employee_hours_report, schedule_import_view, cycle_export_docx
-from .views import (
-    employee_hours_report,
-    schedule_export_view,
-    teacher_load_export_view,
-    schedule_import_view,
-)
-
-from io import BytesIO
-from urllib.parse import quote
-
-from django.http import HttpResponse, Http404
-from docxtpl import DocxTemplate
-
-from .models import Cycle, DocumentTemplate
-from .services.cycle_hours import calculate_cycle_hours
-
+from .views import employee_hours_report, schedule_import_view
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, 
     Cycle, Lesson, DocumentTemplate, DocumentKind,
 )
+from .exports.registry import EXPORTERS, resolve_view, admin_url_name
+from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -138,8 +122,6 @@ class CycleAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
 
-    readonly_fields = ("hours_summary", "export_docx_link", "export_teacher_load_link")
-
     change_list_template = "admin/timetable/cycle/change_list.html"
 
     def get_queryset(self, request):
@@ -149,6 +131,16 @@ class CycleAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super().get_urls()
+
+        export_urls = [
+            path(
+                f"<path:object_id>/export-{spec.url_slug}/",
+                self.admin_site.admin_view(resolve_view(spec.view)),
+                name=admin_url_name(spec),
+            )
+            for spec in EXPORTERS
+        ]
+
         custom = [
             path(
                 "import/",
@@ -157,20 +149,7 @@ class CycleAdmin(admin.ModelAdmin):
                 ),
                 name="timetable_cycle_import",
             ),
-            path(
-                "<path:object_id>/export-schedule/",
-                self.admin_site.admin_view(
-                    lambda request, object_id: schedule_export_view(request, object_id)
-                ),
-                name="timetable_cycle_export_schedule",
-            ),
-            path(
-                "<path:object_id>/export-teacher-load/",
-                self.admin_site.admin_view(
-                    lambda request, object_id: teacher_load_export_view(request, object_id)
-                ),
-                name="timetable_cycle_export_teacher_load",
-            ),
+            *export_urls,
         ]
         return custom + urls
 
@@ -199,24 +178,22 @@ class CycleAdmin(admin.ModelAdmin):
         parts = ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
         return f"{parts}. Итого: {summary.total} ч."
 
-    @admin.display(description="Расписание")
-    def export_docx_link(self, obj):
-        if obj is None or not obj.pk:
-            return "Сохраните цикл."
-        url = reverse("admin:timetable_cycle_export_schedule", args=[obj.pk])
-        return format_html(
-            '<a class="button" href="{}">Расписание</a>', url
-        )
+    readonly_fields = ("hours_summary", "export_links")
 
-    @admin.display(description="Распределение часов")
-    def export_teacher_load_link(self, obj):
+    @admin.display(description="Выгрузки")
+    def export_links(self, obj):
         if obj is None or not obj.pk:
             return "Сохраните цикл."
-        url = reverse(
-            "admin:timetable_cycle_export_teacher_load", args=[obj.pk]
-        )
-        return format_html(
-            '<a class="button" href="{}">Выгрузить распределение часов</a>', url
+        return format_html_join(
+            " ",                                       # разделитель между кнопками
+            '<a class="button" href="{}">{}</a>',      # шаблон одной кнопки
+            (
+                (
+                    reverse(f"admin:{admin_url_name(spec)}", args=[obj.pk]),
+                    spec.label,
+                )
+                for spec in EXPORTERS
+            ),
         )
 
 @admin.register(DocumentTemplate)

@@ -1,16 +1,10 @@
-from io import BytesIO
-from docxtpl import DocxTemplate
 from datetime import date
-from urllib.parse import quote
-
-from django.http import HttpResponse, Http404
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
 from .services.cycle_hours import calculate_cycle_hours
-from .services.teacher_load import calculate_teacher_load
 from .services.schedule_import import ScheduleImportError, import_schedule
 from .services.employee_hours import (
     resolve_period, 
@@ -19,7 +13,7 @@ from .services.employee_hours import (
     calculate_employee_hours_all, 
 )
 from .forms import ScheduleImportForm
-from .models import Cycle, Employee, DocumentTemplate
+from .models import Cycle, Employee
 
 def employee_hours_report(request, employee_id, admin_site):
     """Отдельная страница отчёта по часам сотрудника."""
@@ -128,131 +122,3 @@ def schedule_grid_view(request):
         "cycles": cycles,
         "selected_cycle": cycle,
     })
-
-@login_required
-def schedule_export_view(request, cycle_id):
-    cycle = get_object_or_404(
-        Cycle.objects.select_related(
-            "name", "funding_type", "base", "compiled_by"
-        ),
-        pk=cycle_id,
-    )
-
-    tpl_record = DocumentTemplate.objects.filter(
-        kind__code="schedule",
-        is_active=True,
-    ).first()
-    if tpl_record is None:
-        raise Http404("Активный шаблон расписания не загружен. "
-                      "Загрузите его в разделе «Шаблоны документов».")
-
-    lessons = (
-        cycle.lessons
-        .select_related("lesson_type", "employee")
-        .order_by("date", "time_start")
-    )
-    hours = calculate_cycle_hours(cycle)
-
-    lessons_ctx = [
-        {
-            "date": lesson.date.strftime("%d.%m.%Y"),
-            "time": (
-                f"{lesson.time_start.strftime('%H:%M')}-"
-                f"{lesson.time_end.strftime('%H:%M')}"
-            ),
-            "type": lesson.lesson_type.name,
-            "hours": lesson.hours,
-            "topic": lesson.topic,
-            "teacher": lesson.employee.short_name,
-        }
-        for lesson in lessons
-    ]
-
-    tpl = DocxTemplate(tpl_record.file.path)
-    tpl.render({
-        "cycle_name": cycle.name.name,
-        "funding": cycle.funding_type.name if cycle.funding_type else "",
-        "start": cycle.start_date.strftime("%d.%m.%Y"),
-        "end": cycle.end_date.strftime("%d.%m.%Y"),
-        "base": cycle.base.name,
-        "compiled_by": cycle.compiled_by.short_name,
-        "lessons": lessons_ctx,
-        "hours_summary": hours.by_type,
-        "total_hours": hours.total,
-    })
-
-    buf = BytesIO()
-    tpl.save(buf)
-    buf.seek(0)
-
-    filename = f"Расписание_{cycle.name.name}_{cycle.start_date:%Y-%m-%d}.docx"
-    response = HttpResponse(
-        buf.read(),
-        content_type=(
-            "application/vnd.openxmlformats-officedocument"
-            ".wordprocessingml.document"
-        ),
-    )
-    response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(filename)}"
-    return response
-
-@login_required
-def teacher_load_export_view(request, cycle_id):
-    cycle = get_object_or_404(
-        Cycle.objects.select_related("name", "base", "compiled_by"),
-        pk=cycle_id,
-    )
-
-    tpl_record = DocumentTemplate.objects.filter(
-        kind__code="teacher_load",
-        is_active=True,
-    ).first()
-    if tpl_record is None:
-        raise Http404(
-            "Активный шаблон «Распределение часов» не загружен."
-        )
-
-    load = calculate_teacher_load(cycle)
-
-    tpl = DocxTemplate(tpl_record.file.path)
-    tpl.render({
-        "cycle_name": cycle.name.name,
-        "start": cycle.start_date.strftime("%d.%m.%Y"),
-        "end": cycle.end_date.strftime("%d.%m.%Y"),
-        "base": cycle.base.name,
-        "rows": [
-            {
-                "n": r.n,
-                "teacher": r.teacher,
-                "lecture": r.lecture,
-                "seminar": r.seminar,
-                "practice": r.practice,
-                "total": r.total,
-            }
-            for r in load.rows
-        ],
-        "total_lecture": load.total_lecture,
-        "total_seminar": load.total_seminar,
-        "total_practice": load.total_practice,
-        "grand_total": load.grand_total,
-        "signer": cycle.compiled_by.short_name,
-    })
-
-    buf = BytesIO()
-    tpl.save(buf)
-    buf.seek(0)
-
-    filename = (
-        f"Распределение часов_{cycle.name.name}_{cycle.start_date:%Y-%m-%d}.docx"
-    )
-    response = HttpResponse(
-        buf.read(),
-        content_type=(
-            "application/vnd.openxmlformats-officedocument"
-            ".wordprocessingml.document"
-        ),
-    )
-    response["Content-Disposition"] = (
-        f"attachment; filename*=UTF-8''{quote(filename)}"
-    )
-    return response
