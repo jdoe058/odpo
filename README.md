@@ -65,13 +65,19 @@ DEBUG=True
 python manage.py migrate
 ```
 
-### 6. Создать суперпользователя
+### 6. Заполнить справочники
+
+```bash
+python manage.py seed_references
+```
+
+### 7. Создать суперпользователя
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 7. Запустить сервер
+### 8. Запустить сервер
 
 ```bash
 python manage.py runserver
@@ -81,3 +87,4 @@ python manage.py runserver
 
 - Админка: http://127.0.0.1:8000/admin/
 - Расписание: http://127.0.0.1:8000/
+
