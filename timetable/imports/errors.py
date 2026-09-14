@@ -14,6 +14,7 @@ class ScheduleImportError(Exception):
 
 def compress_ranges(numbers: list[int]) -> str:
     """[9,10,11,12,17] → 'строки 9–12, 17'."""
+    numbers = sorted(set(numbers))
     if not numbers:
         return ""
     ranges = []
