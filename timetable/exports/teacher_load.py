@@ -1,12 +1,8 @@
-from django.http import HttpResponse
-
-from timetable.exports.base import (
-    get_active_template, render_docx, docx_response,
-)
+from timetable.exports.kinds import ExporterSpec, register
 from timetable.services.teacher_load import calculate_teacher_load
 
 
-def build_teacher_load_context(cycle) -> dict:
+def build_context(cycle) -> dict:
     load = calculate_teacher_load(cycle)
     return {
         "cycle_name": cycle.name.name,
@@ -15,12 +11,9 @@ def build_teacher_load_context(cycle) -> dict:
         "base": cycle.base.name,
         "rows": [
             {
-                "n": r.n,
-                "teacher": r.teacher,
-                "lecture": r.lecture,
-                "seminar": r.seminar,
-                "practice": r.practice,
-                "total": r.total,
+                "n": r.n, "teacher": r.teacher,
+                "lecture": r.lecture, "seminar": r.seminar,
+                "practice": r.practice, "total": r.total,
             }
             for r in load.rows
         ],
@@ -32,15 +25,17 @@ def build_teacher_load_context(cycle) -> dict:
     }
 
 
-def teacher_load_filename(cycle) -> str:
+def build_filename(cycle) -> str:
     return (
-        f"Распределение часов_{cycle.name.name}_"
+        f"teacher_load_{cycle.name.name}_"
         f"{cycle.start_date:%Y-%m-%d}.docx"
     )
 
 
-def export_teacher_load(cycle) -> HttpResponse:
-    tpl = get_active_template("teacher_load")
-    context = build_teacher_load_context(cycle)
-    data = render_docx(tpl.file.path, context)
-    return docx_response(data, teacher_load_filename(cycle))
+register(ExporterSpec(
+    code="teacher_load",
+    name="Распределение часов преподавателей",
+    sort_order=20,
+    build_context=build_context,
+    build_filename=build_filename,
+))

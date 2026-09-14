@@ -2,4 +2,10 @@ from django.apps import AppConfig
 
 
 class TimetableConfig(AppConfig):
-    name = 'timetable'
+    name = "timetable"
+    default_auto_field = "django.db.models.BigAutoField"
+
+    def ready(self):
+        # Импорт модулей наполняет реестр выгрузок (exports/kinds.py).
+        from timetable.exports import schedule, teacher_load  # noqa: F401
+
