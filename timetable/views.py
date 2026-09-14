@@ -14,6 +14,7 @@ from .services.employee_hours import (
 from .forms import ScheduleImportForm
 from .models import Cycle, Employee
 from .imports import ScheduleImportError, import_schedule
+from timetable.exports.kinds import all_specs
 
 def employee_hours_report(request, employee_id, admin_site):
     """Отдельная страница отчёта по часам сотрудника."""
@@ -121,4 +122,5 @@ def schedule_grid_view(request):
         "period": period,
         "cycles": cycles,
         "selected_cycle": cycle,
+        "export_kinds": all_specs(),
     })

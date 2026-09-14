@@ -62,14 +62,12 @@
 
 {% if selected_cycle %}
   <div class="cycle-actions" style="margin: 12px 0;">
-    <a class="button"
-       href="{% url 'timetable:cycle_export_schedule_docx' selected_cycle.pk %}">
-      📄 Расписание
-    </a>
-    <a class="button"
-       href="{% url 'timetable:cycle_export_teacher_load_docx' selected_cycle.pk %}">
-      📊 Нагрузка
-    </a>
+    {% for kind in export_kinds %}
+      <a class="button"
+         href="{% url 'timetable:cycle_export' selected_cycle.pk kind.code %}">
+        📄 {{ kind.name }}
+      </a>
+    {% endfor %}
   </div>
 {% endif %}
 

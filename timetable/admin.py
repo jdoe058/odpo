@@ -5,8 +5,10 @@ from .views import employee_hours_report, schedule_import_view
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
-from .exports.registry import EXPORTERS, resolve_view, admin_url_name
 from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
+
+from timetable.exports.kinds import all_specs
+from timetable.exports.views import export_view as cycle_export_view
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -126,34 +128,6 @@ class CycleAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return prefetch_lessons_for_hours(super().get_queryset(request))
 
-    # --- URL-ы ---
-
-    def get_urls(self):
-        urls = super().get_urls()
-
-        export_urls = [
-            path(
-                f"<path:object_id>/export-{spec.url_slug}/",
-                self.admin_site.admin_view(resolve_view(spec.view)),
-                name=admin_url_name(spec),
-            )
-            for spec in EXPORTERS
-        ]
-
-        custom = [
-            path(
-                "import/",
-                self.admin_site.admin_view(
-                    lambda request: schedule_import_view(request, self.admin_site)
-                ),
-                name="timetable_cycle_import",
-            ),
-            *export_urls,
-        ]
-        return custom + urls
-
-    # --- Колонки списка ---
-
     @admin.display(description="Всего часов")
     def total_hours(self, obj):
         return calculate_cycle_hours(obj).total
@@ -179,20 +153,41 @@ class CycleAdmin(admin.ModelAdmin):
 
     readonly_fields = ("hours_summary", "export_links")
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "import/",
+                self.admin_site.admin_view(
+                    lambda request: schedule_import_view(request, self.admin_site)
+                ),
+                name="timetable_cycle_import",
+            ),
+            path(
+                "<path:cycle_id>/export/<slug:kind>/",
+                self.admin_site.admin_view(cycle_export_view),
+                name="timetable_cycle_export",
+            ),
+        ]
+        return custom + urls
+
     @admin.display(description="Выгрузки")
     def export_links(self, obj):
         if obj is None or not obj.pk:
-            return "Сохраните цикл."
+            return "Сохраните цикл, чтобы выгрузить документы."
         return format_html_join(
-            " ",                                       # разделитель между кнопками
-            '<a class="button" href="{}">{}</a>',      # шаблон одной кнопки
-            (
+            " ",
+            '<a class="button" href="{}">{}</a>',
+            [
                 (
-                    reverse(f"admin:{admin_url_name(spec)}", args=[obj.pk]),
-                    spec.label,
+                    reverse(
+                        "admin:timetable_cycle_export",
+                        args=[obj.pk, spec.code],
+                    ),
+                    spec.name,
                 )
-                for spec in EXPORTERS
-            ),
+                for spec in all_specs()
+            ],
         )
 
 # Регистрация моделей из подпакетов. Импорт нужен для побочного
