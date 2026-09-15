@@ -7,4 +7,4 @@ class TimetableConfig(AppConfig):
 
     def ready(self):
         # Импорт наполняет реестр выгрузок (exports/kinds.py).
-        from timetable.exports import schedule, teacher_load  # noqa: F401
+        from timetable.exports import schedule, teacher_load, timesheet  # noqa: F401
