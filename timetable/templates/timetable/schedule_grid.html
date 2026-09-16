@@ -2,62 +2,48 @@
 
 {% block title %}Расписание — {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}{% endblock %}
 
-{% block extra_head %}
-<style>
-  .filters { margin-bottom: 16px; }
-  .filters a { margin-right: 6px; }
-  .filters a.active { font-weight: bold; }
-
-  table.grid { border-collapse: collapse; background: #fff; }
-  table.grid th, table.grid td {
-    border: 1px solid #ddd; padding: 4px 8px; font-size: 13px;
-  }
-  table.grid thead th { background: #eef3f8; font-weight: 600; }
-  table.grid th.employee { text-align: left; position: sticky; left: 0; background: #eef3f8; }
-  table.grid td.hours { text-align: center; min-width: 38px; }
-  table.grid td.empty { color: #ccc; }
-  table.grid td.over { background: #ffe5e5; color: #b00020; font-weight: 600; }
-  table.grid th.weekend, table.grid td.weekend { background: #fafafa; }
-  table.grid tfoot th { background: #eef3f8; }
-
-  .over-box { margin-top: 20px; padding: 12px 16px; background: #fff3f3;
-              border-left: 4px solid #c00; border-radius: 3px; }
-  .over-box h2 { font-size: 16px; margin: 0 0 8px; color: #b00020; }
-  .over-box ul { margin: 0; padding-left: 20px; }
-</style>
-{% endblock %}
-
 {% block content %}
 <h1>Расписание: {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}</h1>
 
 {% include "timetable/_overtime_block.html" %}
 
 <form method="get" class="filters">
-  <label>Цикл:</label>
-  <select name="cycle">
-    <option value="">— все —</option>
-    {% for c in cycles %}
-      <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
-        {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name }}
-      </option>
-    {% endfor %}
-  </select>
+  <div class="filters-row">
+    <div>
+      <label for="id_cycle">Цикл</label>
+      <select name="cycle" id="id_cycle">
+        <option value="">— все —</option>
+        {% for c in cycles %}
+          <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
+            {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-  <label style="margin-left:12px">Период:</label>
-  <select name="period">
-    <option value="week" {% if period == 'week' %}selected{% endif %}>Неделя</option>
-    <option value="month" {% if period == 'month' %}selected{% endif %}>Месяц</option>
-    <option value="all" {% if period == 'all' %}selected{% endif %}>Весь период</option>
-    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
-  </select>
+    <div>
+      <label for="id_period">Период</label>
+      <select name="period" id="id_period">
+        <option value="week"   {% if period == 'week'   %}selected{% endif %}>Неделя</option>
+        <option value="month"  {% if period == 'month'  %}selected{% endif %}>Месяц</option>
+        <option value="all"    {% if period == 'all'    %}selected{% endif %}>Весь период</option>
+        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
+      </select>
+    </div>
 
-  <label>с</label>
-  <input type="date" name="start" value="{{ grid.start|date:'Y-m-d' }}">
-  <label>по</label>
-  <input type="date" name="end" value="{{ grid.end|date:'Y-m-d' }}">
-  
-  <br/>
-  <button type="submit" class="button">Показать</button>
+    <div>
+      <label for="id_start">С</label>
+      <input type="date" name="start" id="id_start" value="{{ grid.start|date:'Y-m-d' }}">
+    </div>
+    <div>
+      <label for="id_end">По</label>
+      <input type="date" name="end" id="id_end" value="{{ grid.end|date:'Y-m-d' }}">
+    </div>
+
+    <div>
+      <button type="submit">Показать</button>
+    </div>
+  </div>
 </form>
 
 {% if selected_cycle %}
