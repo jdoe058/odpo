@@ -248,6 +248,10 @@ class Cycle(models.Model):
                 condition=models.Q(end_date__gte=models.F("start_date")),
                 name="cycle_end_after_start",
             ),
+            models.UniqueConstraint(
+                fields=["name", "base", "start_date"],
+                name="cycle_unique_name_base_start",
+            ),
         ]
 
     def clean(self):

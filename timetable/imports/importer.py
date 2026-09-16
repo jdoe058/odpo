@@ -166,16 +166,15 @@ def parse_lessons(ws) -> tuple[list[ParsedLesson], list[str]]:
 
     return parsed, errors
 
-
 def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
     with transaction.atomic():
-        cycle, _ = Cycle.objects.get_or_create(
+        cycle, created = Cycle.objects.get_or_create(
             name=header.cycle_name,
+            base=header.base,
             start_date=header.start_date,
-            end_date=header.end_date,
             defaults={
                 "funding_type": header.funding,
-                "base": header.base,
+                "end_date": header.end_date,
                 "compiled_by": header.compiled_by,
             },
         )
@@ -186,17 +185,26 @@ def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
                 "Снимите флаг «В архиве» в админке, если нужно переимпортировать."
             ])
 
+        if not created:
+            cycle.end_date = header.end_date
+            cycle.funding_type = header.funding
+            cycle.compiled_by = header.compiled_by
+            cycle.save(update_fields=["end_date", "funding_type", "compiled_by"])
+
         cycle.lessons.all().delete()
 
         Lesson.objects.bulk_create([
             Lesson(
-                cycle=cycle, date=p.date,
-                time_start=p.time_start, time_end=p.time_end,
-                hours=p.hours, lesson_type=p.lesson_type,
-                topic=p.topic, employee=p.employee,
+                cycle=cycle,
+                date=p.date,
+                time_start=p.time_start,
+                time_end=p.time_end,
+                hours=p.hours,
+                lesson_type=p.lesson_type,
+                topic=p.topic,
+                employee=p.employee,
             )
             for p in parsed
         ])
 
     return ImportResult(cycle=cycle, lessons_created=len(parsed))
-
