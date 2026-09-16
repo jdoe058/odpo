@@ -1,0 +1,163 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}Занятия{% endblock %}
+
+{% block extra_head %}
+<style>
+  form.filters {
+    background: #fff; border: 1px solid #dde1e7; border-radius: 6px;
+    padding: 14px 16px; margin-bottom: 16px;
+  }
+  .filters-row {
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .filters-row > div { display: flex; flex-direction: column; gap: 4px; }
+  .filters-row label { font-size: 12px; color: #666; }
+  .filters-row select,
+  .filters-row input[type="date"] {
+    padding: 6px 8px; border: 1px solid #c8ccd2; border-radius: 4px;
+    font: inherit; background: #fff;
+  }
+  .filters-row button {
+    padding: 7px 16px; border: none; background: #1f4e79; color: #fff;
+    border-radius: 3px; cursor: pointer; font: inherit;
+  }
+  .filters-row button:hover { background: #163a5a; }
+
+  .summary { margin: 0 0 12px; color: #555; }
+  .hint {
+    padding: 32px; text-align: center; color: #777;
+    background: #fff; border: 1px dashed #dde1e7; border-radius: 6px;
+  }
+
+  table.lessons {
+    border-collapse: collapse; width: 100%;
+    background: #fff; font-size: 13px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  table.lessons th,
+  table.lessons td {
+    border: 1px solid #e3e7ec; padding: 6px 9px;
+    text-align: left; vertical-align: top;
+  }
+  table.lessons th { background: #eef2f6; font-weight: 600; }
+  table.lessons tr:nth-child(even) td { background: #fafbfc; }
+  table.lessons td.empty {
+    text-align: center; color: #888; padding: 24px;
+  }
+  table.lessons a { color: #1f4e79; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Занятия</h1>
+
+<form class="filters" method="get">
+  <div class="filters-row">
+    <div>
+      <label for="id_base">База</label>
+      <select name="base" id="id_base">
+        <option value="">— Выберите базу —</option>
+        {% for b in bases %}
+          <option value="{{ b.pk }}"
+            {% if selected_base and selected_base.pk == b.pk %}selected{% endif %}>
+            {{ b.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="id_cycle">Цикл</label>
+      <select name="cycle" id="id_cycle" {% if not selected_base %}disabled{% endif %}>
+        <option value="">— Все циклы —</option>
+        {% for c in cycles %}
+          <option value="{{ c.pk }}"
+            {% if selected_cycle and selected_cycle.pk == c.pk %}selected{% endif %}>
+            {{ c.name }} ({{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="id_period">Период</label>
+      <select name="period" id="id_period">
+        <option value="week"   {% if period == "week"   %}selected{% endif %}>Неделя</option>
+        <option value="month"  {% if period == "month"  %}selected{% endif %}>Месяц</option>
+        <option value="all"    {% if period == "all"    %}selected{% endif %}>Весь период</option>
+        <option value="custom" {% if period == "custom" %}selected{% endif %}>Произвольный</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="id_start">С</label>
+      <input type="date" name="start" id="id_start" value="{{ start_str }}">
+    </div>
+    <div>
+      <label for="id_end">По</label>
+      <input type="date" name="end" id="id_end" value="{{ end_str }}">
+    </div>
+
+    <div>
+      <button type="submit">Применить</button>
+    </div>
+  </div>
+</form>
+
+{% if not selected_base %}
+  <div class="hint">Выберите базу, чтобы увидеть занятия.</div>
+{% else %}
+
+  {% if start and end %}
+    <p class="summary">
+      Период: <strong>{{ start|date:"d.m.Y" }}</strong> — <strong>{{ end|date:"d.m.Y" }}</strong>.
+      Найдено занятий: <strong>{{ lessons|length }}</strong>.
+    </p>
+  {% else %}
+    <p class="summary">Найдено занятий: <strong>{{ lessons|length }}</strong>.</p>
+  {% endif %}
+
+  <table class="lessons">
+    <thead>
+      <tr>
+        <th>Дата</th>
+        <th>Время</th>
+        <th>Часы</th>
+        <th>Тип занятия</th>
+        <th>Тема</th>
+        <th>Преподаватель</th>
+        {% if not selected_cycle %}
+          <th>Начало цикла</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for lesson in lessons %}
+        <tr>
+          <td>{{ lesson.date|date:"d.m.Y" }}</td>
+          <td>{{ lesson.time_start|time:"H:i" }} — {{ lesson.time_end|time:"H:i" }}</td>
+          <td>{{ lesson.hours }}</td>
+          <td>{{ lesson.lesson_type.name }}</td>
+          <td>{{ lesson.topic|default:"—" }}</td>
+          <td>{{ lesson.employee.short_name }}</td>
+          {% if not selected_cycle %}
+            <td>
+              <a href="{% url 'admin:timetable_cycle_change' lesson.cycle.pk %}">
+                {{ lesson.cycle.start_date|date:"d.m.Y" }}
+              </a>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="empty" colspan="{% if selected_cycle %}6{% else %}7{% endif %}">
+            Занятий не найдено.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endif %}
+{% endblock %}
