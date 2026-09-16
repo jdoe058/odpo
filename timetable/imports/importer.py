@@ -179,6 +179,13 @@ def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
                 "compiled_by": header.compiled_by,
             },
         )
+
+        if cycle.in_archive:
+            raise ScheduleImportError([
+                f"Цикл «{cycle}» помечен как архивный — импорт запрещён. "
+                "Снимите флаг «В архиве» в админке, если нужно переимпортировать."
+            ])
+
         cycle.lessons.all().delete()
 
         Lesson.objects.bulk_create([

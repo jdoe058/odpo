@@ -230,6 +230,15 @@ class Cycle(models.Model):
         verbose_name="Составил",
     )
 
+    in_archive = models.BooleanField(
+        "В архиве",
+        default=False,
+        help_text=(
+            "Отметьте после выгрузки расписания, табеля и нагрузки. "
+            "Архивированный цикл защищён от изменений."
+        ),
+    )
+
     class Meta:
         verbose_name = "Цикл"
         verbose_name_plural = "Циклы"
