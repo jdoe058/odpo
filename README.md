@@ -37,6 +37,11 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
+если политика включена
+```
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+```
+
 **Linux / macOS:**
 
 ```bash
