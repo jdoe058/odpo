@@ -18,12 +18,19 @@ def as_date(value, row_idx: int) -> date:
     raise ValueError(f"Строка {row_idx}: не распознана дата {value!r}")
 
 
-def parse_time(value: str, row_idx: int) -> time:
+def parse_time(value, row_idx: int) -> time:
     s = str(value).strip().replace(".", ":")
+    s = s.strip(":")          # '12:30:' → '12:30',  ':12:30' → '12:30'
     parts = s.split(":")
     if len(parts) != 2:
         raise ValueError(f"Строка {row_idx}: неверный формат времени {value!r}")
-    return time(int(parts[0]), int(parts[1]))
+    try:
+        h, m = int(parts[0]), int(parts[1])
+    except ValueError:
+        raise ValueError(f"Строка {row_idx}: неверный формат времени {value!r}")
+    if not (0 <= h < 24 and 0 <= m < 60):
+        raise ValueError(f"Строка {row_idx}: неверное время {value!r}")
+    return time(h, m)
 
 
 def parse_range(value, row_idx: int):
