@@ -5,7 +5,6 @@ from .views import schedule_import_view
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
-from .services.cycle_hours import calculate_cycle_hours, prefetch_lessons_for_hours
 
 from timetable.exports.kinds import all_specs
 from timetable.exports.views import export_view as cycle_export_view
@@ -89,7 +88,7 @@ class LessonAdmin(admin.ModelAdmin):
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
-        "start_date", "total_hours", "base", "name",
+        "start_date", "base", "name",
     )
     list_filter = ("name", "base")
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
@@ -98,12 +97,7 @@ class CycleAdmin(admin.ModelAdmin):
 
     change_list_template = "admin/timetable/cycle/change_list.html"
 
-    def get_queryset(self, request):
-        return prefetch_lessons_for_hours(super().get_queryset(request))
 
-    @admin.display(description="Всего часов")
-    def total_hours(self, obj):
-        return calculate_cycle_hours(obj).total
 
     readonly_fields = ("export_links",)
 
