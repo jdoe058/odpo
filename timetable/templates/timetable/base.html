@@ -9,8 +9,7 @@
 </head>
 <body>
 <header>
-  <a href="{% url 'timetable:schedule_grid' %}">Расписание</a>
-  <a href="{% url 'timetable:lessons_list' %}">Занятия</a>
+  <a href="{% url 'timetable:schedule_grid' %}">Главная</a>
   {% if request.user.is_staff %}
     <a href="/admin/">Админка</a>
   {% endif %}
