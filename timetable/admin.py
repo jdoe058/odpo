@@ -105,26 +105,7 @@ class CycleAdmin(admin.ModelAdmin):
     def total_hours(self, obj):
         return calculate_cycle_hours(obj).total
 
-    @admin.display(description="По типам")
-    def breakdown_short(self, obj):
-        summary = calculate_cycle_hours(obj)
-        if not summary.by_type:
-            return "—"
-        return ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
-
-    # --- Поля карточки ---
-
-    @admin.display(description="Часы по типам занятий")
-    def hours_summary(self, obj):
-        if obj is None or not obj.pk:
-            return "—"
-        summary = calculate_cycle_hours(obj)
-        if not summary.by_type:
-            return "Занятий с учётом часов пока нет."
-        parts = ", ".join(f"{b.name}: {b.hours}" for b in summary.by_type)
-        return f"{parts}. Итого: {summary.total} ч."
-
-    readonly_fields = ("hours_summary", "export_links")
+    readonly_fields = ("export_links",)
 
     def get_urls(self):
         urls = super().get_urls()
