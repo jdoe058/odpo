@@ -1,0 +1,22 @@
+{% if breakdown and breakdown.by_type %}
+<div class="hours-breakdown">
+  <table>
+    <thead>
+      <tr>
+        {% for b in breakdown.by_type %}
+          <th>{{ b.name }}</th>
+        {% endfor %}
+        <th class="total-col">Итого</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        {% for b in breakdown.by_type %}
+          <td>{{ b.hours }}</td>
+        {% endfor %}
+        <td class="total-col"><b>{{ breakdown.total }}</b></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}

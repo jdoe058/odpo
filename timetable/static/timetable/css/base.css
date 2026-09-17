@@ -142,6 +142,37 @@ table.grid th.weekend,
 table.grid td.weekend { background: #fafafa; }
 table.grid tfoot th { background: #eef3f8; }
 
+/* ===================== Распределение часов ===================== */
+.hours-breakdown {
+  background: #fff;
+  border: 1px solid #dde1e7;
+  border-left: 4px solid #1f4e79;
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.hours-breakdown table {
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 13px;
+}
+.hours-breakdown th,
+.hours-breakdown td {
+  border: 1px solid #e3e7ec;
+  padding: 6px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+.hours-breakdown thead th {
+  background: #eef3f8;
+  font-weight: 600;
+}
+.hours-breakdown .total-col {
+  background: #eef2f6;
+  border-left: 2px solid #cdd5df;
+}
+
 /* ===================== Блок переработок ===================== */
 .overtime-box {
   background: #fff3f3;

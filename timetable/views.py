@@ -3,6 +3,8 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
+
+from timetable.services.cycle_hours import calculate_cycle_hours
 from .services.periods import resolve_period
 
 from .services.schedule_grid import (
@@ -93,6 +95,8 @@ def schedule_grid_view(request):
     prev_anchor = start - timedelta(days=1)
     next_anchor = end + timedelta(days=1)
 
+    breakdown = calculate_cycle_hours(cycle) if cycle is not None else None
+
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
         "overtime": overtime,
@@ -102,4 +106,5 @@ def schedule_grid_view(request):
         "export_kinds": all_specs(),
         "prev_anchor": prev_anchor,
         "next_anchor": next_anchor,
+        "breakdown": breakdown,
     })
