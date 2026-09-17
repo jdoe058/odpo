@@ -1,32 +1,14 @@
+from typing import TYPE_CHECKING
 from dataclasses import dataclass
 from collections import defaultdict
 from datetime import date, timedelta
 from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
+if TYPE_CHECKING:
+    from timetable.models import Employee
 
 WEEKDAYS_RU = ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-
-
-@dataclass(frozen=True)
-class DayHours:
-    date: date
-    hours: int
-    over_limit: bool
-
-    @property
-    def weekday_ru(self) -> str:
-        return WEEKDAYS_RU[self.date.weekday()]
-
-
-@dataclass(frozen=True)
-class EmployeeHours:
-    start: date
-    end: date
-    days: tuple[DayHours, ...]
-    total: int
-    max_per_day: int
-    days_over_limit: int
 
 
 def resolve_period(kind, today=None, start=None, end=None, cycle=None):
@@ -70,79 +52,6 @@ def resolve_period(kind, today=None, start=None, end=None, cycle=None):
 
     raise ValueError(f"unknown period kind: {kind!r}")
 
-
-def calculate_employee_hours(employee, start, end) -> EmployeeHours:
-    """
-    Часы по дням за период. Только типы занятий с counts_in_hours=True.
-    Дни без занятий в результат не попадают.
-    """
-    from timetable.models import Lesson
-
-    rows = (
-        Lesson.objects
-        .filter(
-            employee=employee,
-            date__gte=start,
-            date__lte=end,
-            lesson_type__counts_in_hours=True,
-        )
-        .values("date")
-        .annotate(hours=Sum("hours"))
-        .order_by("date")
-    )
-
-    max_per_day = employee.max_hours_per_day
-    days, over_count = [], 0
-    for row in rows:
-        h = row["hours"] or 0
-        over = max_per_day > 0 and h > max_per_day
-        over_count += int(over)
-        days.append(DayHours(date=row["date"], hours=h, over_limit=over))
-
-    return EmployeeHours(
-        start=start, end=end,
-        days=tuple(days),
-        total=sum(d.hours for d in days),
-        max_per_day=max_per_day,
-        days_over_limit=over_count,
-    )
-
-def calculate_employee_hours_all(employee) -> EmployeeHours:
-    """
-    Часы по дням за всё время. Только типы занятий с counts_in_hours=True.
-    """
-    from timetable.models import Lesson
-
-    rows = (
-        Lesson.objects
-        .filter(
-            employee=employee,
-            lesson_type__counts_in_hours=True,
-        )
-        .values("date")
-        .annotate(hours=Sum("hours"))
-        .order_by("date")
-    )
-
-    max_per_day = employee.max_hours_per_day
-    days, over_count = [], 0
-    for row in rows:
-        h = row["hours"] or 0
-        over = max_per_day > 0 and h > max_per_day
-        over_count += int(over)
-        days.append(DayHours(date=row["date"], hours=h, over_limit=over))
-
-    dates = [d.date for d in days] or [None]
-    return EmployeeHours(
-        start=dates[0],
-        end=dates[-1],
-        days=tuple(days),
-        total=sum(d.hours for d in days),
-        max_per_day=max_per_day,
-        days_over_limit=over_count,
-    )
-
-
 @dataclass(frozen=True)
 class GridDay:
     date: date
@@ -162,15 +71,6 @@ class GridRow:
     employee: object
     cells: tuple[GridCell, ...]
     total: int
-
-
-@dataclass(frozen=True)
-class OverEvent:
-    employee: object
-    date: date
-    hours: int
-    limit: int
-
 
 @dataclass(frozen=True)
 class Grid:
@@ -238,7 +138,7 @@ class OverDay:
 
 @dataclass(frozen=True)
 class OvertimeEmployee:
-    employee: object
+    employee: "Employee"
     limit: int
     days: tuple[OverDay, ...]
     total_excess: int
@@ -267,18 +167,6 @@ def calculate_overtime(start: date | None = None, end: date | None = None) -> tu
         qs.values("employee_id", "date")
         .annotate(h=Sum("hours"))
     )
-    # ... дальше без изменений ...
-
-#    rows = (
-#        Lesson.objects
-#        .filter(
-#            date__gte=start,
-#            date__lte=end,
-#            lesson_type__counts_in_hours=True,
-#        )
-#        .values("employee_id", "date")
-#        .annotate(h=Sum("hours"))
-#    )
 
     by_emp: dict[int, list[tuple[date, int]]] = defaultdict(list)
     for row in rows:
