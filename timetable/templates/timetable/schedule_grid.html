@@ -72,31 +72,54 @@
 
 {% include "timetable/_hours_breakdown.html" %}
 
-<table class="grid">
-  <thead>
-    <tr>
-      <th class="employee">Преподаватель</th>
-      <th>Итого</th>
-      {% for day in grid.days %}
-        <th class="{% if day.is_weekend %}weekend{% endif %}">
-          {{ day.weekday_ru }}<br>{{ day.date|date:"d.m" }}
-        </th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in grid.rows %}
+<nav class="view-tabs">
+  <a class="tab active" data-tab="schedule" href="#">Расписание</a>
+  <a class="tab" data-tab="lessons" href="#">Занятия</a>
+</nav>
+
+<div class="tab-panel" data-panel="schedule">
+  <table class="grid">
+    <thead>
       <tr>
-        <th class="employee">{{ row.employee.short_name }}</th>
-        <td class="hours"><b>{{ row.total }}</b></td>
-        {% for cell in row.cells %}
-          <td class="hours {% if cell.over_limit %}over{% elif not cell.hours %}empty{% endif %} {% if cell.date.weekday >= 5 %}weekend{% endif %}">
-            {% if cell.hours %}{{ cell.hours }}{% else %}—{% endif %}
-          </td>
+        <th class="employee">Преподаватель</th>
+        <th>Итого</th>
+        {% for day in grid.days %}
+          <th class="{% if day.is_weekend %}weekend{% endif %}">
+            {{ day.weekday_ru }}<br>{{ day.date|date:"d.m" }}
+          </th>
         {% endfor %}
       </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      {% for row in grid.rows %}
+        <tr>
+          <th class="employee">{{ row.employee.short_name }}</th>
+          <td class="hours"><b>{{ row.total }}</b></td>
+          {% for cell in row.cells %}
+            <td class="hours {% if cell.over_limit %}over{% elif not cell.hours %}empty{% endif %} {% if cell.date.weekday >= 5 %}weekend{% endif %}">
+              {% if cell.hours %}{{ cell.hours }}{% else %}—{% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
+<div class="tab-panel" data-panel="lessons" hidden>
+  В разработке
+</div>
+
+<script>
+  document.querySelectorAll('.view-tabs .tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.preventDefault();
+      const name = tab.dataset.tab;
+      document.querySelectorAll('.view-tabs .tab')
+        .forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.tab-panel')
+        .forEach(p => p.hidden = p.dataset.panel !== name);
+    });
+  });
+</script>
 {% endblock %}
