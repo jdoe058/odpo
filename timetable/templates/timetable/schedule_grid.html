@@ -14,9 +14,9 @@
       <select name="cycle" id="id_cycle">
         <option value="">— все —</option>
         {% for c in cycles %}
-          <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
-            {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name }}
-          </option>
+        <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
+          {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name|truncatechars:40 }}
+        </option>
         {% endfor %}
       </select>
     </div>
