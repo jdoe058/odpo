@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -83,12 +83,49 @@ def schedule_import_view(request, admin_site):
         request, "timetable/schedule_import.html", context
     )
 
+from datetime import date, timedelta
+from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
+from django.template.response import TemplateResponse
+from django.contrib.auth.decorators import login_required
+
+from .services.cycle_hours import calculate_cycle_hours
+from .services.employee_hours import (
+    resolve_period,
+    calculate_grid,
+    calculate_overtime,
+    calculate_employee_hours_all,
+)
+from .forms import ScheduleImportForm
+from .models import Cycle, Employee
+from .imports import ScheduleImportError, import_schedule
+from timetable.exports.kinds import all_specs
+
+
+def _shift_period(period: str, anchor: date):
+    """Границы недели/месяца, содержащего anchor."""
+    if period == "week":
+        start = anchor - timedelta(days=anchor.weekday())  # Пн
+        end = start + timedelta(days=6)                    # Вс
+        return start, end
+    if period == "month":
+        start = anchor.replace(day=1)
+        if start.month == 12:
+            nxt = start.replace(year=start.year + 1, month=1)
+        else:
+            nxt = start.replace(month=start.month + 1)
+        end = nxt - timedelta(days=1)
+        return start, end
+    return None
+
+
 @login_required
 def schedule_grid_view(request):
     period = request.GET.get("period", "week")
     start_str = request.GET.get("start")
     end_str = request.GET.get("end")
     cycle_id = request.GET.get("cycle")
+    anchor_str = request.GET.get("anchor")
 
     cycle = None
     if cycle_id:
@@ -99,8 +136,17 @@ def schedule_grid_view(request):
             .first()
         )
 
+    anchor = None
+    if anchor_str:
+        try:
+            anchor = date.fromisoformat(anchor_str)
+        except ValueError:
+            anchor = None
+
     try:
-        if period == "custom":
+        if period in ("week", "month") and anchor:
+            start, end = _shift_period(period, anchor)
+        elif period == "custom":
             start = date.fromisoformat(start_str) if start_str else None
             end = date.fromisoformat(end_str) if end_str else None
             start, end = resolve_period("custom", start=start, end=end)
@@ -116,6 +162,10 @@ def schedule_grid_view(request):
     overtime = calculate_overtime()
     cycles = Cycle.objects.select_related("name", "base").order_by("-start_date")
 
+    # анкеры для стрелок «←/→»
+    prev_anchor = start - timedelta(days=1)
+    next_anchor = end + timedelta(days=1)
+
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
         "overtime": overtime,
@@ -123,4 +173,6 @@ def schedule_grid_view(request):
         "cycles": cycles,
         "selected_cycle": cycle,
         "export_kinds": all_specs(),
+        "prev_anchor": prev_anchor,
+        "next_anchor": next_anchor,
     })

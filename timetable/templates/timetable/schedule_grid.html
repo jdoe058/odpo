@@ -46,6 +46,19 @@
   </div>
 </form>
 
+{% if period == 'week' or period == 'month' %}
+  <div class="period-nav" style="margin: 8px 0;">
+    <a class="button"
+       href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ prev_anchor|date:'Y-m-d' }}">
+      ← Предыдущая {% if period == 'week' %}неделя{% else %}месяц{% endif %}
+    </a>
+    <a class="button"
+       href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ next_anchor|date:'Y-m-d' }}">
+      Следующая {% if period == 'week' %}неделя{% else %}месяц{% endif %} →
+    </a>
+  </div>
+{% endif %}
+
 {% if selected_cycle %}
   <div class="cycle-actions" style="margin: 12px 0;">
     {% for kind in export_kinds %}
