@@ -1,7 +1,7 @@
 from django.urls import path, reverse
 from django.contrib import admin
-from django.utils.html import format_html, format_html_join
-from .views import employee_hours_report, schedule_import_view
+from django.utils.html import format_html_join
+from .views import schedule_import_view
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
@@ -32,23 +32,6 @@ class EmployeeAdmin(admin.ModelAdmin):
     ordering = ("short_name",)
     autocomplete_fields = ("position",)
 
-    readonly_fields = ("hours_report_link",)
-
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path(
-                "<path:object_id>/hours/",
-                self.admin_site.admin_view(
-                    lambda request, object_id: employee_hours_report(
-                        request, object_id, self.admin_site,
-                    )
-                ),
-                name="timetable_employee_hours",
-            ),
-        ]
-        return custom + urls
-
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
         if "position" not in initial:
@@ -70,16 +53,6 @@ class EmployeeAdmin(admin.ModelAdmin):
     @admin.display(description="Утверждает", boolean=True)
     def can_approve(self, obj):
         return obj.can_approve
-
-    @admin.display(description="Часы по дням")
-    def hours_report_link(self, obj):
-        if obj is None or obj.pk is None:
-            return "Сохраните сотрудника, чтобы увидеть отчёт."
-        url = reverse("admin:timetable_employee_hours", args=[obj.pk])
-        return format_html(
-            '<a class="button" href="{}">Открыть отчёт по часам</a>',
-            url,
-        )
 
 @admin.register(Base)
 class BaseAdmin(admin.ModelAdmin):

@@ -1,56 +1,19 @@
 from datetime import date, timedelta
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
-from .services.cycle_hours import calculate_cycle_hours
 from .services.employee_hours import (
     resolve_period, 
     calculate_grid,   
     calculate_overtime, 
-    calculate_employee_hours_all, 
 )
+
 from .forms import ScheduleImportForm
-from .models import Cycle, Employee
+from .models import Cycle
 from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
-
-def employee_hours_report(request, employee_id, admin_site):
-    """Отдельная страница отчёта по часам сотрудника."""
-    employee = get_object_or_404(Employee, pk=employee_id)
-    data = calculate_employee_hours_all(employee)
-
-    context = {
-        **admin_site.each_context(request),
-        "title": f"Часы: {employee.short_name}",
-        "opts": Employee._meta,
-        "employee": employee,
-        "data": data,
-    }
-    return TemplateResponse(
-        request,
-        "timetable/employee_hours_report.html",
-        context,
-    )
-
-def cycle_hours_report(request, cycle_id, admin_site):
-    """Отдельная страница отчёта по часам цикла."""
-    cycle = get_object_or_404(Cycle, pk=cycle_id)
-    data = calculate_cycle_hours(cycle)
-
-    context = {
-        **admin_site.each_context(request),
-        "title": f"Часы: {cycle.name}",
-        "opts": Cycle._meta,
-        "cycle": cycle,
-        "data": data,
-    }
-    return TemplateResponse(
-        request,
-        "timetable/cycle_hours_report.html",
-        context,
-    )
 
 def schedule_import_view(request, admin_site):
     form = ScheduleImportForm()
@@ -82,25 +45,6 @@ def schedule_import_view(request, admin_site):
     return TemplateResponse(
         request, "timetable/schedule_import.html", context
     )
-
-from datetime import date, timedelta
-from django.contrib import messages
-from django.shortcuts import render, get_object_or_404, redirect
-from django.template.response import TemplateResponse
-from django.contrib.auth.decorators import login_required
-
-from .services.cycle_hours import calculate_cycle_hours
-from .services.employee_hours import (
-    resolve_period,
-    calculate_grid,
-    calculate_overtime,
-    calculate_employee_hours_all,
-)
-from .forms import ScheduleImportForm
-from .models import Cycle, Employee
-from .imports import ScheduleImportError, import_schedule
-from timetable.exports.kinds import all_specs
-
 
 def _shift_period(period: str, anchor: date):
     """Границы недели/месяца, содержащего anchor."""
