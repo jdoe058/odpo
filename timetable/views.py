@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 from .services.periods import resolve_period
 
-from .services.employee_hours import (
+from .services.schedule_grid import (
     calculate_grid,
     calculate_overtime,
 )
