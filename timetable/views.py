@@ -3,11 +3,11 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
+from .services.periods import resolve_period
 
 from .services.employee_hours import (
-    resolve_period, 
-    calculate_grid,   
-    calculate_overtime, 
+    calculate_grid,
+    calculate_overtime,
 )
 
 from .forms import ScheduleImportForm
@@ -46,23 +46,6 @@ def schedule_import_view(request, admin_site):
         request, "timetable/schedule_import.html", context
     )
 
-def _shift_period(period: str, anchor: date):
-    """Границы недели/месяца, содержащего anchor."""
-    if period == "week":
-        start = anchor - timedelta(days=anchor.weekday())  # Пн
-        end = start + timedelta(days=6)                    # Вс
-        return start, end
-    if period == "month":
-        start = anchor.replace(day=1)
-        if start.month == 12:
-            nxt = start.replace(year=start.year + 1, month=1)
-        else:
-            nxt = start.replace(month=start.month + 1)
-        end = nxt - timedelta(days=1)
-        return start, end
-    return None
-
-
 @login_required
 def schedule_grid_view(request):
     period = request.GET.get("period", "week")
@@ -89,7 +72,7 @@ def schedule_grid_view(request):
 
     try:
         if period in ("week", "month") and anchor:
-            start, end = _shift_period(period, anchor)
+            start, end = resolve_period(period, anchor)
         elif period == "custom":
             start = date.fromisoformat(start_str) if start_str else None
             end = date.fromisoformat(end_str) if end_str else None

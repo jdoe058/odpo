@@ -6,7 +6,7 @@ from django.db.models import Max, Min
 from django.shortcuts import render
 
 from .models import Base, Cycle, Lesson
-from .services.employee_hours import resolve_period
+from .services.periods import resolve_period
 
 
 @login_required
