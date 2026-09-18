@@ -11,13 +11,13 @@ from timetable.reference_data import (
 )
 
 
-GROUPS = ("funding", "positions", "lesson_types")
+GROUPS = ("funding", "positions", "lesson_types", "templates")
 
 
 class Command(BaseCommand):
     help = (
         "Заполнить справочники каноническими данными: виды финансирования, "
-        "должности, типы документов, типы занятий. "
+        "должности, типы занятий; загрузить эталонные шаблоны документов. "
         "Существующие записи не изменяются — команда идемпотентна."
     )
 
@@ -61,9 +61,18 @@ class Command(BaseCommand):
             if dry_run:
                 transaction.set_rollback(True)
 
+        if "templates" in groups:
+            self._seed_templates(stats["templates"])
+
         self._print_summary(stats, dry_run)
 
     # ---------------------------------------------------------- seeders
+
+    def _seed_templates(self, stat):
+        self.stdout.write("\nШаблоны документов:")
+        from timetable.exports.library import seed_templates
+        for code, created in seed_templates():
+            self._record(stat, code, created)
 
     def _seed_funding(self, stat):
         self.stdout.write("\nВиды финансирования:")
@@ -140,3 +149,4 @@ class Command(BaseCommand):
             ))
         else:
             self.stdout.write(self.style.SUCCESS("Готово."))
+
