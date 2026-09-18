@@ -234,3 +234,48 @@ table.grid tfoot th { background: #eef3f8; }
   font-size: 13px;
 }
 .excess { color: #b00020; }
+/* ===================== Форма занятия ===================== */
+form.lesson-form {
+  background: #fff;
+  border: 1px solid #dde1e7;
+  border-radius: 6px;
+  padding: 20px;
+  max-width: 640px;
+}
+form.lesson-form .field { margin-bottom: 14px; }
+form.lesson-form label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+form.lesson-form input,
+form.lesson-form select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #c8ccd2;
+  border-radius: 4px;
+  font: inherit;
+  background: #fff;
+}
+form.lesson-form .errors {
+  color: #b00020;
+  font-size: 12px;
+  margin-top: 4px;
+}
+form.lesson-form .actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+form.lesson-form .actions button {
+  padding: 7px 16px;
+  border: none;
+  background: #1f4e79;
+  color: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font: inherit;
+}
+form.lesson-form .actions button:hover { background: #163a5a; }

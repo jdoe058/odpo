@@ -1,6 +1,7 @@
 from datetime import date, timedelta
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
@@ -12,8 +13,8 @@ from .services.schedule_grid import (
     calculate_overtime,
 )
 
-from .forms import ScheduleImportForm
-from .models import Cycle
+from .forms import ScheduleImportForm, LessonForm
+from .models import Cycle, Lesson
 from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
 
@@ -117,4 +118,36 @@ def schedule_grid_view(request):
         "prev_anchor": prev_anchor,
         "next_anchor": next_anchor,
         "breakdown": breakdown,
+    })
+
+@login_required
+def lesson_edit_view(request, pk):
+    lesson = get_object_or_404(
+        Lesson.objects.select_related("cycle", "cycle__name"),
+        pk=pk,
+    )
+
+    next_url = request.GET.get("next") or request.POST.get("next") or ""
+
+    if lesson.cycle.in_archive:
+        messages.error(request, "Цикл в архиве — редактирование запрещено.")
+        return redirect(next_url or "timetable:schedule_grid")
+
+    if request.method == "POST":
+        form = LessonForm(request.POST, instance=lesson)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Занятие сохранено.")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}
+            ):
+                return redirect(next_url)
+            return redirect("timetable:schedule_grid")
+    else:
+        form = LessonForm(instance=lesson)
+
+    return render(request, "timetable/lesson_edit.html", {
+        "form": form,
+        "lesson": lesson,
+        "next": next_url,
     })

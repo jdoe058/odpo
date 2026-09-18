@@ -115,6 +115,7 @@
     <table class="lessons">
       <thead>
         <tr>
+          <th></th>
           <th>Дата</th>
           <th>Время</th>
           <th>Тип</th>
@@ -126,6 +127,9 @@
       <tbody>
         {% for l in lessons %}
           <tr>
+            <td>
+              <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}">✎</a>
+            </td>
             <td>{{ l.date|date:"d.m.Y" }}</td>
             <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
             <td>{{ l.lesson_type.name }}</td>

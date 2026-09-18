@@ -1,0 +1,36 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}Редактирование занятия{% endblock %}
+
+{% block content %}
+<h1>Редактирование занятия</h1>
+
+<p class="muted">
+  Цикл: <b>{{ lesson.cycle.name.name }}</b> —
+  {{ lesson.cycle.start_date|date:"d.m.Y" }} — {{ lesson.cycle.end_date|date:"d.m.Y" }}
+</p>
+
+<form method="post" class="lesson-form">
+  {% csrf_token %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+  {% for field in form %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}
+        <div class="errors">{{ field.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    {% if next %}
+      <a class="button" href="{{ next }}">Отмена</a>
+    {% else %}
+      <a class="button" href="{% url 'timetable:schedule_grid' %}">Отмена</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}
