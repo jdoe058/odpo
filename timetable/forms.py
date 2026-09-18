@@ -20,12 +20,10 @@ class LessonForm(forms.ModelForm):
             "date",
             "hours",
             "time_start",
-            "time_end",
             "lesson_type",
             "topic",
             "employee",
         ]
         widgets = {
             "time_start": forms.TimeInput(attrs={"type": "time"}),
-            "time_end": forms.TimeInput(attrs={"type": "time"}),
         }

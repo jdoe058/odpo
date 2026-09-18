@@ -1,7 +1,9 @@
 import re
 from django.db import models
 from django.core.exceptions import ValidationError
+from datetime import datetime, time, timedelta
 
+MINUTES_PER_HOUR = 45   # академический час
 
 # Формат "ФАМИЛИЯ И.И." в верхнем регистре.
 # Допускает дефисы и апострофы в фамилии.
@@ -270,7 +272,6 @@ class Lesson(models.Model):
     )
     date = models.DateField(verbose_name="Дата")
     time_start = models.TimeField(verbose_name="Начало")
-    time_end = models.TimeField(verbose_name="Окончание")
     hours = models.PositiveSmallIntegerField(verbose_name="Часы")
     lesson_type = models.ForeignKey(
         LessonType, on_delete=models.PROTECT,
@@ -288,6 +289,13 @@ class Lesson(models.Model):
         verbose_name = "Занятие"
         verbose_name_plural = "Занятия"
         ordering = ["date", "time_start"]
+
+    @property
+    def time_end(self) -> time:
+        """Окончание = начало + hours академических часов."""
+        start_dt = datetime.combine(self.date, self.time_start)
+        end_dt = start_dt + timedelta(minutes=MINUTES_PER_HOUR * self.hours)
+        return end_dt.time()
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
