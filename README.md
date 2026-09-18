@@ -107,6 +107,19 @@ python manage.py migrate
 python manage.py seed_references
 ```
 
+Команда создаёт виды финансирования, должности, типы занятий и
+загружает эталонные .docx-шаблоны из timetable/exports/seed_templates/
+в медиахранилище. Если активный шаблон для какого-то вида уже есть —
+он не перезаписывается.
+
+Полезные флаги:
+
+```bash
+python manage.py seed_references --dry-run
+python manage.py seed_references --only=funding,positions
+python manage.py seed_references --only=templates
+```
+
 ### 6a. (Опционально) Загрузить демо-данные
 
 Для быстрого наполнения стенда вымышленными базами, сотрудниками,
@@ -114,6 +127,7 @@ python manage.py seed_references
 
 ```bash
 python manage.py seed_demo
+```
 
 ### 7. Создать суперпользователя
 
