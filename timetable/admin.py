@@ -12,11 +12,20 @@ from timetable.exports.views import export_view as cycle_export_view
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
     list_display = (
-        "name", "max_hours_per_day",
+        "name",
+        "max_hours_per_day",
+        "max_hours_per_week",
+        "max_hours_per_year",
         "can_sign", "can_approve",
         "sort_order",
     )
-    list_editable = ("max_hours_per_day", "can_sign", "can_approve", "sort_order")
+    list_editable = (
+        "max_hours_per_day",
+        "max_hours_per_week",
+        "max_hours_per_year",
+        "can_sign", "can_approve",
+        "sort_order",
+    )
     search_fields = ("name",)
     ordering = ("sort_order", "name")
 
@@ -24,7 +33,7 @@ class PositionAdmin(admin.ModelAdmin):
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = (
         "short_name", "position",
-        "max_hours_per_day", "can_sign", "can_approve",
+        "max_hours_per_day",
     )
     list_filter = ("position",)
     search_fields = ("short_name",)

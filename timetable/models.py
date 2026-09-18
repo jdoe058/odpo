@@ -55,6 +55,25 @@ class Position(models.Model):
         default=0,
         help_text="0 — сотрудник не ведёт занятия.",
     )
+
+    max_hours_per_week = models.PositiveSmallIntegerField(
+    "Макс. часов в неделю",
+        null=True,
+        blank=True,
+        help_text=(
+        "Оставьте пустым, если недельный лимит не задан — "
+        "проверяется только дневной."
+        ),
+    )
+    max_hours_per_year = models.PositiveSmallIntegerField(
+        "Макс. часов в учебном году",
+        null=True,
+        blank=True,
+        help_text=(
+            "Оставьте пустым, если годовой лимит не задан. "
+            "Учебный год: с 1 сентября по дату окончания последнего цикла."
+        ),
+    )
     can_sign = models.BooleanField(
         "Подписывает расписание",
         default=False,
@@ -120,6 +139,14 @@ class Employee(models.Model):
     @property
     def max_hours_per_day(self) -> int:
         return self.position.max_hours_per_day
+
+    @property
+    def max_hours_per_week(self) -> int:
+        return self.position.max_hours_per_week or 0
+
+    @property
+    def max_hours_per_year(self) -> int:
+        return self.position.max_hours_per_year or 0
 
     @property
     def can_teach(self) -> bool:
