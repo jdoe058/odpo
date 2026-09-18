@@ -2,13 +2,9 @@ from timetable.exports.kinds import ExporterSpec, register
 from timetable.services.teacher_load import calculate_teacher_load
 
 
-def build_context(cycle) -> dict:
+def build_own_context(cycle) -> dict:
     load = calculate_teacher_load(cycle)
     return {
-        "cycle_name": cycle.name.name,
-        "start": cycle.start_date.strftime("%d.%m.%Y"),
-        "end": cycle.end_date.strftime("%d.%m.%Y"),
-        "base": cycle.base.name,
         "rows": [
             {
                 "n": r.n, "teacher": r.teacher,
@@ -21,7 +17,6 @@ def build_context(cycle) -> dict:
         "total_seminar": load.total_seminar,
         "total_practice": load.total_practice,
         "grand_total": load.grand_total,
-        "signer": cycle.compiled_by.short_name,
     }
 
 
@@ -36,6 +31,6 @@ register(ExporterSpec(
     code="teacher_load",
     name="Распределение часов преподавателей",
     sort_order=20,
-    build_context=build_context,
+    build_own_context=build_own_context,
     build_filename=build_filename,
 ))
