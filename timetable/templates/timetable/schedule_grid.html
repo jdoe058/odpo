@@ -7,57 +7,7 @@
 
 {% include "timetable/_overtime_block.html" %}
 
-<form method="get" class="filters">
-  <div class="filters-row">
-    <div>
-      <label for="id_cycle">Цикл</label>
-      <select name="cycle" id="id_cycle">
-        <option value="">— все —</option>
-        {% for c in cycles %}
-        <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
-          {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name|truncatechars:40 }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label for="id_period">Период</label>
-      <select name="period" id="id_period">
-        <option value="week"   {% if period == 'week'   %}selected{% endif %}>Неделя</option>
-        <option value="month"  {% if period == 'month'  %}selected{% endif %}>Месяц</option>
-        <option value="all"    {% if period == 'all'    %}selected{% endif %}>Весь период</option>
-        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
-      </select>
-    </div>
-
-    <div>
-      <label for="id_start">С</label>
-      <input type="date" name="start" id="id_start" value="{{ grid.start|date:'Y-m-d' }}">
-    </div>
-    <div>
-      <label for="id_end">По</label>
-      <input type="date" name="end" id="id_end" value="{{ grid.end|date:'Y-m-d' }}">
-    </div>
-
-    <div>
-      <button type="submit">Показать</button>
-    </div>
-  </div>
-</form>
-
-{% if period == 'week' or period == 'month' %}
-  <div class="period-nav" style="margin: 8px 0;">
-    <a class="button"
-       href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ prev_anchor|date:'Y-m-d' }}">
-      ← Предыдущая {% if period == 'week' %}неделя{% else %}месяц{% endif %}
-    </a>
-    <a class="button"
-       href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ next_anchor|date:'Y-m-d' }}">
-      Следующая {% if period == 'week' %}неделя{% else %}месяц{% endif %} →
-    </a>
-  </div>
-{% endif %}
+{% include "timetable/_schedule_filters.html" %}
 
 {% if selected_cycle %}
   <div class="cycle-actions" style="margin: 12px 0;">

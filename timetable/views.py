@@ -73,15 +73,17 @@ def schedule_grid_view(request):
         except ValueError:
             anchor = None
 
+    # Если якорь не задан явно — берём дату начала цикла (если он выбран)
+    if anchor is None and cycle is not None:
+        anchor = cycle.start_date
+
     try:
-        if period in ("week", "month") and anchor:
+        if period in ("week", "month", "year"):
             start, end = resolve_period(period, anchor)
         elif period == "custom":
             start = date.fromisoformat(start_str) if start_str else None
             end = date.fromisoformat(end_str) if end_str else None
             start, end = resolve_period("custom", start=start, end=end)
-        elif period == "all":
-            start, end = resolve_period("all", cycle=cycle)
         else:
             start, end = resolve_period(period)
     except (TypeError, ValueError):

@@ -1,25 +1,19 @@
 from datetime import date, timedelta
-from django.db.models import Max, Min
 from django.utils import timezone
 
 
-def resolve_period(kind, today=None, start=None, end=None, cycle=None):
-    """kind: 'week' | 'month' | 'custom' | 'all' → (start, end)."""
-    from timetable.models import Lesson
-
-    if kind == "all":
-        if cycle is not None:
-            return cycle.start_date, cycle.end_date
-
-        qs = Lesson.objects.all()
-        agg = qs.aggregate(first=Min("date"), last=Max("date"))
-        if agg["first"] and agg["last"]:
-            return agg["first"], agg["last"]
-
-        # если занятий нет — текущая неделя
-        today = today or timezone.localdate()
-        start = today - timedelta(days=today.weekday())
-        return start, start + timedelta(days=6)
+def resolve_period(kind, today=None, start=None, end=None):
+    """kind: 'week' | 'month' | 'year' | 'custom' → (start, end)."""
+    if kind == "year":
+        anchor = today or timezone.localdate()
+        # учебный год: 1 сентября — 31 августа
+        if anchor.month >= 9:
+            start = date(anchor.year, 9, 1)
+            end = date(anchor.year + 1, 8, 31)
+        else:
+            start = date(anchor.year - 1, 9, 1)
+            end = date(anchor.year, 8, 31)
+        return start, end
 
     today = today or timezone.localdate()
 

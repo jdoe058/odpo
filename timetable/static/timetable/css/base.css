@@ -62,6 +62,11 @@ form.filters {
   flex-direction: column;
   gap: 4px;
 }
+.filters-row > div.field-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
 .filters-row label { font-size: 12px; color: #666; }
 .filters-row select,
 .filters-row input[type="date"] {
