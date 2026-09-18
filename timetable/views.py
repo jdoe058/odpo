@@ -89,6 +89,15 @@ def schedule_grid_view(request):
 
     grid = calculate_grid(start, end, cycle=cycle)
     overtime = calculate_overtime()
+
+    lessons = []
+    if cycle is not None:
+        lessons = (
+            cycle.lessons
+            .select_related("lesson_type", "employee")
+            .order_by("date", "time_start")
+        )
+
     cycles = Cycle.objects.select_related("name", "base").order_by("-start_date")
 
     # анкеры для стрелок «←/→»
@@ -100,6 +109,7 @@ def schedule_grid_view(request):
     return render(request, "timetable/schedule_grid.html", {
         "grid": grid,
         "overtime": overtime,
+        "lessons": lessons,
         "period": period,
         "cycles": cycles,
         "selected_cycle": cycle,

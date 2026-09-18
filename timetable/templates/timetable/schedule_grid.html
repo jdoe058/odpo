@@ -107,7 +107,36 @@
 </div>
 
 <div class="tab-panel" data-panel="lessons" hidden>
-  В разработке
+  {% if not selected_cycle %}
+    <div class="hint">Выберите цикл, чтобы увидеть занятия.</div>
+  {% elif not lessons %}
+    <div class="hint">В выбранном цикле нет занятий.</div>
+  {% else %}
+    <table class="lessons">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Время</th>
+          <th>Тип</th>
+          <th>Часов</th>
+          <th>Тема</th>
+          <th>Преподаватель</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lessons %}
+          <tr>
+            <td>{{ l.date|date:"d.m.Y" }}</td>
+            <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
+            <td>{{ l.lesson_type.name }}</td>
+            <td>{{ l.hours }}</td>
+            <td>{{ l.topic }}</td>
+            <td>{{ l.employee.short_name }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 </div>
 
 <script>
