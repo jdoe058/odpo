@@ -8,10 +8,8 @@ from django.contrib.auth.decorators import login_required
 from timetable.services.cycle_hours import calculate_cycle_hours
 from .services.periods import resolve_period
 
-from .services.grid import (
-    calculate_grid,
-    calculate_overtime,
-)
+from .services.grid import calculate_grid
+from .services.limits import calculate_overtime
 
 from .forms import ScheduleImportForm, LessonForm
 from .models import Cycle, Lesson, Base
