@@ -11,6 +11,7 @@ from timetable.models import (
 )
 from timetable.imports.errors import ScheduleImportError, group_errors
 from timetable.imports.parsers import as_date, parse_range
+from timetable.services.limits import find_violations, format_violation
 
 
 @dataclass
@@ -18,6 +19,7 @@ class ParsedLesson:
     row_idx: int
     date: date
     time_start: time
+    time_end: time
     hours: int
     lesson_type: LessonType
     topic: str
@@ -51,8 +53,26 @@ def import_schedule(file_obj) -> ImportResult:
     if errors:
         raise ScheduleImportError(group_errors(errors))
 
+    # Фаза 3.5: превышения лимитов нагрузки
+    existing_cycle = (
+        Cycle.objects
+        .filter(
+            name=header.cycle_name,
+            base=header.base,
+            start_date=header.start_date,
+        )
+        .first()
+    )
+    violations = find_violations(
+        parsed,
+        exclude_cycle_id=existing_cycle.pk if existing_cycle else None,
+    )
+    if violations:
+        raise ScheduleImportError([format_violation(v) for v in violations])
+
     # Фаза 4: пишем всё одной транзакцией
     return write_cycle(header, parsed)
+
 
 # ФАЗЫ
 
@@ -158,12 +178,13 @@ def parse_lessons(ws) -> tuple[list[ParsedLesson], list[str]]:
 
         parsed.append(ParsedLesson(
             row_idx=row_idx, date=lesson_date,
-            time_start=t_start, 
+            time_start=t_start, time_end=t_end,
             hours=hours_int, lesson_type=lesson_type,
             topic=str(topic or "").strip(), employee=teacher_obj,
         ))
 
     return parsed, errors
+
 
 def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
     with transaction.atomic():
@@ -192,6 +213,8 @@ def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
 
         cycle.lessons.all().delete()
 
+        # В модели Lesson нет поля time_end — это property,
+        # вычисляемое из time_start и hours.
         Lesson.objects.bulk_create([
             Lesson(
                 cycle=cycle,
