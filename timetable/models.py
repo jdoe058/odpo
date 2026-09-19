@@ -311,6 +311,28 @@ class Lesson(models.Model):
         Employee, on_delete=models.PROTECT,
         related_name="lessons", verbose_name="Преподаватель",
     )
+    
+    break_after_minutes = models.PositiveSmallIntegerField(
+        "Перемена после урока, мин",
+        default=10,
+        help_text=(
+            "Пауза между этим занятием и следующим. Слушателям нужно "
+            "время, чтобы добраться до другой базы. 0 — занятия идут "
+            "встык."
+        ),
+    )
+
+    base = models.ForeignKey(
+        Base,
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name="lessons",
+        verbose_name="База",
+        help_text=(
+            "Оставьте пустым, если занятие идёт на базе цикла. "
+            "Заполните, если занятие проходит на другой базе."
+        ),
+    )
 
     class Meta:
         verbose_name = "Занятие"
@@ -323,6 +345,27 @@ class Lesson(models.Model):
         start_dt = datetime.combine(self.date, self.time_start)
         end_dt = start_dt + timedelta(minutes=MINUTES_PER_HOUR * self.hours)
         return end_dt.time()
+
+    @property
+    def effective_base(self):
+        """
+        База, где фактически проходит занятие.
+        Пустой Lesson.base означает «на базе цикла».
+        """
+        return self.base or self.cycle.base
+
+    @property
+    def available_from(self) -> time:
+        """
+        Момент, с которого можно начать следующее занятие:
+        окончание + перемена.
+
+        Не заменяет time_end — окончание урока остаётся окончанием
+        урока. available_from — это то, что видит методист при
+        планировании следующего занятия.
+        """
+        end_dt = datetime.combine(self.date, self.time_end)
+        return (end_dt + timedelta(minutes=self.break_after_minutes)).time()
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
