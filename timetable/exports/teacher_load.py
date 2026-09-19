@@ -29,7 +29,7 @@ def build_filename(cycle) -> str:
 
 register(ExporterSpec(
     code="teacher_load",
-    name="Распределение часов преподавателей",
+    name="Распределение часов",
     sort_order=20,
     build_own_context=build_own_context,
     build_filename=build_filename,
