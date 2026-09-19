@@ -15,6 +15,8 @@ from dataclasses import dataclass
 class PositionSpec:
     name: str
     max_hours_per_day: int = 0
+    max_hours_per_week: int | None = None
+    max_hours_per_year: int | None = None
     can_sign: bool = False
     can_approve: bool = False
     sort_order: int = 100
@@ -44,10 +46,14 @@ POSITIONS: tuple[PositionSpec, ...] = (
                  can_sign=True, can_approve=True, sort_order=10),
     PositionSpec("зам. директора по ДПО", max_hours_per_day=0,
                  can_sign=True, can_approve=True, sort_order=20),
-    PositionSpec("зав. отделением", max_hours_per_day=0, 
+    PositionSpec("зав. отделением", max_hours_per_day=0,
                  can_sign=True, can_approve=False, sort_order=30),
-    PositionSpec("преподаватель", max_hours_per_day=6, sort_order=50),
-    PositionSpec("преподаватель-совместитель", max_hours_per_day=4, sort_order=60),
+    PositionSpec("преподаватель", max_hours_per_day=6,
+                 max_hours_per_week=36, max_hours_per_year=720,
+                 sort_order=50),
+    PositionSpec("совместитель", max_hours_per_day=4,
+                 max_hours_per_week=18, max_hours_per_year=360,
+                 sort_order=60),
 )
 
 

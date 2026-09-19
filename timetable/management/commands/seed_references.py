@@ -88,6 +88,8 @@ class Command(BaseCommand):
                 name=spec.name,
                 defaults={
                     "max_hours_per_day": spec.max_hours_per_day,
+                    "max_hours_per_week": spec.max_hours_per_week,
+                    "max_hours_per_year": spec.max_hours_per_year,
                     "can_sign": spec.can_sign,
                     "can_approve": spec.can_approve,
                     "sort_order": spec.sort_order,
