@@ -21,9 +21,8 @@ from django.urls import reverse
 from timetable.exports.base import DOCX_CONTENT_TYPE
 from timetable.exports.kinds import all_specs
 from timetable.exports.library import seed_templates
-from timetable.exports.models import DocumentTemplate
 from timetable.tests._factories import (
-    make_base, make_cycle, make_cycle_name, make_docx_file,
+    make_base, make_cycle, make_cycle_name,
     make_employee, make_funding_type, make_position,
 )
 
@@ -114,16 +113,8 @@ class ExportViewErrorTests(_TempMediaMixin, TestCase):
         response = self.client.get(self._url("schedule", cycle_id=999_999))
         self.assertEqual(response.status_code, 404)
 
-    def test_no_active_template_returns_404(self):
-        # seed_templates не вызываем — активных нет.
-        response = self.client.get(self._url("schedule"))
-        self.assertEqual(response.status_code, 404)
-
-    def test_only_archived_template_returns_404(self):
-        DocumentTemplate.objects.create(
-            kind="schedule", is_active=False,
-            file=make_docx_file("archived.docx"),
-        )
+    def test_no_template_returns_404(self):
+        # seed_templates не вызываем — ни одного шаблона нет.
         response = self.client.get(self._url("schedule"))
         self.assertEqual(response.status_code, 404)
 

@@ -10,13 +10,13 @@ from timetable.exports.models import DocumentTemplate
 class DocumentTemplateAdmin(admin.ModelAdmin):
     list_display = (
         "kind", "uploaded_at", "uploaded_by",
-        "is_active", "download_link", "comment",
+        "download_link", "comment",
     )
-    list_filter = ("kind", "is_active")
+    list_filter = ("kind",)
     search_fields = ("comment",)
     readonly_fields = ("uploaded_at", "uploaded_by", "download_link")
     fields = (
-        "kind", "file", "is_active", "comment",
+        "kind", "file", "comment",
         "download_link", "uploaded_by", "uploaded_at",
     )
 
