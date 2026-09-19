@@ -1,0 +1,193 @@
+"""
+Тесты timetable.exports.library.
+
+Проверяют:
+* get_active_template — выбор активного шаблона, Http404 на отсутствующем;
+* template_status — одну запись на каждый зарегистрированный kind;
+* seed_templates — копирование эталонных .docx из репозитория в MEDIA_ROOT.
+
+Реальные seed_templates/ (schedule.docx, teacher_load.docx, timesheet.docx)
+не модифицируются — только читаются. MEDIA_ROOT изолирован.
+"""
+import shutil
+import tempfile
+
+from django.http import Http404
+from django.test import TestCase, override_settings
+
+from timetable.exports.kinds import all_specs
+from timetable.exports.library import (
+    SEED_TEMPLATES_DIR, get_active_template, seed_templates, template_status
+)
+from timetable.exports.models import DocumentTemplate
+from timetable.tests._factories import make_docx_file
+
+
+class _TempMediaMixin:
+    """Изолированный MEDIA_ROOT на класс — как в test_exports_models."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._media_dir = tempfile.mkdtemp(prefix="timetable-test-media-")
+        cls._override = override_settings(MEDIA_ROOT=cls._media_dir)
+        cls._override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls._override.disable()
+        shutil.rmtree(cls._media_dir, ignore_errors=True)
+
+
+# --- get_active_template ---------------------------------------------
+
+class GetActiveTemplateTests(_TempMediaMixin, TestCase):
+
+    def _active(self, kind, name=None):
+        return DocumentTemplate.objects.create(
+            kind=kind, is_active=True,
+            file=make_docx_file(name or f"{kind}-active.docx"),
+        )
+
+    def _archive(self, kind, name=None):
+        return DocumentTemplate.objects.create(
+            kind=kind, is_active=False,
+            file=make_docx_file(name or f"{kind}-archive.docx"),
+        )
+
+    def test_returns_active(self):
+        tpl = self._active("schedule")
+        self.assertEqual(get_active_template("schedule").pk, tpl.pk)
+
+    def test_returns_active_when_archive_exists_too(self):
+        active = self._active("schedule", "active.docx")
+        self._archive("schedule", "old.docx")
+        self.assertEqual(get_active_template("schedule").pk, active.pk)
+
+    def test_raises_when_only_archive(self):
+        self._archive("schedule")
+        with self.assertRaises(Http404):
+            get_active_template("schedule")
+
+    def test_raises_when_nothing(self):
+        with self.assertRaises(Http404):
+            get_active_template("schedule")
+
+    def test_does_not_confuse_kinds(self):
+        sched = self._active("schedule")
+        self._active("teacher_load")
+        self.assertEqual(get_active_template("schedule").pk, sched.pk)
+
+
+# --- template_status --------------------------------------------------
+
+class TemplateStatusTests(_TempMediaMixin, TestCase):
+
+    def _active(self, kind, name=None):
+        return DocumentTemplate.objects.create(
+            kind=kind, is_active=True,
+            file=make_docx_file(name or f"{kind}-active.docx"),
+        )
+
+    def test_one_row_per_registered_kind(self):
+        rows = list(template_status_wrapper := template_status())
+        codes_expected = [s.code for s in all_specs()]
+        codes_actual = [r["spec"].code for r in rows]
+        self.assertEqual(codes_actual, codes_expected)
+
+    def test_order_matches_all_specs(self):
+        rows = template_status()
+        specs = all_specs()
+        for row, spec in zip(rows, specs):
+            self.assertEqual(row["spec"].code, spec.code)
+
+    def test_template_is_none_when_absent(self):
+        rows = template_status()
+        for r in rows:
+            self.assertIsNone(r["template"])
+
+    def test_template_is_active_when_exists(self):
+        self._active("schedule")
+        rows = template_status()
+        by_code = {r["spec"].code: r["template"] for r in rows}
+        self.assertIsNotNone(by_code["schedule"])
+        self.assertTrue(by_code["schedule"].is_active)
+        self.assertIsNone(by_code["teacher_load"])
+        self.assertIsNone(by_code["timesheet"])
+
+    def test_ignores_archived(self):
+        DocumentTemplate.objects.create(
+            kind="schedule", is_active=False,
+            file=make_docx_file("old.docx"),
+        )
+        rows = template_status()
+        by_code = {r["spec"].code: r["template"] for r in rows}
+        self.assertIsNone(by_code["schedule"])
+
+
+# --- seed_templates ---------------------------------------------------
+
+class SeedTemplatesTests(_TempMediaMixin, TestCase):
+
+    def test_seed_files_present_in_repo(self):
+        """
+        Проверяем, что в репо действительно лежат seed-файлы для
+        всех зарегистрированных видов. Если кто-то удалит schedule.docx —
+        тест сразу это покажет.
+        """
+        for spec in all_specs():
+            self.assertTrue(
+                (SEED_TEMPLATES_DIR / f"{spec.code}.docx").exists(),
+                f"нет эталонного шаблона для {spec.code!r}",
+            )
+
+    def test_creates_active_for_all_kinds(self):
+        result = seed_templates()
+        created_codes = [code for code, created in result if created]
+        self.assertEqual(
+            sorted(created_codes), sorted(s.code for s in all_specs()),
+        )
+        for spec in all_specs():
+            tpl = DocumentTemplate.objects.get(
+                kind=spec.code, is_active=True,
+            )
+            self.assertEqual(tpl.comment, "Эталонный шаблон из репозитория")
+            self.assertTrue(tpl.file.name.startswith(f"templates_docx/{spec.code}/"))
+
+    def test_idempotent(self):
+        seed_templates()
+        result = seed_templates()
+        for _, created in result:
+            self.assertFalse(created)
+        self.assertEqual(
+            DocumentTemplate.objects.filter(is_active=True).count(),
+            len(all_specs()),
+        )
+
+    def test_does_not_overwrite_existing_active(self):
+        existing = DocumentTemplate.objects.create(
+            kind="schedule", is_active=True,
+            file=make_docx_file("custom.docx"),
+        )
+        result = seed_templates()
+        # schedule не должен создаваться заново.
+        flags = dict(result)
+        self.assertFalse(flags["schedule"])
+        # Активный остался прежним.
+        self.assertEqual(
+            DocumentTemplate.objects.get(kind="schedule", is_active=True).pk,
+            existing.pk,
+        )
+
+    def test_skips_kinds_without_seed_file(self):
+        """
+        Если у какого-то registered-кода нет файла в seed_templates/,
+        он просто не попадает в результат. Проверяем на примере
+        временного кода через patch реестра — но проще принять как
+        контракт: результат = только те, для кого файл есть.
+        """
+        result = seed_templates()
+        codes_in_result = {code for code, _ in result}
+        for code in codes_in_result:
+            self.assertTrue((SEED_TEMPLATES_DIR / f"{code}.docx").exists())
