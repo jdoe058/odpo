@@ -146,7 +146,3 @@ class CycleAdmin(admin.ModelAdmin):
                 for spec in all_specs()
             ],
         )
-
-# Регистрация моделей из подпакетов. Импорт нужен для побочного
-# эффекта: декоратор @admin.register выполняется при импорте модуля.
-from timetable.exports import admin as _exports_admin  # noqa: F401, E402
