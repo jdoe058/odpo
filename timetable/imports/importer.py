@@ -18,7 +18,6 @@ class ParsedLesson:
     row_idx: int
     date: date
     time_start: time
-    time_end: time
     hours: int
     lesson_type: LessonType
     topic: str
@@ -159,7 +158,7 @@ def parse_lessons(ws) -> tuple[list[ParsedLesson], list[str]]:
 
         parsed.append(ParsedLesson(
             row_idx=row_idx, date=lesson_date,
-            time_start=t_start, time_end=t_end,
+            time_start=t_start, 
             hours=hours_int, lesson_type=lesson_type,
             topic=str(topic or "").strip(), employee=teacher_obj,
         ))
@@ -198,7 +197,6 @@ def write_cycle(header: Header, parsed: list[ParsedLesson]) -> ImportResult:
                 cycle=cycle,
                 date=p.date,
                 time_start=p.time_start,
-                time_end=p.time_end,
                 hours=p.hours,
                 lesson_type=p.lesson_type,
                 topic=p.topic,

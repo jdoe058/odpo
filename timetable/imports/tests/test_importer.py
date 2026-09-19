@@ -117,7 +117,6 @@ class WriteCycleTests(ImporterFixtureMixin, TestCase):
             ParsedLesson(
                 row_idx=7, date=date(2026, 9, 1),
                 time_start=__import__("datetime").time(9),
-                time_end=__import__("datetime").time(10, 30),
                 hours=2, lesson_type=self.lesson_type,
                 topic="Тема", employee=self.teacher,
             ),
