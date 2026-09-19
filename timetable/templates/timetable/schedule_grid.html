@@ -10,7 +10,7 @@
 {% include "timetable/_schedule_filters.html" %}
 
 {% if selected_cycle %}
-  <div class="cycle-actions" style="margin: 12px 0;">
+  <div class="cycle-actions">
     {% for kind in export_kinds %}
       <a class="button"
          href="{% url 'timetable:cycle_export' selected_cycle.pk kind.code %}">

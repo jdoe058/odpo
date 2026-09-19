@@ -84,6 +84,26 @@ a.button:hover { background: var(--color-primary-hover); }
 
 .muted { color: var(--color-text-muted-strong); }
 
+/* ===================== Шапка ===================== */
+.user-box {
+  float: right;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--color-primary-fg-muted);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  margin-left: 8px;
+}
+
+/* ===================== Экшены цикла ===================== */
+.cycle-actions {
+  margin: 12px 0;
+}
+
 /* ===================== Сообщения ===================== */
 ul.messages {
   list-style: none;
