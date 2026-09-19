@@ -1,6 +1,11 @@
 {% extends "timetable/base.html" %}
+{% load static %}
 
 {% block title %}Редактирование занятия{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lesson-form.css' %}">
+{% endblock %}
 
 {% block content %}
 <h1>Редактирование занятия</h1>

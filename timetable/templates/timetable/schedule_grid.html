@@ -1,6 +1,16 @@
 {% extends "timetable/base.html" %}
+{% load static %}
 
 {% block title %}Расписание — {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/filters.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/grid.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/breakdown.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/tabs.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/overtime.css' %}">
+{% endblock %}
 
 {% block content %}
 <h1>Расписание: {{ grid.start|date:"d.m.Y" }} — {{ grid.end|date:"d.m.Y" }}</h1>
