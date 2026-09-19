@@ -14,9 +14,4 @@ table.lessons td {
 }
 table.lessons th { background: var(--color-surface-subtle); font-weight: 600; }
 table.lessons tr:nth-child(even) td { background: var(--color-surface-stripe); }
-table.lessons td.empty {
-  text-align: center;
-  color: var(--color-text-muted-light);
-  padding: 24px;
-}
 table.lessons a { color: var(--color-primary); }

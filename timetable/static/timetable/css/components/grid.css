@@ -16,12 +16,11 @@ table.grid th.employee {
   background: var(--color-surface-subtle);
 }
 table.grid td.hours { text-align: center; min-width: 38px; }
-table.grid td.empty { color: var(--color-text-disabled); }
-table.grid td.over {
+table.grid .is-empty { color: var(--color-text-disabled); }
+table.grid .is-over {
   background: var(--color-danger-bg);
   color: var(--color-danger);
   font-weight: 600;
 }
-table.grid th.weekend,
-table.grid td.weekend { background: var(--color-surface-weekend); }
+table.grid .is-weekend { background: var(--color-surface-weekend); }
 table.grid tfoot th { background: var(--color-surface-subtle); }

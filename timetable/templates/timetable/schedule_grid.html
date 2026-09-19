@@ -34,7 +34,7 @@
         <th class="employee">Преподаватель</th>
         <th>Итого</th>
         {% for day in grid.days %}
-          <th class="{% if day.is_weekend %}weekend{% endif %}">
+          <th class="{% if day.is_weekend %}is-weekend{% endif %}">
             {{ day.weekday_ru }}<br>{{ day.date|date:"d.m" }}
           </th>
         {% endfor %}
@@ -46,7 +46,7 @@
           <th class="employee">{{ row.employee.short_name }}</th>
           <td class="hours"><b>{{ row.total }}</b></td>
           {% for cell in row.cells %}
-            <td class="hours {% if cell.over_limit %}over{% elif not cell.hours %}empty{% endif %} {% if cell.date.weekday >= 5 %}weekend{% endif %}">
+            <td class="hours {% if cell.over_limit %}is-over{% elif not cell.hours %}is-empty{% endif %} {% if cell.date.weekday >= 5 %}is-weekend{% endif %}">
               {% if cell.hours %}{{ cell.hours }}{% else %}—{% endif %}
             </td>
           {% endfor %}
