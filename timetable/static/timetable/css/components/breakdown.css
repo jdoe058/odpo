@@ -1,0 +1,29 @@
+.hours-breakdown {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.hours-breakdown table {
+  border-collapse: collapse;
+  background: var(--color-surface);
+  font-size: 13px;
+}
+.hours-breakdown th,
+.hours-breakdown td {
+  border: 1px solid var(--color-border-light);
+  padding: 6px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+.hours-breakdown thead th {
+  background: var(--color-surface-subtle);
+  font-weight: 600;
+}
+.hours-breakdown .total-col {
+  background: var(--color-surface-subtle);
+  border-left: 2px solid var(--color-border-muted);
+}

@@ -1,0 +1,27 @@
+table.grid { border-collapse: collapse; background: var(--color-surface); }
+table.grid th,
+table.grid td {
+  border: 1px solid var(--color-border-grid);
+  padding: 4px 8px;
+  font-size: 13px;
+}
+table.grid thead th {
+  background: var(--color-surface-subtle);
+  font-weight: 600;
+}
+table.grid th.employee {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  background: var(--color-surface-subtle);
+}
+table.grid td.hours { text-align: center; min-width: 38px; }
+table.grid td.empty { color: var(--color-text-disabled); }
+table.grid td.over {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+table.grid th.weekend,
+table.grid td.weekend { background: var(--color-surface-weekend); }
+table.grid tfoot th { background: var(--color-surface-subtle); }
