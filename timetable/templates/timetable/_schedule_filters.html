@@ -1,13 +1,24 @@
 <form method="get" class="filters" id="schedule-filters">
   <div class="filters-row">
     <div>
+      <label for="id_base">База</label>
+      <select name="base" id="id_base">
+        <option value="">— все базы —</option>
+        {% for b in bases %}
+          <option value="{{ b.pk }}" {% if selected_base == b.pk|stringformat:"s" %}selected{% endif %}>
+            {{ b.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
       <label for="id_cycle">Цикл</label>
       <select name="cycle" id="id_cycle">
         <option value="">— все —</option>
         {% for c in cycles %}
-        <option value="{{ c.pk }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
-          {{ c.start_date|date:"d.m.Y" }} {{ c.base }} {{ c.name|truncatechars:40 }}
-        </option>
+          <option value="{{ c.pk }}" data-base="{{ c.base_id }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
+            {{ c.start_date|date:"d.m.Y" }} {{ c.name|truncatechars:40 }}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -17,7 +28,7 @@
     {% if period != 'custom' %}
       <div class="period-nav">
         <a class="button"
-           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ prev_anchor|date:'Y-m-d' }}">
+           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}{% if selected_base %}&base={{ selected_base }}{% endif %}&anchor={{ prev_anchor|date:'Y-m-d' }}">
           ←
         </a>
       </div>
@@ -45,7 +56,7 @@
     {% if period != 'custom' %}
       <div class="period-nav">
         <a class="button"
-           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}&anchor={{ next_anchor|date:'Y-m-d' }}">
+           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}{% if selected_base %}&base={{ selected_base }}{% endif %}&anchor={{ next_anchor|date:'Y-m-d' }}">
           →
         </a>
       </div>
@@ -58,15 +69,52 @@
     const form = document.getElementById('schedule-filters');
     if (!form) return;
 
+    const baseSelect   = document.getElementById('id_base');
     const cycleSelect  = form.querySelector('#id_cycle');
     const periodSelect = form.querySelector('#id_period');
     const startInput   = form.querySelector('#id_start');
     const endInput     = form.querySelector('#id_end');
 
+    // Копия всех опций цикла — неприкосновенный запас для пересборки.
+    const allCycleOptions = cycleSelect
+      ? Array.from(cycleSelect.options).map(o => o.cloneNode(true))
+      : [];
+
+    function filterCycles() {
+      if (!baseSelect || !cycleSelect) return;
+      const baseId = baseSelect.value;
+      const current = cycleSelect.value;
+
+      cycleSelect.innerHTML = '';
+      for (const opt of allCycleOptions) {
+        const optBase = opt.getAttribute('data-base');
+        if (!opt.value || !baseId || optBase === baseId) {
+          cycleSelect.appendChild(opt.cloneNode(true));
+        }
+      }
+      // Восстанавливаем выбор. Если current не входит в новую базу,
+      // браузер сам поставит "" (первый option).
+      cycleSelect.value = current;
+    }
+
+    // На старте: если база пришла из GET — фильтруем циклы под неё.
+    if (baseSelect && cycleSelect && baseSelect.value) {
+      filterCycles();
+    }
+
+    // Смена базы: фильтруем список и всегда отправляем форму,
+    // чтобы база попала в URL. Цикл сохраняется, если он есть в новой базе.
+    if (baseSelect) {
+      baseSelect.addEventListener('change', () => {
+        filterCycles();
+        form.submit();
+      });
+    }
+
+    // Смена цикла — отправка формы.
     if (cycleSelect)  cycleSelect.addEventListener('change', () => form.submit());
     if (periodSelect) periodSelect.addEventListener('change', () => form.submit());
 
-    // Смена любой даты переводит период в «Произвольный»
     function onDateChange() {
       if (periodSelect && periodSelect.value !== 'custom') {
         periodSelect.value = 'custom';

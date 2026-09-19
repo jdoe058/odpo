@@ -14,7 +14,7 @@ from .services.schedule_grid import (
 )
 
 from .forms import ScheduleImportForm, LessonForm
-from .models import Cycle, Lesson
+from .models import Cycle, Lesson, Base
 from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
 
@@ -56,6 +56,7 @@ def schedule_grid_view(request):
     end_str = request.GET.get("end")
     cycle_id = request.GET.get("cycle")
     anchor_str = request.GET.get("anchor")
+    base_id = request.GET.get("base") or ""
 
     cycle = None
     if cycle_id:
@@ -120,6 +121,8 @@ def schedule_grid_view(request):
         "prev_anchor": prev_anchor,
         "next_anchor": next_anchor,
         "breakdown": breakdown,
+        "selected_base": base_id,
+        "bases": Base.objects.order_by("name"),
     })
 
 @login_required
