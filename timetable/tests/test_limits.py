@@ -1,4 +1,5 @@
 from datetime import date, time
+from types import SimpleNamespace
 
 from django.test import TestCase
 
@@ -7,9 +8,14 @@ from timetable.models import (
     Position,
 )
 from timetable.services.limits import (
-    SCOPES, calculate_overtime
+    SCOPES, calculate_overtime, find_violations, format_violation,
 )
 
+def _stub(*, employee, d, hours=2, lesson_type):
+    """Псевдо-Lesson для find_violations (в БД не сохраняется)."""
+    return SimpleNamespace(
+        date=d, hours=hours, employee=employee, lesson_type=lesson_type,
+    )
 
 class LimitsBase(TestCase):
     @classmethod
@@ -65,6 +71,158 @@ class LimitsBase(TestCase):
             employee=employee or self.teacher,
         )
 
+class FindViolationsDayTests(LimitsBase):
+    def test_under_limit(self):
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=4, lesson_type=self.lt_lecture)],
+            scope="day",
+        )
+        self.assertEqual(v, ())
+
+    def test_exactly_at_limit(self):
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=6, lesson_type=self.lt_lecture)],
+            scope="day",
+        )
+        self.assertEqual(v, ())
+
+    def test_over_limit(self):
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=8, lesson_type=self.lt_lecture)],
+            scope="day",
+        )
+        self.assertEqual(len(v), 1)
+        self.assertEqual(v[0].scope, "day")
+        self.assertEqual(v[0].hours, 8)
+        self.assertEqual(v[0].limit, 6)
+        self.assertEqual(v[0].excess, 2)
+
+    def test_ignores_non_counting_types(self):
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=100, lesson_type=self.lt_exam)],
+            scope="day",
+        )
+        self.assertEqual(v, ())
+
+    def test_ignores_employee_without_limit(self):
+        v = find_violations(
+            [_stub(employee=self.chief, d=date(2026, 9, 1),
+                   hours=100, lesson_type=self.lt_lecture)],
+            scope="day",
+        )
+        self.assertEqual(v, ())
+
+    def test_accumulates_db_and_new(self):
+        self._db_lesson(d=date(2026, 9, 1), hours=4)
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=4, lesson_type=self.lt_lecture)],
+            scope="day",
+        )
+        self.assertEqual(len(v), 1)
+        self.assertEqual(v[0].hours, 8)
+
+class FindViolationsWeekTests(LimitsBase):
+    def test_week_over_limit(self):
+        # 7 дней × 6 ч = 42 ч > 36 ч/нед
+        new = [
+            _stub(employee=self.teacher, d=date(2026, 9, 7 + i),
+                  hours=6, lesson_type=self.lt_lecture)
+            for i in range(7)
+        ]
+        v = find_violations(new, scope="week")
+        self.assertEqual(len(v), 1)
+        self.assertEqual(v[0].hours, 42)
+        self.assertEqual(v[0].limit, 36)
+        self.assertEqual(v[0].period_start, date(2026, 9, 7))
+        self.assertEqual(v[0].period_end, date(2026, 9, 13))
+
+    def test_split_across_weeks_not_combined(self):
+        new = [
+            _stub(employee=self.teacher, d=date(2026, 9, 7),
+                  hours=6, lesson_type=self.lt_lecture),
+            _stub(employee=self.teacher, d=date(2026, 9, 14),
+                  hours=6, lesson_type=self.lt_lecture),
+        ]
+        self.assertEqual(find_violations(new, scope="week"), ())
+
+class FindViolationsYearTests(LimitsBase):
+    def test_year_over_limit(self):
+        v = find_violations(
+            [_stub(employee=self.year_emp, d=date(2026, 12, 1),
+                   hours=12, lesson_type=self.lt_lecture)],
+            scope="year",
+        )
+        self.assertEqual(len(v), 1)
+        self.assertEqual(v[0].period_start, date(2026, 9, 1))
+        self.assertEqual(v[0].period_end, date(2027, 8, 31))
+
+    def test_year_boundary_not_combined(self):
+        # 31.08.2026 и 01.09.2026 — разные учебные годы;
+        # 8 + 8 = 16 не должно суммироваться в один год.
+        aug = _stub(employee=self.year_emp, d=date(2026, 8, 31),
+                    hours=8, lesson_type=self.lt_lecture)
+        sep = _stub(employee=self.year_emp, d=date(2026, 9, 1),
+                    hours=8, lesson_type=self.lt_lecture)
+        self.assertEqual(find_violations([aug, sep], scope="year"), ())
+
+class FindViolationsExclusionTests(LimitsBase):
+    def test_exclude_cycle_id(self):
+        self._db_lesson(d=date(2026, 9, 1), hours=6)
+        new = [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                     hours=6, lesson_type=self.lt_lecture)]
+        # Без исключения: 6 (БД) + 6 (новое) = 12 > 6.
+        self.assertEqual(len(find_violations(new, scope="day")), 1)
+        # С исключением цикла: остаётся только новое = 6 ≤ 6.
+        self.assertEqual(
+            find_violations(new, scope="day",
+                            exclude_cycle_id=self.cycle.pk),
+            (),
+        )
+
+    def test_exclude_lesson_ids(self):
+        existing = self._db_lesson(d=date(2026, 9, 1), hours=6)
+        new = [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                     hours=6, lesson_type=self.lt_lecture)]
+        self.assertEqual(len(find_violations(new, scope="day")), 1)
+        self.assertEqual(
+            find_violations(new, scope="day",
+                            exclude_lesson_ids=(existing.pk,)),
+            (),
+        )
+
+class FindViolationsAllTests(LimitsBase):
+    def test_scope_all_day_only(self):
+        new = [_stub(employee=self.teacher, d=date(2026, 9, 7),
+                     hours=8, lesson_type=self.lt_lecture)]
+        v = find_violations(new)  # scope="all" по умолчанию
+        self.assertEqual([x.scope for x in v], ["day"])
+
+    def test_scope_all_week_only(self):
+        new = [
+            _stub(employee=self.teacher, d=date(2026, 9, 7 + i),
+                  hours=6, lesson_type=self.lt_lecture)
+            for i in range(7)
+        ]
+        v = find_violations(new)
+        self.assertEqual([x.scope for x in v], ["week"])
+        self.assertEqual(v[0].hours, 42)
+
+class FormatViolationTests(LimitsBase):
+    def test_format_single_day(self):
+        v = find_violations(
+            [_stub(employee=self.teacher, d=date(2026, 9, 1),
+                   hours=8, lesson_type=self.lt_lecture)],
+            scope="day",
+        )[0]
+        msg = format_violation(v)
+        self.assertIn("ИВАНОВ И.И.", msg)
+        self.assertIn("01.09.2026", msg)
+        self.assertIn("лимит 6", msg)
 
 class CalculateOvertimeTests(LimitsBase):
     def test_no_overtime_returns_empty(self):
