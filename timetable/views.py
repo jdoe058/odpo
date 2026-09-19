@@ -9,7 +9,7 @@ from timetable.services.cycle_hours import calculate_cycle_hours
 from .services.periods import resolve_period
 
 from .services.grid import calculate_grid
-from .services.limits import calculate_overtime
+from .services.limits import calculate_overtime, SCOPE_LABELS
 
 from .forms import ScheduleImportForm, LessonForm
 from .models import Cycle, Lesson, Base
@@ -90,7 +90,12 @@ def schedule_grid_view(request):
         start, end = resolve_period(period)
 
     grid = calculate_grid(start, end, cycle=cycle)
-    overtime = calculate_overtime()
+
+    overtime = []
+    for scope in ("day", "week", "year"):
+        items = calculate_overtime(scope)
+        if items:
+            overtime.append((SCOPE_LABELS[scope], items))
 
     lessons = []
     if cycle is not None:
