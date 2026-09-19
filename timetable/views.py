@@ -1,3 +1,11 @@
+from collections import defaultdict
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+from timetable.exports.forms import DocumentTemplateForm
+from timetable.exports.models import DocumentTemplate
+
 from datetime import date, timedelta
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
@@ -170,3 +178,83 @@ def lesson_edit_view(request, pk):
         "lesson": lesson,
         "next": next_url,
     })
+
+@login_required
+def template_library_view(request):
+    """
+    Страница управления шаблонами: форма загрузки сверху, ниже —
+    список всех версий, сгруппированный по видам. Рабочим считается
+    последний загруженный шаблон (см. library.get_latest_template).
+
+    POST может приходить двумя путями:
+    * обычной формой (без JS) — отвечаем redirect с messages;
+    * через Dropzone (AJAX) — отвечаем JSON, JS сам перезагрузит
+      страницу после успеха.
+    """
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    form = DocumentTemplateForm()
+
+    if request.method == "POST":
+        form = DocumentTemplateForm(request.POST, request.FILES)
+        if form.is_valid():
+            tpl = form.save(commit=False)
+            tpl.uploaded_by = request.user
+            tpl.save()
+            if is_ajax:
+                return JsonResponse({"status": "ok"})
+            messages.success(request, "Шаблон загружен.")
+            return redirect("timetable:template_library")
+
+        if is_ajax:
+            return JsonResponse(
+                {"status": "error", "errors": form.errors.get_json_data()},
+                status=400,
+            )
+        messages.error(request, "Исправьте ошибки в форме.")
+
+    return render(request, "timetable/template_library.html", {
+        "form": form,
+        "groups": _group_templates_by_kind(),
+    })
+
+
+def _group_templates_by_kind() -> list[dict]:
+    by_kind: dict[str, list[DocumentTemplate]] = defaultdict(list)
+    qs = (
+        DocumentTemplate.objects
+        .select_related("uploaded_by")
+        .order_by("-uploaded_at")
+    )
+    for tpl in qs:
+        by_kind[tpl.kind].append(tpl)
+    return [
+        {"spec": spec, "templates": by_kind.get(spec.code, [])}
+        for spec in all_specs()
+    ]
+
+
+@login_required
+@require_POST
+def template_delete_view(request, pk):
+    tpl = get_object_or_404(DocumentTemplate, pk=pk)
+    kind = tpl.kind
+    latest = (
+        DocumentTemplate.objects
+        .filter(kind=kind)
+        .order_by("-uploaded_at")
+        .first()
+    )
+    was_latest = latest is not None and latest.pk == tpl.pk
+
+    tpl.file.delete(save=False)
+    tpl.delete()
+
+    if was_latest:
+        messages.warning(
+            request,
+            f"Удалён рабочий шаблон «{kind}». Экспорт этого вида "
+            "будет недоступен, пока не загрузите новый.",
+        )
+    else:
+        messages.success(request, "Шаблон удалён.")
+    return redirect("timetable:template_library")

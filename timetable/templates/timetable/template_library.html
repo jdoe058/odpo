@@ -1,0 +1,169 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Шаблоны документов{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/vendor/dropzone/dropzone.min.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/template-library.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Шаблоны документов</h1>
+
+<p class="muted">
+  Рабочим считается последний загруженный шаблон для каждого вида.
+  Старые версии сохраняются — их можно скачать или удалить.
+</p>
+
+<form method="post"
+      enctype="multipart/form-data"
+      action="{% url 'timetable:template_library' %}"
+      id="template-upload-form">
+  {% csrf_token %}
+
+  <div class="template-form__fields">
+    <div class="field">
+      <label for="{{ form.kind.id_for_label }}">{{ form.kind.label }}</label>
+      {{ form.kind }}
+    </div>
+    <div class="field">
+      <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+      {{ form.comment }}
+    </div>
+  </div>
+
+  {# Наш собственный блок: внутри него Dropzone развернёт input. #}
+  <div id="template-dropzone" class="template-form__dropzone">
+    <div class="template-form__message" id="dropzone-message">
+      Перетащите .docx сюда или нажмите, чтобы выбрать файл
+    </div>
+  </div>
+
+  <div class="template-form__submit">
+    <button type="submit">Загрузить</button>
+  </div>
+</form>
+
+{% for group in groups %}
+  <section class="template-group">
+    <h2>{{ group.spec.name }}</h2>
+
+    {% if group.templates %}
+      <table class="template-table">
+        <thead>
+          <tr>
+            <th>Загружен</th>
+            <th>Кем</th>
+            <th>Комментарий</th>
+            <th>Файл</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tpl in group.templates %}
+            <tr{% if forloop.first %} class="is-latest"{% endif %}>
+              <td>
+                {{ tpl.uploaded_at|date:"d.m.Y H:i" }}
+                {% if forloop.first %}<span class="badge">рабочий</span>{% endif %}
+              </td>
+              <td>{{ tpl.uploaded_by.username|default:"—" }}</td>
+              <td>{{ tpl.comment|default:"—" }}</td>
+              <td><a href="{{ tpl.file.url }}" target="_blank">Скачать</a></td>
+              <td>
+                <form method="post"
+                      action="{% url 'timetable:template_delete' tpl.pk %}"
+                      class="inline-form"
+                      data-confirm="Удалить шаблон от {{ tpl.uploaded_at|date:'d.m.Y H:i' }}?">
+                  {% csrf_token %}
+                  <button type="submit" class="link-button danger">Удалить</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="hint">Шаблон не загружен.</p>
+    {% endif %}
+  </section>
+{% endfor %}
+
+<script src="{% static 'timetable/vendor/dropzone/dropzone.min.js' %}"></script>
+<script>
+(function () {
+  Dropzone.autoDiscover = false;
+
+  var form     = document.getElementById('template-upload-form');
+  var dropEl   = document.getElementById('template-dropzone');
+  var msgEl    = document.getElementById('dropzone-message');
+  var DEFAULT  = 'Перетащите .docx сюда или нажмите, чтобы выбрать файл';
+
+  var dz = new Dropzone(dropEl, {
+    url: form.getAttribute('action'),
+    paramName: 'file',
+    acceptedFiles: '.docx',
+    maxFiles: 1,
+    maxFilesize: 20,
+    autoProcessQueue: false,
+    // Пустая строка — Dropzone не рисует своё сообщение,
+    // мы показываем своё (msgEl).
+    dictDefaultMessage: '',
+    dictInvalidFileType: 'Можно загружать только .docx',
+    dictFileTooBig: 'Файл больше {{maxFilesize}} МБ',
+  });
+
+  // Отправка по кнопке.
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (dz.getQueuedFiles().length === 0) {
+      alert('Сначала выберите файл .docx');
+      return;
+    }
+    dz.processQueue();
+  });
+
+  // Обновляем наш собственный текст.
+  dz.on('addedfile', function (file) {
+    msgEl.textContent = 'Выбран: ' + file.name;
+    msgEl.classList.add('has-file');
+  });
+  dz.on('removedfile', function () {
+    msgEl.textContent = DEFAULT;
+    msgEl.classList.remove('has-file');
+  });
+
+  // Все поля формы уходят на сервер вместе с файлом.
+  dz.on('sending', function (data, xhr, formData) {
+    var fd = new FormData(form);
+    for (var pair of fd.entries()) {
+      formData.append(pair[0], pair[1]);
+    }
+  });
+
+  dz.on('success', function () {
+    window.location.reload();
+  });
+
+  dz.on('error', function (file, response) {
+    var msg = 'Ошибка загрузки';
+    if (response && response.errors) {
+      msg = 'Ошибки: ' + JSON.stringify(response.errors, null, 2);
+    } else if (typeof response === 'string') {
+      msg += ': ' + response;
+    }
+    alert(msg);
+    dz.removeFile(file);
+  });
+
+  // Confirm для форм удаления.
+  document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      if (!window.confirm(f.getAttribute('data-confirm'))) {
+        e.preventDefault();
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}
