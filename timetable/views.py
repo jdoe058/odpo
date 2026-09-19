@@ -7,14 +7,16 @@ from django.contrib.auth.decorators import login_required
 
 from timetable.services.cycle_hours import calculate_cycle_hours
 from .services.periods import resolve_period
-
 from .services.grid import calculate_grid
-from .services.limits import calculate_overtime, SCOPE_LABELS
+from .services.limits import (
+    SCOPE_LABELS, calculate_overtime, find_violations, format_violation,
+)
 
 from .forms import ScheduleImportForm, LessonForm
 from .models import Cycle, Lesson, Base
 from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
+
 
 def schedule_import_view(request, admin_site):
     form = ScheduleImportForm()
@@ -47,6 +49,7 @@ def schedule_import_view(request, admin_site):
         request, "timetable/schedule_import.html", context
     )
 
+
 @login_required
 def schedule_grid_view(request):
     period = request.GET.get("period", "week")
@@ -72,7 +75,6 @@ def schedule_grid_view(request):
         except ValueError:
             anchor = None
 
-    # Если якорь не задан явно — берём дату начала цикла (если он выбран)
     if anchor is None and cycle is not None:
         anchor = cycle.start_date
 
@@ -107,7 +109,6 @@ def schedule_grid_view(request):
 
     cycles = Cycle.objects.select_related("name", "base").order_by("-start_date")
 
-    # анкеры для стрелок «←/→»
     prev_anchor = start - timedelta(days=1)
     next_anchor = end + timedelta(days=1)
 
@@ -128,6 +129,7 @@ def schedule_grid_view(request):
         "bases": Base.objects.order_by("name"),
     })
 
+
 @login_required
 def lesson_edit_view(request, pk):
     lesson = get_object_or_404(
@@ -144,13 +146,22 @@ def lesson_edit_view(request, pk):
     if request.method == "POST":
         form = LessonForm(request.POST, instance=lesson)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Занятие сохранено.")
-            if next_url and url_has_allowed_host_and_scheme(
-                next_url, allowed_hosts={request.get_host()}
-            ):
-                return redirect(next_url)
-            return redirect("timetable:schedule_grid")
+            candidate = form.save(commit=False)
+            violations = find_violations(
+                [candidate],
+                exclude_lesson_ids=(candidate.pk,) if candidate.pk else (),
+            )
+            if violations:
+                for v in violations:
+                    messages.error(request, format_violation(v))
+            else:
+                candidate.save()
+                messages.success(request, "Занятие сохранено.")
+                if next_url and url_has_allowed_host_and_scheme(
+                    next_url, allowed_hosts={request.get_host()}
+                ):
+                    return redirect(next_url)
+                return redirect("timetable:schedule_grid")
     else:
         form = LessonForm(instance=lesson)
 
