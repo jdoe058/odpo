@@ -284,3 +284,36 @@ form.lesson-form .actions button {
   font: inherit;
 }
 form.lesson-form .actions button:hover { background: #163a5a; }
+
+/* ===================== Сообщения ===================== */
+ul.messages {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+ul.messages li {
+  padding: 8px 14px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border-left: 4px solid #1f4e79;
+  background: #eef2f6;
+}
+ul.messages li.error {
+  border-left-color: #b00020;
+  background: #fdecec;
+  color: #b00020;
+}
+ul.messages li.success {
+  border-left-color: #2e7d32;
+  background: #f1f8f1;
+  color: #2e7d32;
+}
+
+/* ===================== Заголовки масштабов в блоке переработок ===== */
+.overtime-scope {
+  font-size: 14px;
+  margin: 12px 0 6px;
+  color: #666;
+  font-weight: 600;
+}
+.overtime-scope:first-of-type { margin-top: 0; }

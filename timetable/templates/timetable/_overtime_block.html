@@ -1,27 +1,30 @@
 {% if overtime %}
 <div class="overtime-box">
-<h2>⚠ Переработки за всё время</h2>
-  {% for o in overtime %}
-    <div class="overtime-emp">
-      <div class="overtime-header">
-        <b>{{ o.employee.short_name }}</b>
-        — суммарная переработка <b class="excess">+{{ o.total_excess }} ч</b>
-        за {{ o.days_count }} дн. (лимит {{ o.limit }} ч/день)
+  <h2>⚠ Переработки в базе</h2>
+  {% for label, employees in overtime %}
+    <h3 class="overtime-scope">За {{ label }}</h3>
+    {% for o in employees %}
+      <div class="overtime-emp">
+        <div class="overtime-header">
+          <b>{{ o.employee.short_name }}</b>
+          — суммарная переработка <b class="excess">+{{ o.total_excess }} ч</b>
+          за {{ o.periods_count }} период(ов) (лимит {{ o.limit }} ч)
+        </div>
+        <ul class="overtime-days">
+          {% for item in o.items %}
+            <li>
+              {{ item.period_start|date:"d.m.Y" }}{% if item.period_end != item.period_start %}–{{ item.period_end|date:"d.m.Y" }}{% endif %} —
+              {{ item.hours }} ч,
+              <span class="excess">+{{ item.excess }} ч</span> сверх лимита
+            </li>
+          {% endfor %}
+        </ul>
       </div>
-      <ul class="overtime-days">
-        {% for d in o.days %}
-          <li>
-            {{ d.date|date:"d.m.Y" }} ({{ d.date|date:"D" }}) —
-            {{ d.hours }} ч, <span class="excess">+{{ d.excess }} ч</span> сверх лимита
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
+    {% endfor %}
   {% endfor %}
 </div>
 {% else %}
 <div class="overtime-box overtime-ok">
-  <h2>✓ Переработок за период нет</h2>
+  <h2>✓ Переработок нет</h2>
 </div>
 {% endif %}
-
