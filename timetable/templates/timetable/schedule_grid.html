@@ -20,14 +20,18 @@
 {% include "timetable/_schedule_filters.html" %}
 
 {% if selected_cycle %}
-  <div class="cycle-actions">
-    {% for kind in export_kinds %}
-      <a class="button"
-         href="{% url 'timetable:cycle_export' selected_cycle.pk kind.code %}">
-        📄 {{ kind.name }}
-      </a>
-    {% endfor %}
-  </div>
+<div class="cycle-actions">
+  {% for kind in export_kinds %}
+    <a class="button"
+       href="{% url 'timetable:cycle_export' selected_cycle.pk kind.code %}">
+      📄 {{ kind.name }}
+    </a>
+  {% endfor %}
+  <a class="button"
+     href="{% url 'timetable:cycle_export_csv' selected_cycle.pk %}">
+    📄 CSV
+  </a>
+</div>
 {% endif %}
 
 {% include "timetable/_hours_breakdown.html" %}

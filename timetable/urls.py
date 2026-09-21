@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .exports.views import export_view
+from .exports.views import cycle_export_csv_view, export_view
 from .references import views as references_views
 
 app_name = "timetable"
@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("templates/", views.template_library_view, name="template_library"),
     path("templates/<int:pk>/delete/", views.template_delete_view, name="template_delete"),
+    path(
+        "cycle/<int:cycle_id>/export/csv/",
+        cycle_export_csv_view,
+        name="cycle_export_csv",
+    ),
     path(
         "cycle/<int:cycle_id>/export/<slug:kind>/",
         export_view,

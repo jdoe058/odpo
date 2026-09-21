@@ -51,3 +51,17 @@ def cycle_export_csv_view(request, cycle_id):
         f'attachment; filename="{filename}"; filename*=UTF-8\'\'{filename}'
     )
     return response
+
+@login_required
+def cycle_export_csv_view(request, cycle_id):
+    cycle = get_object_or_404(
+        Cycle.objects.select_related("name", "base", "funding_type", "compiled_by"),
+        pk=cycle_id,
+    )
+    content = cycle_to_csv_bytes(cycle)
+    response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+    filename = f"{cycle.name.name}_{cycle.start_date:%Y-%m-%d}.csv"
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"; filename*=UTF-8\'\'{filename}'
+    )
+    return response
