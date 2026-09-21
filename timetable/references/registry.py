@@ -64,6 +64,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         columns=(
             Column("short_name", "str"),
             Column("position", "fk_name"),
+            Column("base", "fk_name"),
         ),
         key_normalizer=normalize_short_name,
     ),
@@ -72,7 +73,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         title="Базы",
         model=Base,
         upsert_key="name",
-        import_order=30,
+        import_order=15,
         columns=(Column("name", "str"),),
     ),
     ReferenceSpec(

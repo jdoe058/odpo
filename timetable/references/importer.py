@@ -6,6 +6,7 @@
 * apply(content) — повторный разбор + запись в одной транзакции.
 """
 import re
+import csv
 from dataclasses import dataclass, field
 
 from django.db import transaction
@@ -123,7 +124,7 @@ def _enter_section(slug, line_no, result, section_seen, last_order, sections_fou
 
 
 def _parse_header(line, line_no, spec, result):
-    names = [n.strip() for n in line.split(";")]
+    names = [n.strip() for n in _csv_fields(line)]
     by_header = {c.csv_header(): c for c in spec.columns}
     columns: list = []
     for name in names:
@@ -140,7 +141,7 @@ def _parse_header(line, line_no, spec, result):
 
 
 def _parse_row(line, line_no, spec, columns, result):
-    values = line.split(";")
+    values = _csv_fields(line)
     if len(values) != len(columns):
         result.warnings.append(
             f"строка {line_no}: [{spec.slug}] ожидалось {len(columns)} полей, "
@@ -190,6 +191,9 @@ def _convert(col, raw):
         return value
     raise ValueError(f"неизвестный тип колонки «{col.kind}»")
 
+def _csv_fields(line: str) -> list[str]:
+    """Разбирает одну CSV-строку с учётом кавычек и ; внутри полей."""
+    return next(csv.reader([line], delimiter=";"))
 
 def _resolve_foreign_key(row, line_no, spec, columns, result) -> bool:
     for col in columns:
@@ -197,6 +201,11 @@ def _resolve_foreign_key(row, line_no, spec, columns, result) -> bool:
             continue
         value = row.get(col.name)
         if not value:
+            field = spec.model._meta.get_field(col.name)
+            if field.null:
+                del row[col.name]
+                row[col.name + "_id"] = None
+                continue
             result.errors.append(
                 f"строка {line_no}: [{spec.slug}] поле «{col.name}» пусто"
             )

@@ -8,7 +8,7 @@ from datetime import date
 
 from . import export as csv_export
 from . import importer as csv_import
-from .registry import all_specs, get_spec
+from .registry import get_spec, specs_in_import_order
 
 
 SESSION_KEY = "references_import_content"
@@ -47,7 +47,7 @@ def exchange_view(request):
             request.session.pop(SESSION_KEY, None)
 
     return render(request, "timetable/references/exchange.html", {
-        "specs": all_specs(),
+        "specs": specs_in_import_order(),
         "import_result": import_result,
     })
 
