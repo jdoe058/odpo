@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from collections import defaultdict
 from datetime import date, timedelta
-from django.db.models import Sum
+from django.db.models import Q, Sum
 
 WEEKDAYS_RU = ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
 
@@ -33,10 +33,12 @@ class Grid:
     rows: tuple[GridRow, ...]
 
 
-def calculate_grid(start: date, end: date, cycle=None) -> Grid:
+def calculate_grid(start: date, end: date, cycle=None, base=None) -> Grid:
     """
     Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
     Если cycle задан — только занятия этого цикла.
+    Если base задан — только занятия, фактически проходящие на этой базе:
+    Lesson.base=base либо (Lesson.base is null и Cycle.base=base).
     """
     from timetable.models import Employee, Lesson
 
@@ -57,6 +59,8 @@ def calculate_grid(start: date, end: date, cycle=None) -> Grid:
     )
     if cycle is not None:
         qs = qs.filter(cycle=cycle)
+    if base is not None:
+        qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
 
     rows_raw = list(qs.values("employee_id", "date").annotate(h=Sum("hours")))
 

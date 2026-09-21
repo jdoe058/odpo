@@ -7,6 +7,7 @@ from timetable.exports.forms import DocumentTemplateForm
 from timetable.exports.models import DocumentTemplate
 
 from datetime import date, timedelta
+from django.db.models import Q
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
@@ -75,6 +76,11 @@ def schedule_grid_view(request):
             .filter(pk=cycle_id)
             .first()
         )
+    base = None
+    if base_id:
+        base = Base.objects.filter(pk=base_id).first()
+        if base is None:
+            base_id = ""
 
     anchor = None
     if anchor_str:
@@ -99,7 +105,7 @@ def schedule_grid_view(request):
         period = "week"
         start, end = resolve_period(period)
 
-    grid = calculate_grid(start, end, cycle=cycle)
+    grid = calculate_grid(start, end, cycle=cycle, base=base)
 
     overtime = []
     for scope in ("day", "week", "year"):
@@ -109,13 +115,19 @@ def schedule_grid_view(request):
 
     lessons = []
     if cycle is not None:
-        lessons = (
+        qs = (
             cycle.lessons
             .select_related("lesson_type", "employee")
             .order_by("date", "time_start")
         )
+        if base is not None:
+            qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
+        lessons = qs
 
-    cycles = Cycle.objects.select_related("name", "base").order_by("-start_date")
+    cycles_qs = Cycle.objects.select_related("name", "base").order_by("-start_date")
+    if base is not None:
+        cycles_qs = cycles_qs.filter(base=base)
+    cycles = cycles_qs
 
     prev_anchor = start - timedelta(days=1)
     next_anchor = end + timedelta(days=1)
