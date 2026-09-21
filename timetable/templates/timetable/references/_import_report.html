@@ -1,0 +1,35 @@
+<div class="refs-report">
+  {% if import_result.errors %}
+    <div class="refs-report__block refs-report__block--error">
+      <h3>Ошибки ({{ import_result.errors|length }})</h3>
+      <p class="muted">Импорт не будет применён, пока есть ошибки.</p>
+      <ul>
+        {% for e in import_result.errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="refs-report__block refs-report__block--ok">
+      <h3>Ошибок нет</h3>
+    </div>
+  {% endif %}
+
+  {% if import_result.warnings %}
+    <div class="refs-report__block refs-report__block--warning">
+      <h3>Предупреждения ({{ import_result.warnings|length }})</h3>
+      <ul>
+        {% for w in import_result.warnings %}<li>{{ w }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if import_result.stats %}
+    <div class="refs-report__block">
+      <h3>Обновлено записей</h3>
+      <ul>
+        {% for slug, count in import_result.stats.items %}
+          <li><code>{{ slug }}</code>: {{ count }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</div>

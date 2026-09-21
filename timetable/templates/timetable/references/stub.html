@@ -1,0 +1,11 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}{{ spec.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ spec.title }}</h1>
+<p class="hint">
+  Раздел в разработке. Пока справочник можно править через обмен CSV:
+  <a href="{% url 'timetable:references_exchange' %}">Обмен справочниками</a>.
+</p>
+{% endblock %}

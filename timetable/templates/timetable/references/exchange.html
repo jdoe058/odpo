@@ -1,0 +1,51 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Обмен справочниками{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/references.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Обмен справочниками</h1>
+
+<p class="muted">
+  Файл — единый CSV в кодировке UTF-8, разделитель «;».
+  Разделы помечены маркерами вида <code>[employees]</code>,
+  порядок разделов фиксирован.
+</p>
+
+<section class="refs-block">
+  <h2>Выгрузить</h2>
+  <p>
+    <a class="button" href="{% url 'timetable:references_export' %}">Скачать CSV</a>
+  </p>
+  <p class="muted">
+    Порядок разделов:
+    {% for spec in specs %}<code>[{{ spec.slug }}]</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
+  </p>
+</section>
+
+<section class="refs-block">
+  <h2>Загрузить</h2>
+  <form method="post" enctype="multipart/form-data" class="refs-form">
+    {% csrf_token %}
+    <div class="field">
+      <label for="id_file">CSV-файл</label>
+      <input type="file" name="file" id="id_file" accept=".csv,text/csv">
+    </div>
+    <div class="actions">
+      <button type="submit" name="action" value="check">Проверить</button>
+      <button type="submit" name="action" value="apply">Применить</button>
+      {% if import_result %}
+        <button type="submit" name="action" value="reset" class="link-button">Сбросить</button>
+      {% endif %}
+    </div>
+  </form>
+</section>
+
+{% if import_result %}
+  {% include "timetable/references/_import_report.html" %}
+{% endif %}
+{% endblock %}
