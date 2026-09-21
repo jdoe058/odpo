@@ -118,6 +118,18 @@ class Employee(models.Model):
         verbose_name="Должность",
     )
 
+    base = models.ForeignKey(
+        "Base",
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name="employees",
+        verbose_name="База",
+        help_text=(
+            "Основная база, где работает сотрудник. "
+            "Оставьте пустым, если сотрудник не привязан к конкретной базе."
+        ),
+    )
+
     class Meta:
         verbose_name = "Сотрудник"
         verbose_name_plural = "Сотрудники"

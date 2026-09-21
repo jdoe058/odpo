@@ -32,13 +32,13 @@ class PositionAdmin(admin.ModelAdmin):
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = (
-        "short_name", "position",
-        "max_hours_per_day",
+        "short_name", "position", "base",
+        "max_hours_per_day", "max_hours_per_week", "max_hours_per_year",
     )
-    list_filter = ("position",)
+    list_filter = ("position", "base",)
     search_fields = ("short_name",)
     ordering = ("short_name",)
-    autocomplete_fields = ("position",)
+    autocomplete_fields = ("position", "base")
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
