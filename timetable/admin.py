@@ -1,7 +1,6 @@
 from django.urls import path, reverse
 from django.contrib import admin
 from django.utils.html import format_html_join
-from .views import schedule_import_view
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
@@ -104,22 +103,11 @@ class CycleAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
 
-    change_list_template = "admin/timetable/cycle/change_list.html"
-
-
-
     readonly_fields = ("export_links",)
 
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path(
-                "import/",
-                self.admin_site.admin_view(
-                    lambda request: schedule_import_view(request, self.admin_site)
-                ),
-                name="timetable_cycle_import",
-            ),
             path(
                 "<path:cycle_id>/export/<slug:kind>/",
                 self.admin_site.admin_view(cycle_export_view),

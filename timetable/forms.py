@@ -2,12 +2,6 @@ from django import forms
 from .models import Lesson
 
 
-class ScheduleImportForm(forms.Form):
-    file = forms.FileField(
-        label="XLSX-файл",
-        widget=forms.ClearableFileInput(attrs={"accept": ".xlsx"}),
-    )
-
 class LessonForm(forms.ModelForm):
     date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),

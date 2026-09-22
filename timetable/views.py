@@ -11,7 +11,6 @@ from django.db.models import Q
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
-from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 
 from timetable.services.cycle_hours import calculate_cycle_hours
@@ -21,46 +20,12 @@ from .services.limits import (
     SCOPE_LABELS, calculate_overtime, find_violations, format_violation,
 )
 
-from .forms import ScheduleImportForm, LessonForm
+from .forms import LessonForm
 from .models import Cycle, Lesson, Base
-from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import (
     CycleImportError, build_cycle_import_template, import_cycle_from_xlsx,
 )
-
-
-def schedule_import_view(request, admin_site):
-    form = ScheduleImportForm()
-    import_errors: list[str] = []
-
-    if request.method == "POST":
-        form = ScheduleImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                result = import_schedule(form.cleaned_data["file"])
-            except ScheduleImportError as e:
-                import_errors = e.errors
-            else:
-                messages.success(
-                    request,
-                    f"Импортировано занятий: {result.lessons_created}.",
-                )
-                return redirect(
-                    "admin:timetable_cycle_change", result.cycle.pk
-                )
-
-    context = {
-        **admin_site.each_context(request),
-        "title": "Импорт расписания из XLSX",
-        "opts": Cycle._meta,
-        "form": form,
-        "import_errors": import_errors,
-    }
-    return TemplateResponse(
-        request, "timetable/schedule_import.html", context
-    )
-
 
 @login_required
 def schedule_grid_view(request):
