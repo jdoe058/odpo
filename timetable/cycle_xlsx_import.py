@@ -1,18 +1,36 @@
-"""Импорт цикла из XLSX и генерация шаблона."""
+"""Импорт цикла из XLSX."""
+
+from datetime import datetime, timedelta
+
 from django.db import transaction
+from openpyxl import load_workbook
 
 from timetable.models import (
-    Base, Cycle, CycleName, Employee, FundingType, Lesson, LessonType,
-)
-from timetable.xlsx_utils import (
-    cell_date, cell_int, cell_str, cell_time, load_from_upload,
+    MINUTES_PER_HOUR,
+    Base,
+    Cycle,
+    CycleName,
+    Employee,
+    FundingType,
+    Lesson,
+    LessonType,
 )
 from timetable.xlsx_cycle_format import (
-    CYCLE_FIELDS, CYCLE_LATIN, CYCLE_RU_TO_LATIN,
-    LESSON_FIELDS, LESSON_LATIN_TO_INDEX,
-    SHEET_CYCLE, SHEET_LESSONS,
+    CYCLE_FIELDS,
+    CYCLE_LATIN,
+    CYCLE_RU_TO_LATIN,
+    LESSON_FIELDS,
+    LESSON_LATIN_TO_INDEX,
+    SHEET_CYCLE,
+    SHEET_LESSONS,
 )
-
+from timetable.xlsx_utils import (
+    cell_date,
+    cell_int,
+    cell_str,
+    cell_time,
+    load_from_upload,
+)
 
 class CycleImportError(Exception):
     def __init__(self, errors: list[str]):
@@ -103,7 +121,6 @@ def _parse_lessons_sheet(ws, errors: list[str]) -> list[tuple[int, dict]]:
         )
         return rows
 
-    prev_date = None
     for row_idx, row in enumerate(
         ws.iter_rows(min_row=3, values_only=True), start=3
     ):
@@ -112,13 +129,6 @@ def _parse_lessons_sheet(ws, errors: list[str]) -> list[tuple[int, dict]]:
         row_data = {}
         for latin, idx in col_index.items():
             row_data[latin] = row[idx] if idx < len(row) else None
-
-        # Пустая ячейка даты означает «тот же день, что и в предыдущей строке».
-        if cell_str(row_data.get("date")) == "":
-            row_data["date"] = prev_date
-        else:
-            prev_date = row_data["date"]
-
         rows.append((row_idx, row_data))
 
     return rows
@@ -205,28 +215,57 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
     return cycle
 
 
-def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str]]:
+def _build_lessons(rows):
     errors: list[str] = []
     lessons: list[Lesson] = []
     seen: set[tuple] = set()
 
+    prev_date_resolved = None
+    prev_available_from = None
+
     for row_idx, row in rows:
-        lesson_date = cell_date(row.get("date"))
-        if lesson_date is None:
-            errors.append(
-                f"лист «{SHEET_LESSONS}», строка {row_idx}: "
-                f"дата «{cell_str(row.get('date'))}» не распознана"
-            )
-            continue
+        # --- дата
+        raw_date = cell_str(row.get("date"))
+        if raw_date == "":
+            if prev_date_resolved is None:
+                errors.append(
+                    f"лист «{SHEET_LESSONS}», строка {row_idx}: "
+                    "первая строка должна содержать дату"
+                )
+                continue
+            lesson_date = prev_date_resolved
+        else:
+            lesson_date = cell_date(row.get("date"))
+            if lesson_date is None:
+                errors.append(
+                    f"лист «{SHEET_LESSONS}», строка {row_idx}: "
+                    f"дата «{raw_date}» не распознана"
+                )
+                continue
 
-        lesson_time = cell_time(row.get("time_start"))
-        if lesson_time is None:
-            errors.append(
-                f"лист «{SHEET_LESSONS}», строка {row_idx}: "
-                f"время «{cell_str(row.get('time_start'))}» не распознано"
-            )
-            continue
+        if lesson_date != prev_date_resolved:
+            prev_available_from = None
 
+        # --- время
+        raw_time = cell_str(row.get("time_start"))
+        if raw_time == "":
+            if prev_available_from is None:
+                errors.append(
+                    f"лист «{SHEET_LESSONS}», строка {row_idx}: "
+                    "в начале дня время начала должно быть заполнено"
+                )
+                continue
+            lesson_time = prev_available_from
+        else:
+            lesson_time = cell_time(row.get("time_start"))
+            if lesson_time is None:
+                errors.append(
+                    f"лист «{SHEET_LESSONS}», строка {row_idx}: "
+                    f"время «{raw_time}» не распознано"
+                )
+                continue
+
+        # --- часы
         hours = cell_int(row.get("hours"))
         if hours is None or hours <= 0:
             errors.append(
@@ -235,6 +274,19 @@ def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str
             )
             continue
 
+        # --- перемена
+        break_after = cell_int(row.get("break_after_minutes"))
+        if break_after is None:
+            break_after = 10
+
+        # обновляем границы для следующей строки
+        end_dt = datetime.combine(lesson_date, lesson_time) + timedelta(
+            minutes=MINUTES_PER_HOUR * hours
+        )
+        prev_available_from = (end_dt + timedelta(minutes=break_after)).time()
+        prev_date_resolved = lesson_date
+
+        # --- тип занятия
         type_code = cell_str(row.get("lesson_type_code"))
         lesson_type = LessonType.objects.filter(code=type_code).first()
         if lesson_type is None:
@@ -244,6 +296,7 @@ def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str
             )
             continue
 
+        # --- сотрудник
         emp_name = cell_str(row.get("employee"))
         employee = Employee.objects.filter(short_name=emp_name).first()
         if employee is None:
@@ -253,10 +306,7 @@ def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str
             )
             continue
 
-        break_after = cell_int(row.get("break_after_minutes"))
-        if break_after is None:
-            break_after = 10
-
+        # --- база занятия
         lesson_base = None
         base_name = cell_str(row.get("base"))
         if base_name:
@@ -268,6 +318,7 @@ def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str
                 )
                 continue
 
+        # --- дубли
         key = (lesson_date, lesson_time, employee.pk)
         if key in seen:
             errors.append(

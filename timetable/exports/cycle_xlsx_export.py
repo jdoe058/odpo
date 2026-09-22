@@ -38,17 +38,29 @@ def cycle_to_xlsx_bytes(cycle: Cycle) -> bytes:
         .order_by("date", "time_start")
     )
     prev_date = None
+    prev_available_from = None
     for lesson in lessons:
         break_after = (
             "" if lesson.break_after_minutes == default_break
             else lesson.break_after_minutes
         )
-        date_cell = "" if lesson.date == prev_date else lesson.date.isoformat()
-        prev_date = lesson.date
+        if lesson.date == prev_date:
+            date_cell = ""
+        else:
+            date_cell = lesson.date.isoformat()
+            prev_date = lesson.date
+            prev_available_from = None
+
+        if prev_available_from is not None and lesson.time_start == prev_available_from:
+            time_cell = ""
+        else:
+            time_cell = lesson.time_start.strftime("%H:%M")
+
+        prev_available_from = lesson.available_from
 
         ws2.append([
             date_cell,
-            lesson.time_start.strftime("%H:%M"),
+            time_cell,
             lesson.hours,
             lesson.lesson_type.code,
             lesson.topic or "",
