@@ -23,9 +23,8 @@ from .services.limits import (
 from .forms import LessonForm
 from .models import Cycle, Lesson, Base
 from timetable.exports.kinds import all_specs
-from .cycle_xlsx_import import (
-    CycleImportError, build_cycle_import_template, import_cycle_from_xlsx,
-)
+from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
+from .exports.cycle_xlsx_export import build_cycle_import_template
 
 @login_required
 def schedule_grid_view(request):

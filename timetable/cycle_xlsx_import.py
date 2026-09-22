@@ -1,9 +1,5 @@
 """Импорт цикла из XLSX и генерация шаблона."""
-import io
-from datetime import date, time
-
 from django.db import transaction
-from openpyxl import Workbook
 
 from timetable.models import (
     Base, Cycle, CycleName, Employee, FundingType, Lesson, LessonType,
@@ -11,38 +7,11 @@ from timetable.models import (
 from timetable.xlsx_utils import (
     cell_date, cell_int, cell_str, cell_time, load_from_upload,
 )
-
-
-SHEET_CYCLE = "Цикл"
-SHEET_LESSONS = "Занятия"
-
-# (latin_key, russian_title)
-CYCLE_FIELDS = (
-    ("compiled_by", "Составил"),
-    ("funding", "Финансирование"),
-    ("base", "База"),
-    ("name", "Название цикла"),
-    ("start_date", "Дата начала"),
-    ("end_date", "Дата окончания"),
+from timetable.xlsx_cycle_format import (
+    CYCLE_FIELDS, CYCLE_LATIN, CYCLE_RU_TO_LATIN,
+    LESSON_FIELDS, LESSON_LATIN_TO_INDEX,
+    SHEET_CYCLE, SHEET_LESSONS,
 )
-
-LESSON_FIELDS = (
-    ("date", "Дата"),
-    ("time_start", "Начало"),
-    ("hours", "Часы"),
-    ("lesson_type_code", "Код типа занятия"),
-    ("topic", "Тема"),
-    ("employee", "Преподаватель"),
-    ("break_after_minutes", "Перемена после, мин"),
-    ("base", "База занятия"),
-)
-
-CYCLE_RU = dict(CYCLE_FIELDS)
-CYCLE_LATIN = {latin for latin, _ in CYCLE_FIELDS}
-CYCLE_RU_TO_LATIN = {ru: latin for latin, ru in CYCLE_FIELDS}
-
-LESSON_LATIN_TO_INDEX = {latin: i for i, (latin, _) in enumerate(LESSON_FIELDS)}
-LESSON_RU_TO_LATIN = {ru: latin for latin, ru in LESSON_FIELDS}
 
 
 class CycleImportError(Exception):
@@ -313,32 +282,3 @@ def _build_lessons(rows: list[tuple[int, dict]]) -> tuple[list[Lesson], list[str
         ))
 
     return lessons, errors
-
-
-# --- Шаблон -------------------------------------------------------------
-
-def build_cycle_import_template() -> bytes:
-    wb = Workbook()
-
-    ws = wb.worksheets[0]
-    ws.title = SHEET_CYCLE
-    ws.append(["Русское", "Латиница", "Значение"])
-    for latin, ru in CYCLE_FIELDS:
-        ws.append([ru, latin, ""])
-    ws.column_dimensions["A"].width = 28
-    ws.column_dimensions["B"].width = 22
-    ws.column_dimensions["C"].width = 40
-
-    ws2 = wb.create_sheet(SHEET_LESSONS)
-    ws2.append([ru for _, ru in LESSON_FIELDS])
-    ws2.append([latin for latin, _ in LESSON_FIELDS])
-    ws2.append([
-        "2026-08-24", "09:00", 2, "0", "Основы охраны труда",
-        "МАРКОВ Д.В.", 10, "",
-    ])
-    for i, _ in enumerate(LESSON_FIELDS, start=1):
-        ws2.column_dimensions[chr(64 + i)].width = 20
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    return buf.getvalue()
