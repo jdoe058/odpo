@@ -37,13 +37,17 @@ def cycle_to_xlsx_bytes(cycle: Cycle) -> bytes:
         .select_related("lesson_type", "employee", "base")
         .order_by("date", "time_start")
     )
+    prev_date = None
     for lesson in lessons:
         break_after = (
             "" if lesson.break_after_minutes == default_break
             else lesson.break_after_minutes
         )
+        date_cell = "" if lesson.date == prev_date else lesson.date.isoformat()
+        prev_date = lesson.date
+
         ws2.append([
-            lesson.date.isoformat(),
+            date_cell,
             lesson.time_start.strftime("%H:%M"),
             lesson.hours,
             lesson.lesson_type.code,
