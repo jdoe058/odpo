@@ -1,12 +1,8 @@
-from django.urls import path, reverse
 from django.contrib import admin
-from django.utils.html import format_html_join
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
 
-from timetable.exports.kinds import all_specs
-from timetable.exports.views import export_view as cycle_export_view
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -102,35 +98,3 @@ class CycleAdmin(admin.ModelAdmin):
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
-
-    readonly_fields = ("export_links",)
-
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path(
-                "<path:cycle_id>/export/<slug:kind>/",
-                self.admin_site.admin_view(cycle_export_view),
-                name="timetable_cycle_export",
-            ),
-        ]
-        return custom + urls
-
-    @admin.display(description="Выгрузки")
-    def export_links(self, obj):
-        if obj is None or not obj.pk:
-            return "Сохраните цикл, чтобы выгрузить документы."
-        return format_html_join(
-            " ",
-            '<a class="button" href="{}">{}</a>',
-            [
-                (
-                    reverse(
-                        "admin:timetable_cycle_export",
-                        args=[obj.pk, spec.code],
-                    ),
-                    spec.name,
-                )
-                for spec in all_specs()
-            ],
-        )
