@@ -83,7 +83,8 @@ def schedule_grid_view(request):
     lessons = []
     if cycle is not None:
         qs = (
-            cycle.lessons
+            Lesson.objects
+            .filter(cycle=cycle)
             .select_related("lesson_type", "employee")
             .order_by("date", "time_start")
         )
