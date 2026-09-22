@@ -103,6 +103,7 @@ def _parse_lessons_sheet(ws, errors: list[str]) -> list[tuple[int, dict]]:
         )
         return rows
 
+    prev_date = None
     for row_idx, row in enumerate(
         ws.iter_rows(min_row=3, values_only=True), start=3
     ):
@@ -111,6 +112,13 @@ def _parse_lessons_sheet(ws, errors: list[str]) -> list[tuple[int, dict]]:
         row_data = {}
         for latin, idx in col_index.items():
             row_data[latin] = row[idx] if idx < len(row) else None
+
+        # Пустая ячейка даты означает «тот же день, что и в предыдущей строке».
+        if cell_str(row_data.get("date")) == "":
+            row_data["date"] = prev_date
+        else:
+            prev_date = row_data["date"]
+
         rows.append((row_idx, row_data))
 
     return rows
