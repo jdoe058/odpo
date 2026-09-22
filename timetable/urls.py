@@ -27,5 +27,15 @@ urlpatterns = [
     ),
     path("references/", references_views.exchange_view, name="references_exchange"),
     path("references/export/", references_views.export_view, name="references_export"),
-    path("references/<slug:slug>/", references_views.reference_stub_view, name="reference_stub"),    
+    path("references/<slug:slug>/", references_views.reference_stub_view, name="reference_stub"),
+    path(
+    "cycle/import/",
+        views.cycle_import_view,
+        name="cycle_import",
+    ),
+    path(
+        "cycle/import/template/",
+        views.cycle_import_template_view,
+        name="cycle_import_template",
+    ),    
 ]

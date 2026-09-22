@@ -1,6 +1,6 @@
 from collections import defaultdict
-
-from django.http import JsonResponse
+from django.urls import reverse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 
 from timetable.exports.forms import DocumentTemplateForm
@@ -25,6 +25,9 @@ from .forms import ScheduleImportForm, LessonForm
 from .models import Cycle, Lesson, Base
 from .imports import ScheduleImportError, import_schedule
 from timetable.exports.kinds import all_specs
+from .cycle_xlsx_import import (
+    CycleImportError, build_cycle_import_template, import_cycle_from_xlsx,
+)
 
 
 def schedule_import_view(request, admin_site):
@@ -270,3 +273,43 @@ def template_delete_view(request, pk):
     else:
         messages.success(request, "Шаблон удалён.")
     return redirect("timetable:template_library")
+
+@login_required
+def cycle_import_view(request):
+    errors: list[str] = []
+
+    if request.method == "POST":
+        uploaded = request.FILES.get("file")
+        if uploaded is None:
+            errors = ["Файл не выбран."]
+        else:
+            try:
+                cycle = import_cycle_from_xlsx(uploaded)
+            except CycleImportError as e:
+                errors = e.errors
+            else:
+                messages.success(
+                    request,
+                    f"Импортирован цикл «{cycle.name.name}» "
+                    f"от {cycle.start_date:%d.%m.%Y}.",
+                )
+                url = reverse("timetable:schedule_grid")
+                return redirect(f"{url}?cycle={cycle.pk}")
+
+    return render(request, "timetable/cycle_import.html", {"errors": errors})
+
+
+@login_required
+def cycle_import_template_view(request):
+    content = build_cycle_import_template()
+    response = HttpResponse(
+        content,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument"
+            ".spreadsheetml.sheet"
+        ),
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="cycle_import_template.xlsx"'
+    )
+    return response

@@ -1,0 +1,53 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Загрузка расписания{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/references.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Загрузка расписания</h1>
+
+<p class="muted">
+  Файл — XLSX с двумя листами: «Цикл» и «Занятия».
+  Скачайте шаблон, заполните его и загрузите обратно.
+  Импорт всегда создаёт новый цикл; при совпадении
+  «название + база + дата начала» с существующим — ошибка.
+</p>
+
+<div class="refs-block">
+  <h2>Шаг 1. Шаблон</h2>
+  <p>
+    <a class="button" href="{% url 'timetable:cycle_import_template' %}">
+      Скачать шаблон XLSX
+    </a>
+  </p>
+</div>
+
+<div class="refs-block">
+  <h2>Шаг 2. Загрузка</h2>
+
+  {% if errors %}
+    <div class="refs-report__block refs-report__block--error">
+      <h3>Ошибки ({{ errors|length }})</h3>
+      <p class="muted">В базу ничего не записано.</p>
+      <ul>
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="refs-form">
+    {% csrf_token %}
+    <div class="field">
+      <label for="id_file">XLSX-файл</label>
+      <input type="file" name="file" id="id_file" accept=".xlsx">
+    </div>
+    <div class="actions">
+      <button type="submit">Загрузить</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
