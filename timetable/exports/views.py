@@ -1,4 +1,4 @@
-from shlex import quote
+from urllib.parse import quote
 
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse
@@ -46,8 +46,16 @@ def cycle_xlsx_export_view(request, cycle_id):
             ".spreadsheetml.sheet"
         ),
     )
-    safe = "".join(c for c in cycle.name.name if c not in '/\\:"<>|?*')
-    filename = f"{safe}_{cycle.start_date:%Y-%m-%d}.xlsx"
+
+    def _safe(s: str) -> str:
+        return "".join(c for c in s if c not in '/\\:"<>|?*').strip()
+
+    filename = (
+        f"{cycle.start_date:%Y-%m-%d}_"
+        f"{_safe(cycle.base.name)}_"
+        f"{_safe(cycle.name.name)}.xlsx"
+    )
+
     response["Content-Disposition"] = (
         f'attachment; filename="cycle.xlsx"; '
         f"filename*=UTF-8''{quote(filename)}"
