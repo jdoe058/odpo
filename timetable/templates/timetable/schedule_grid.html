@@ -27,10 +27,10 @@
       📄 {{ kind.name }}
     </a>
   {% endfor %}
-  <a class="button"
-     href="{% url 'timetable:cycle_export_csv' selected_cycle.pk %}">
-    📄 CSV
-  </a>
+    <a class="button"
+      href="{% url 'timetable:cycle_export_xlsx' selected_cycle.pk %}">
+      📄 XLSX
+    </a>
 </div>
 {% endif %}
 
