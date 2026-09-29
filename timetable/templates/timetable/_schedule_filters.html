@@ -3,8 +3,8 @@
     <div>
       <label for="id_employee">Преподаватели</label>
       <input type="text" name="employee" id="id_employee"
-            value="{{ selected_employee }}"
-            placeholder="МАРКОВ, СОКОЛОВА">
+             value="{{ selected_employee }}"
+             placeholder="МАРКОВ, СОКОЛОВА">
     </div>
     <div>
       <label for="id_base">База</label>
@@ -34,39 +34,44 @@
     {% if period != 'custom' %}
       <div class="period-nav">
         <a class="button"
-           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}{% if selected_base %}&base={{ selected_base }}{% endif %}&anchor={{ prev_anchor|date:'Y-m-d' }}">
-          ←
-        </a>
+           href="{% querystring period=period anchor=prev_anchor|date:'Y-m-d' %}">←</a>
       </div>
     {% endif %}
 
-    <div class="field-inline">
-      <label for="id_period">Период</label>
-      <select name="period" id="id_period">
-        <option value="week"   {% if period == 'week'   %}selected{% endif %}>Неделя</option>
-        <option value="month"  {% if period == 'month'  %}selected{% endif %}>Месяц</option>
-        <option value="year"   {% if period == 'year'   %}selected{% endif %}>Учебный год</option>
-        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Произвольный</option>
-      </select>
+    <div class="period-tabs">
+      <a class="period-tab {% if period == 'week' %}active{% endif %}"
+         href="{% querystring period='week' anchor=None start=None end=None %}">Неделя</a>
+      <a class="period-tab {% if period == 'month' %}active{% endif %}"
+         href="{% querystring period='month' anchor=None start=None end=None %}">Месяц</a>
+      <a class="period-tab {% if period == 'year' %}active{% endif %}"
+         href="{% querystring period='year' anchor=None start=None end=None %}">Учебный год</a>
+      <a class="period-tab {% if period == 'custom' %}active{% endif %}"
+         href="{% querystring period='custom' anchor=None start=grid.start|date:'Y-m-d' end=grid.end|date:'Y-m-d' %}">Произвольный</a>
     </div>
 
-    <div class="field-inline">
-      <label for="id_start">С</label>
-      <input type="date" name="start" id="id_start" value="{{ grid.start|date:'Y-m-d' }}">
-    </div>
-    <div class="field-inline">
-      <label for="id_end">По</label>
-      <input type="date" name="end" id="id_end" value="{{ grid.end|date:'Y-m-d' }}">
-    </div>
+    {% if period == 'custom' %}
+      <div class="field-inline">
+        <label for="id_start">С</label>
+        <input type="date" name="start" id="id_start"
+               value="{{ grid.start|date:'Y-m-d' }}">
+      </div>
+      <div class="field-inline">
+        <label for="id_end">По</label>
+        <input type="date" name="end" id="id_end"
+               value="{{ grid.end|date:'Y-m-d' }}">
+      </div>
+    {% endif %}
 
     {% if period != 'custom' %}
       <div class="period-nav">
         <a class="button"
-           href="?period={{ period }}{% if selected_cycle %}&cycle={{ selected_cycle.pk }}{% endif %}{% if selected_base %}&base={{ selected_base }}{% endif %}&anchor={{ next_anchor|date:'Y-m-d' }}">
-          →
-        </a>
+           href="{% querystring period=period anchor=next_anchor|date:'Y-m-d' %}">→</a>
       </div>
     {% endif %}
+
+    <div class="period-nav">
+      <a class="button" href="{% querystring base=None cycle=None employee=None period='week' anchor=None %}">X</a>
+    </div>
   </div>
 </form>
 
@@ -75,11 +80,10 @@
     const form = document.getElementById('schedule-filters');
     if (!form) return;
 
-    const baseSelect   = document.getElementById('id_base');
-    const cycleSelect  = form.querySelector('#id_cycle');
-    const periodSelect = form.querySelector('#id_period');
-    const startInput   = form.querySelector('#id_start');
-    const endInput     = form.querySelector('#id_end');
+    const baseSelect  = document.getElementById('id_base');
+    const cycleSelect = form.querySelector('#id_cycle');
+    const startInput  = form.querySelector('#id_start');
+    const endInput    = form.querySelector('#id_end');
 
     // Копия всех опций цикла — неприкосновенный запас для пересборки.
     const allCycleOptions = cycleSelect
@@ -98,8 +102,6 @@
           cycleSelect.appendChild(opt.cloneNode(true));
         }
       }
-      // Восстанавливаем выбор. Если current не входит в новую базу,
-      // браузер сам поставит "" (первый option).
       cycleSelect.value = current;
     }
 
@@ -108,8 +110,7 @@
       filterCycles();
     }
 
-    // Смена базы: фильтруем список и всегда отправляем форму,
-    // чтобы база попала в URL. Цикл сохраняется, если он есть в новой базе.
+    // Смена базы: фильтруем список и отправляем форму.
     if (baseSelect) {
       baseSelect.addEventListener('change', () => {
         filterCycles();
@@ -118,18 +119,15 @@
     }
 
     // Смена цикла — отправка формы.
-    if (cycleSelect)  cycleSelect.addEventListener('change', () => form.submit());
-    if (periodSelect) periodSelect.addEventListener('change', () => form.submit());
-
-    function onDateChange() {
-      if (periodSelect && periodSelect.value !== 'custom') {
-        periodSelect.value = 'custom';
-      }
-      form.submit();
+    if (cycleSelect) {
+      cycleSelect.addEventListener('change', () => form.submit());
     }
-    if (startInput) startInput.addEventListener('change', onDateChange);
-    if (endInput)   endInput.addEventListener('change',   onDateChange);
 
+    // Изменение дат — отправка формы.
+    if (startInput) startInput.addEventListener('change', () => form.submit());
+    if (endInput)   endInput.addEventListener('change',   () => form.submit());
+
+    // Enter в поле преподавателей — отправка формы.
     const employeeInput = form.querySelector('#id_employee');
     if (employeeInput) {
       employeeInput.addEventListener('keydown', (e) => {

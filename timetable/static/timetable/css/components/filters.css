@@ -50,3 +50,26 @@ form.filters {
   border: 1px dashed var(--color-border);
   border-radius: 6px;
 }
+
+.filters-row > .period-tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+}
+
+.period-tab {
+  padding: 6px 12px;
+  color: var(--color-primary);
+  text-decoration: none;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+}
+.period-tab:hover { background: var(--color-surface-subtle); }
+.period-tab.active {
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+  font-weight: 600;
+}
