@@ -33,7 +33,7 @@ class Grid:
     rows: tuple[GridRow, ...]
 
 
-def calculate_grid(start: date, end: date, cycle=None, base=None) -> Grid:
+def calculate_grid(start: date, end: date, cycle=None, base=None, employee_q=None) -> Grid:
     """
     Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
     Если cycle задан — только занятия этого цикла.
@@ -61,6 +61,8 @@ def calculate_grid(start: date, end: date, cycle=None, base=None) -> Grid:
         qs = qs.filter(cycle=cycle)
     if base is not None:
         qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
+    if employee_q:
+        qs = qs.filter(employee_q)
 
     rows_raw = list(qs.values("employee_id", "date").annotate(h=Sum("hours")))
 

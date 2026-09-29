@@ -21,7 +21,7 @@ from .services.limits import (
 )
 
 from .forms import LessonForm
-from .models import Cycle, Lesson, Base
+from .models import Cycle, Lesson, Base, normalize_short_name
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
 from .exports.cycle_xlsx_export import build_cycle_import_template
@@ -72,7 +72,18 @@ def schedule_grid_view(request):
         period = "week"
         start, end = resolve_period(period)
 
-    grid = calculate_grid(start, end, cycle=cycle, base=base)
+    employee_query = (request.GET.get("employee") or "").strip()
+    employee_q = Q()
+    if employee_query:
+        for part in employee_query.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            normalized = normalize_short_name(part)
+            if normalized:
+                employee_q |= Q(employee__short_name__contains=normalized)
+
+    grid = calculate_grid(start, end, cycle=cycle, base=base, employee_q=employee_q,)
 
     overtime = []
     for scope in ("day", "week", "year"):
@@ -90,6 +101,8 @@ def schedule_grid_view(request):
         )
         if base is not None:
             qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
+        if employee_q:
+            qs = qs.filter(employee_q)
         lessons = qs
 
     cycles_qs = Cycle.objects.select_related("name", "base").order_by("-start_date")
@@ -114,6 +127,7 @@ def schedule_grid_view(request):
         "next_anchor": next_anchor,
         "breakdown": breakdown,
         "selected_base": base_id,
+        "selected_employee": employee_query,
         "bases": Base.objects.order_by("name"),
     })
 

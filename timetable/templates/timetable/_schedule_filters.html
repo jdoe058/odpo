@@ -1,6 +1,12 @@
 <form method="get" class="filters" id="schedule-filters">
   <div class="filters-row">
     <div>
+      <label for="id_employee">Преподаватели</label>
+      <input type="text" name="employee" id="id_employee"
+            value="{{ selected_employee }}"
+            placeholder="МАРКОВ, СОКОЛОВА">
+    </div>
+    <div>
       <label for="id_base">База</label>
       <select name="base" id="id_base">
         <option value="">— все базы —</option>
@@ -123,5 +129,15 @@
     }
     if (startInput) startInput.addEventListener('change', onDateChange);
     if (endInput)   endInput.addEventListener('change',   onDateChange);
+
+    const employeeInput = form.querySelector('#id_employee');
+    if (employeeInput) {
+      employeeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          form.submit();
+        }
+      });
+    }
   })();
 </script>
