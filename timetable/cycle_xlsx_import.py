@@ -247,7 +247,7 @@ def _build_lessons(rows):
             prev_available_from = None
 
         # --- время
-        raw_time = cell_str(row.get("time_start"))
+        raw_time = cell_str(row.get("time_start"))[:5]
         if raw_time == "":
             if prev_available_from is None:
                 errors.append(
