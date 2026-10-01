@@ -1,6 +1,6 @@
 """Импорт цикла из XLSX."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 from django.db import transaction
 from openpyxl import load_workbook
@@ -214,6 +214,48 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
 
     return cycle
 
+def _parse_time_cell(raw: str) -> time | None:
+    """
+    Разбирает "HH:MM" из ячейки XLSX.
+    Принимает также "HH.MM", "HH:MM:SS", "HH:MM-HH:MM" (берёт начало).
+    Юникод-двойники ":" и "." нормализуются.
+    """
+    if not raw:
+        return None
+
+    # Нормализация юникод-двойников
+    for bad, good in (
+        ("：", ":"),   # fullwidth colon U+FF1A
+        ("﹕", ":"),   # small colon U+FE55
+        ("．", "."),   # fullwidth full stop U+FF0E
+        ("–", "-"),   # en-dash
+        ("—", "-"),   # em-dash
+        ("−", "-"),   # minus sign
+        ("\u200b", ""),   # zero-width space
+        ("\u00a0", " "),  # NBSP
+    ):
+        raw = raw.replace(bad, good)
+
+    # Диапазон "12:00-13:30" → "12:00"
+    if "-" in raw:
+        raw = raw.split("-", 1)[0]
+
+    # "." → ":" для "12.30"
+    s = raw.strip().replace(".", ":")
+    parts = s.split(":")
+    if len(parts) < 2:
+        return None
+
+    try:
+        h = int(parts[0])
+        m = int(parts[1])
+    except (ValueError, TypeError):
+        return None
+
+    if not (0 <= h < 24 and 0 <= m < 60):
+        return None
+
+    return time(h, m)
 
 def _build_lessons(rows):
     errors: list[str] = []
@@ -247,7 +289,7 @@ def _build_lessons(rows):
             prev_available_from = None
 
         # --- время
-        raw_time = cell_str(row.get("time_start"))[:5]
+        raw_time = cell_str(row.get("time_start"))
         if raw_time == "":
             if prev_available_from is None:
                 errors.append(
@@ -257,11 +299,11 @@ def _build_lessons(rows):
                 continue
             lesson_time = prev_available_from
         else:
-            lesson_time = cell_time(row.get("time_start"))
+            lesson_time = _parse_time_cell(raw_time)
             if lesson_time is None:
                 errors.append(
                     f"лист «{SHEET_LESSONS}», строка {row_idx}: "
-                    f"время «{raw_time}» не распознано"
+                    f"время {raw_time!r} не распознано"
                 )
                 continue
 
