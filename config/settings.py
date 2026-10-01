@@ -17,13 +17,22 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = os.getenv("DEBUG", "False") == "True"
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-default-change-me")
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-ALLOWED_HOSTS = []
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-MEDIA_URL = "media/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"     # сюда collectstatic сложит файлы
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "http://127.0.0.1,http://localhost",
+).split(",")
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "timetable:schedule_grid"
@@ -110,12 +119,6 @@ TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.1/howto/static-files/
-
-STATIC_URL = 'static/'
 
 
 # Email
