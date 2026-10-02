@@ -381,9 +381,3 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
-
-# --- Модели из подпакетов -------------------------------------------------
-# Django находит модели только в <app>/models.py. DocumentTemplate
-# физически живёт в timetable/exports/models.py, но регистрируется
-# под app_label="timetable" — именно потому, что этот файл её импортирует.
-from .exports.models import DocumentTemplate  # noqa: F401, E402

@@ -27,7 +27,7 @@ def build_own_context(cycle) -> dict:
 
 
 def build_filename(cycle) -> str:
-    return f"schedule_{cycle.name.name}_{cycle.start_date:%Y-%m-%d}.docx"
+    return f"schedule_{cycle.name.name}_{cycle.start_date:%Y-%m-%d}"
 
 
 register(ExporterSpec(

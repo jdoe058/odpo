@@ -6,28 +6,6 @@
 (например, из `conftest`-подобных мест). Локальный импорт гарантирует,
 что модели доступны только в момент вызова, когда Django уже готов.
 """
-from io import BytesIO
-
-from docx import Document
-
-
-# --- .docx ------------------------------------------------------------
-
-def make_docx_bytes(placeholders: list[str] | None = None) -> bytes:
-    """
-    Минимальный валидный .docx. Если переданы `placeholders`, каждый
-    становится отдельным абзацем вида `{{ name }}` — пригодно для
-    проверки рендера через docxtpl.
-
-    Не читает диск и не требует MEDIA_ROOT — возвращает bytes.
-    """
-    doc = Document()
-    for ph in placeholders or []:
-        doc.add_paragraph("{{ " + ph + " }}")
-    buf = BytesIO()
-    doc.save(buf)
-    return buf.getvalue()
-
 
 # --- Модели справочников ---------------------------------------------
 
@@ -84,7 +62,3 @@ def make_cycle(*, name, base, funding, compiled_by, start_date, end_date):
         end_date=end_date,
     )
 
-def make_docx_file(name: str = "t.docx"):
-    """ContentFile с минимальным .docx — для FileField."""
-    from django.core.files.base import ContentFile
-    return ContentFile(make_docx_bytes(), name=name)

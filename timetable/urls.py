@@ -14,8 +14,6 @@ urlpatterns = [
         views.lesson_edit_view,
         name="lesson_edit",
     ),
-    path("templates/", views.template_library_view, name="template_library"),
-    path("templates/<int:pk>/delete/", views.template_delete_view, name="template_delete"),
     path(
         "cycle/<int:cycle_id>/export/xlsx/",
         cycle_xlsx_export_view,

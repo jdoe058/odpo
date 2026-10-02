@@ -23,7 +23,7 @@ def build_own_context(cycle) -> dict:
 def build_filename(cycle) -> str:
     return (
         f"teacher_load_{cycle.name.name}_"
-        f"{cycle.start_date:%Y-%m-%d}.docx"
+        f"{cycle.start_date:%Y-%m-%d}"
     )
 
 

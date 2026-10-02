@@ -38,5 +38,5 @@ def export_pdf_view(request, cycle_id: int, kind: str):
     )
 
     data = build_pdf_for_cycle(cycle, kind)
-    filename = get_spec(kind).build_filename(cycle).replace(".docx", ".pdf")
+    filename = get_spec(kind).build_filename(cycle) + ".pdf"
     return pdf_response(data, filename)

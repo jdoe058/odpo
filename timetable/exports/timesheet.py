@@ -11,7 +11,7 @@ def build_own_context(cycle) -> dict:
 def build_filename(cycle) -> str:
     return (
         f"timesheet_{cycle.name.name}_"
-        f"{cycle.start_date:%Y-%m-%d}.docx"
+        f"{cycle.start_date:%Y-%m-%d}"
     )
 
 
