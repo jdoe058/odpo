@@ -1,0 +1,33 @@
+table.schedule {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+table.schedule th,
+table.schedule td {
+  border: 1px solid #000;
+  padding: 2mm 1.5mm;
+  vertical-align: top;
+  text-align: left;
+}
+
+table.schedule thead {
+  display: table-header-group;
+}
+table.schedule thead th {
+  font-weight: bold;
+  text-align: center;
+  background: #f0f0f0;
+}
+
+table.schedule tr {
+  page-break-inside: avoid;
+}
+
+/* Ширины колонок */
+table.schedule .col-date    { width: 22mm; white-space: nowrap; }
+table.schedule .col-time    { width: 28mm; white-space: nowrap; }
+table.schedule .col-hours   { width: 10mm; text-align: center; }
+table.schedule .col-type    { width: 32mm; }
+table.schedule .col-teacher { width: 32mm; }

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Расписание занятий</title>
+</head>
+<body>
+
+<div class="approval">
+  <div>Утверждаю</div>
+  <div>{{ approver_position }}</div>
+  <div> _____________ {{ approver }}</div>
+  <div>«___» ____________ 2026г.</div>
+</div>
+<h1 class="doc-title">Расписание занятий</h1>
+
+<p class="meta">
+  ДПП: {{ cycle_name }} ({{ funding }})<br>
+  Период: {{ start }} — {{ end }}<br>
+  {{ base }}
+</p>
+
+<p class="hours-summary">
+  {% for b in hours_summary %}{{ b.name }}: {{ b.hours }}{% if not forloop.last %}, {% endif %}{% endfor %}, всего: {{ total_hours }}
+</p>
+
+<table class="schedule">
+  <thead>
+    <tr>
+      <th class="col-date">Дата</th>
+      <th class="col-time">Время</th>
+      <th class="col-hours">ЧЧ</th>
+      <th class="col-type">Вид</th>
+      <th>Тема</th>
+      <th class="col-teacher">Преподаватель</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lessons %}
+      <tr>
+        <td>{{ l.date }}</td>
+        <td>{{ l.time }}</td>
+        <td class="col-hours">{{ l.hours }}</td>
+        <td>{{ l.type }}</td>
+        <td>{{ l.topic }}</td>
+        <td>{{ l.teacher }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="signature">
+  {{ signer_position }} <span class="line"></span> {{ signer }}
+</div>
+
+</body>
+</html>

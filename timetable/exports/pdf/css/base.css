@@ -1,0 +1,61 @@
+@page {
+  size: A4 portrait;
+  margin: 15mm 15mm 15mm 25mm;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Times New Roman", "Liberation Serif", serif;
+  font-size: 11pt;
+  line-height: 1.35;
+  color: #000;
+  margin: 0;
+}
+
+/* --- Шапка «УТВЕРЖДАЮ» --------------------------------------------- */
+
+.approval {
+  float: right;
+  width: 75mm;
+  margin-bottom: 10mm;
+  font-size: 11pt;
+  line-height: 1.6;
+}
+
+
+/* --- Заголовок и мета --------------------------------------------- */
+
+.doc-title {
+  clear: both;
+  text-align: center;
+  font-size: 14pt;
+  font-weight: bold;
+  margin: 0 0 5mm 0;
+  text-transform: uppercase;
+}
+
+.meta {
+  text-align: center;
+  margin: 0 0 4mm 0;
+}
+
+.hours-summary {
+  text-align: center;
+  margin: 0 0 6mm 0;
+  font-size: 10pt;
+}
+
+/* --- Подпись внизу ------------------------------------------------- */
+
+.signature {
+  margin-top: 15mm;
+  font-size: 11pt;
+}
+.signature .line {
+  display: inline-block;
+  border-bottom: 1px solid #000;
+  min-width: 50mm;
+  margin: 0 3mm;
+  vertical-align: baseline;
+}
