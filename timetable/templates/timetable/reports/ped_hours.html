@@ -13,14 +13,31 @@
 
 <div class="refs-block">
   <form method="get" class="refs-form">
-    <div class="field">
-      <label for="id_month">Месяц</label>
-      <input type="month" name="month" id="id_month" value="{{ month_value }}">
+    <div class="filters-row">
+      <div class="field-inline">
+        <label for="id_month">Месяц</label>
+        <select name="month" id="id_month">
+          {% for m in month_names %}
+            <option value="{{ forloop.counter }}"
+                    {% if forloop.counter == selected_month %}selected{% endif %}>
+              {{ m }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field-inline">
+        <label for="id_year">Год</label>
+        <select name="year" id="id_year">
+          {% for y in years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
     <div class="actions">
       <button type="submit">Показать</button>
       <a class="button"
-         href="{% url 'timetable:ped_hours_export' %}?month={{ month_value }}">
+         href="{% url 'timetable:ped_hours_export' %}?year={{ selected_year }}&month={{ selected_month }}">
         Скачать XLSX
       </a>
     </div>
