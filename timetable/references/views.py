@@ -6,7 +6,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from datetime import date
 
-from . import importer as csv_import
+from . import xlsx_importer as csv_import
 from . import xlsx_export
 from .registry import get_spec, specs_in_import_order
 
