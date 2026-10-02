@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Распределение часов</title>
+</head>
+<body>
+
+<h1 class="doc-title">
+  Распределение часов<br>
+  преподавателей ОДПО
+</h1>
+
+<p class="meta">
+  На ДПП: {{ cycle_name }} ({{ funding }})<br>
+  с {{ start }} по {{ end }}<br>
+  {{ base }}
+</p>
+
+<p class="hours-summary">
+  Лекции: {{ total_lecture }},
+  Занятия семинарского типа: {{ total_seminar }},
+  Практика: {{ total_practice }},
+  Всего: {{ grand_total }}
+</p>
+
+<table class="load">
+  <thead>
+    <tr>
+      <th class="col-n">№</th>
+      <th class="col-teacher">ФИО преподавателя</th>
+      <th class="col-num">Лекции</th>
+      <th class="col-num">Занятия семинарского типа</th>
+      <th class="col-num">Практика</th>
+      <th class="col-num">Всего</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.n }}</td>
+        <td class="teacher">{{ r.teacher }}</td>
+        <td>{{ r.lecture }}</td>
+        <td>{{ r.seminar }}</td>
+        <td>{{ r.practice }}</td>
+        <td>{{ r.total }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2" class="teacher">Итого</td>
+      <td>{{ total_lecture }}</td>
+      <td>{{ total_seminar }}</td>
+      <td>{{ total_practice }}</td>
+      <td>{{ grand_total }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="signature">
+  {{ signer_position }} _________________ {{ signer }}
+</div>
+
+</body>
+</html>
