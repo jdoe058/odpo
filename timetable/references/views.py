@@ -6,8 +6,8 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from datetime import date
 
-from . import export as csv_export
 from . import importer as csv_import
+from . import xlsx_export
 from .registry import get_spec, specs_in_import_order
 
 
@@ -54,9 +54,15 @@ def exchange_view(request):
 
 @login_required
 def export_view(request):
-    content = csv_export.export_bytes()
-    response = HttpResponse(content, content_type="text/csv; charset=utf-8")
-    filename = f"references_{date.today():%Y-%m-%d}.csv"
+    content = xlsx_export.references_to_xlsx_bytes()
+    response = HttpResponse(
+        content,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument"
+            ".spreadsheetml.sheet"
+        ),
+    )
+    filename = f"references_{date.today():%Y-%m-%d}.xlsx"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 

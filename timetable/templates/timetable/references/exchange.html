@@ -11,19 +11,19 @@
 <h1>Обмен справочниками</h1>
 
 <p class="muted">
-  Файл — единый CSV в кодировке UTF-8, разделитель «;».
-  Разделы помечены маркерами вида <code>[employees]</code>,
-  порядок разделов фиксирован.
+  Файл — XLSX, один лист на справочник.
+  Первый ряд — русские заголовки, второй — латиница,
+  данные с третьего ряда. Порядок листов не важен.
 </p>
 
 <section class="refs-block">
   <h2>Выгрузить</h2>
   <p>
-    <a class="button" href="{% url 'timetable:references_export' %}">Скачать CSV</a>
+    <a class="button" href="{% url 'timetable:references_export' %}">Скачать XLSX</a>
   </p>
   <p class="muted">
-    Порядок разделов:
-    {% for spec in specs %}<code>[{{ spec.slug }}]</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
+    Листы книги:
+    {% for spec in specs %}{{ spec.title }}{% if not forloop.last %}, {% endif %}{% endfor %}.
   </p>
 </section>
 
@@ -32,8 +32,8 @@
   <form method="post" enctype="multipart/form-data" class="refs-form">
     {% csrf_token %}
     <div class="field">
-      <label for="id_file">CSV-файл</label>
-      <input type="file" name="file" id="id_file" accept=".csv,text/csv">
+      <label for="id_file">XLSX-файл</label>
+      <input type="file" name="file" id="id_file" accept=".xlsx">
     </div>
     <div class="actions">
       <button type="submit" name="action" value="check">Проверить</button>

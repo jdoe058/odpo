@@ -46,13 +46,13 @@ SPECS: tuple[ReferenceSpec, ...] = (
         upsert_key="name",
         import_order=10,
         columns=(
-            Column("name", "str"),
-            Column("max_hours_per_day", "int"),
-            Column("max_hours_per_week", "int_nullable"),
-            Column("max_hours_per_year", "int_nullable"),
-            Column("can_sign", "bool"),
-            Column("can_approve", "bool"),
-            Column("sort_order", "int"),
+            Column("name", "str", header="Название"),
+            Column("max_hours_per_day", "int", header="Макс. часов в день"),
+            Column("max_hours_per_week", "int_nullable", header="Макс. часов в неделю"),
+            Column("max_hours_per_year", "int_nullable", header="Макс. часов в учебном году"),
+            Column("can_sign", "bool", header="Подписывает"),
+            Column("can_approve", "bool", header="Утверждает"),
+            Column("sort_order", "int", header="Порядок сортировки"),
         ),
     ),
     ReferenceSpec(
@@ -62,9 +62,9 @@ SPECS: tuple[ReferenceSpec, ...] = (
         upsert_key="short_name",
         import_order=20,
         columns=(
-            Column("short_name", "str"),
-            Column("position", "fk_name"),
-            Column("base", "fk_name"),
+            Column("short_name", "str", header="Фамилия и инициалы"),
+            Column("position", "fk_name", header="Должность"),
+            Column("base", "fk_name", header="База"),
         ),
         key_normalizer=normalize_short_name,
     ),
@@ -74,7 +74,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         model=Base,
         upsert_key="name",
         import_order=15,
-        columns=(Column("name", "str"),),
+        columns=(Column("name", "str", header="Название"),),
     ),
     ReferenceSpec(
         slug="funding_types",
@@ -82,7 +82,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         model=FundingType,
         upsert_key="name",
         import_order=40,
-        columns=(Column("name", "str"),),
+        columns=(Column("name", "str", header="Название"),),
     ),
     ReferenceSpec(
         slug="cycle_names",
@@ -90,7 +90,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         model=CycleName,
         upsert_key="name",
         import_order=50,
-        columns=(Column("name", "str"),),
+        columns=(Column("name", "str", header="Название"),),
     ),
     ReferenceSpec(
         slug="lesson_types",
@@ -99,15 +99,14 @@ SPECS: tuple[ReferenceSpec, ...] = (
         upsert_key="code",
         import_order=60,
         columns=(
-            Column("code", "str"),
-            Column("name", "str"),
-            Column("category", "str"),
-            Column("counts_in_hours", "bool"),
-            Column("sort_order", "int"),
+            Column("code", "str", header="Код"),
+            Column("name", "str", header="Название"),
+            Column("category", "str", header="Категория"),
+            Column("counts_in_hours", "bool", header="Учитывать часы"),
+            Column("sort_order", "int", header="Порядок сортировки"),
         ),
     ),
 )
-
 
 def all_specs() -> tuple[ReferenceSpec, ...]:
     return SPECS
