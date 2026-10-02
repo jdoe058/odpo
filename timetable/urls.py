@@ -38,8 +38,13 @@ urlpatterns = [
         name="cycle_import_template",
     ),
     path(
-    "reports/ped-hours/",
-    views.ped_hours_view,
-    name="ped_hours",
-),
+        "reports/ped-hours/",
+        views.ped_hours_view,
+        name="ped_hours",
+    ),
+    path(
+        "reports/ped-hours/export/",
+        views.ped_hours_export_view,
+        name="ped_hours_export",
+    ),
 ]

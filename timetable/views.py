@@ -1,7 +1,8 @@
+from datetime import date, timedelta
+from urllib.parse import quote
+
 from django.urls import reverse
 from django.http import HttpResponse
-
-from datetime import date, timedelta
 from django.db.models import Q
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
@@ -21,6 +22,7 @@ from .models import Cycle, Lesson, Base, normalize_short_name
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
 from .exports.cycle_xlsx_export import build_cycle_import_template
+from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
 
 @login_required
 def schedule_grid_view(request):
@@ -247,3 +249,33 @@ def ped_hours_view(request):
         "month_value": f"{year:04d}-{month:02d}",
         "month_label": f"{MONTH_NAMES_RU[month]} {year}",
     })
+
+@login_required
+def ped_hours_export_view(request):
+    today = date.today()
+    month_param = request.GET.get("month", "").strip()
+
+    try:
+        year_str, month_str = month_param.split("-")
+        year, month = int(year_str), int(month_str)
+        if not (1 <= month <= 12):
+            raise ValueError
+    except (ValueError, AttributeError):
+        year, month = today.year, today.month
+
+    report = calculate_ped_hours(year, month)
+    content = ped_hours_to_xlsx_bytes(report)
+
+    response = HttpResponse(
+        content,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument"
+            ".spreadsheetml.sheet"
+        ),
+    )
+    filename = f"ped_hours_{year:04d}-{month:02d}.xlsx"
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"; '
+        f"filename*=UTF-8''{quote(filename)}"
+    )
+    return response
