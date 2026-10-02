@@ -12,7 +12,7 @@ from timetable.exports.pdf.render import pdf_response, render_pdf
 # Виды, для которых уже есть HTML-шаблон и CSS.
 # Расширяется по мере готовности: в коммите 3 добавим teacher_load,
 # в коммите 4 — timesheet.
-PDF_KINDS = frozenset({"schedule", "teacher_load"})
+PDF_KINDS = frozenset({"schedule", "teacher_load", "timesheet"})
 
 
 def build_pdf_for_cycle(cycle, kind: str) -> bytes:

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Расчасовка рабочего времени</title>
+</head>
+<body>
+
+<div class="ts-signatures">
+  <div>{{ approver_position }} _________________ {{ approver }}</div>
+  <div>{{ signer_position }} _________________ {{ signer }}</div>
+</div>
+
+{% for m in months %}
+  <div class="month">
+    <div class="month-title">
+      <div class="line1">РАСЧАСОВКА</div>
+      <div class="line2">рабочего времени преподавателей ОДПО</div>
+      <div class="line3">
+        ДПП: {{ cycle_name }} ({{ funding }})<br>
+        c {{ start }} по {{ end }}
+      </div>
+      <div class="month-name">за {{ m.month_name }}</div>
+    </div>
+
+    <table class="ts">
+      <thead>
+        <tr>
+          <th class="col-n">№</th>
+          <th class="col-teacher">ФИО преподавателя</th>
+          {% for _ in "1234567890123456789012345678901" %}
+            <th>{{ forloop.counter }}</th>
+          {% endfor %}
+          <th class="col-total">Итого</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in m.rows %}
+          <tr>
+            <td>{{ row.n }}</td>
+            <td class="col-teacher">{{ row.teacher }}</td>
+            {% for cell in row.cells %}
+              <td>{{ cell }}</td>
+            {% endfor %}
+            <td>{{ row.total }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endfor %}
+
+</body>
+</html>

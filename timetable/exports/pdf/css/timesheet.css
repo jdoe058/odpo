@@ -1,0 +1,84 @@
+@page {
+  size: A4 landscape;
+  margin: 10mm 10mm 25mm 10mm;   /* снизу больше — под подписи */
+  @bottom-center {
+    content: element(ts-signatures);
+  }
+}
+
+.month {
+  page-break-after: always;
+}
+.month:last-child {
+  page-break-after: auto;
+}
+
+.month-title {
+  text-align: center;
+  margin: 0 0 3mm 0;
+}
+.month-title .line1 {
+  font-size: 13pt;
+  font-weight: bold;
+  letter-spacing: 0.5pt;
+}
+.month-title .line2 {
+  font-size: 11pt;
+}
+.month-title .line3 {
+  font-size: 11pt;
+  margin-top: 1mm;
+}
+.month-title .month-name {
+  font-size: 11pt;
+  font-weight: bold;
+  margin-top: 1mm;
+}
+
+table.ts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7pt;
+  table-layout: fixed;
+}
+
+table.ts th,
+table.ts td {
+  border: 1px solid #000;
+  padding: 0.5mm 0.3mm;
+  text-align: center;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+table.ts thead {
+  display: table-header-group;
+}
+table.ts thead th {
+  font-weight: bold;
+  background: #f0f0f0;
+  font-size: 7pt;
+}
+
+table.ts th.col-n       { width: 7mm; }
+table.ts th.col-teacher { width: 32mm; }
+table.ts th.col-total   { width: 10mm; }
+
+table.ts td.col-teacher {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table.ts tbody tr {
+  page-break-inside: avoid;
+  height: 5mm;
+}
+
+.ts-signatures {
+  position: running(ts-signatures);
+  text-align: center;
+  font-size: 9pt;
+  line-height: 1.6;
+}
