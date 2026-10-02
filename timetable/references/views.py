@@ -5,8 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from datetime import date
-
-from . import xlsx_importer as csv_import
+from . import xlsx_importer
 from . import xlsx_export
 from .registry import get_spec, specs_in_import_order
 
@@ -28,7 +27,7 @@ def exchange_view(request):
             else:
                 content = uploaded.read()
                 request.session[SESSION_KEY] = base64.b64encode(content).decode("ascii")
-                import_result = csv_import.parse_and_validate(content)
+                import_result = xlsx_importer.parse_and_validate(content)
 
         elif action == "apply":
             stored = request.session.get(SESSION_KEY)
@@ -36,7 +35,7 @@ def exchange_view(request):
                 messages.error(request, "Файл не загружен — начните заново.")
             else:
                 content = base64.b64decode(stored)
-                import_result = csv_import.apply(content)
+                import_result = xlsx_importer.apply(content)
                 if import_result.errors:
                     messages.error(request, "Импорт не применён — есть ошибки.")
                 else:
