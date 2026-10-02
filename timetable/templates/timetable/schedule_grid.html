@@ -37,7 +37,7 @@
 {% include "timetable/_hours_breakdown.html" %}
 
 <nav class="view-tabs">
-  <a class="tab active" data-tab="schedule" href="#">Расписание</a>
+  <a class="tab" data-tab="schedule" href="#">Расписание</a>
   <a class="tab" data-tab="lessons" href="#">Занятия</a>
 </nav>
 
@@ -108,15 +108,27 @@
 </div>
 
 <script>
-  document.querySelectorAll('.view-tabs .tab').forEach(tab => {
-    tab.addEventListener('click', e => {
-      e.preventDefault();
-      const name = tab.dataset.tab;
-      document.querySelectorAll('.view-tabs .tab')
-        .forEach(t => t.classList.toggle('active', t === tab));
-      document.querySelectorAll('.tab-panel')
-        .forEach(p => p.hidden = p.dataset.panel !== name);
+  (function () {
+    const STORAGE_KEY = 'schedule_active_tab';
+    const tabs = document.querySelectorAll('.view-tabs .tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    function activate(name) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+      panels.forEach(p => p.hidden = p.dataset.panel !== name);
+    }
+
+    const saved = sessionStorage.getItem(STORAGE_KEY) || 'schedule';
+    activate(saved);
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', e => {
+        e.preventDefault();
+        const name = tab.dataset.tab;
+        sessionStorage.setItem(STORAGE_KEY, name);
+        activate(name);
+      });
     });
-  });
+  })();
 </script>
 {% endblock %}
