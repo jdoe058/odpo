@@ -96,22 +96,36 @@ def schedule_grid_view(request):
         qs = (
             Lesson.objects
             .filter(cycle=cycle)
-            .select_related("lesson_type", "employee")
+            .select_related("lesson_type", "employee", "cycle", "cycle__name")
             .order_by("date", "time_start")
         )
         if base is not None:
             qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
-        if employee_q:
+        if employee_query:
             qs = qs.filter(employee_q)
         lessons = qs
+    elif base is not None or employee_query:
+        qs = (
+            Lesson.objects
+            .filter(date__gte=start, date__lte=end)
+            .select_related(
+                "lesson_type", "employee", "cycle", "cycle__name", "base",
+            )
+            .order_by("date", "time_start")
+        )
+        if base is not None:
+            qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
+        if employee_query:
+            qs = qs.filter(employee_q)
+        lessons = qs
+
+    prev_anchor = start - timedelta(days=1)
+    next_anchor = end + timedelta(days=1)
 
     cycles_qs = Cycle.objects.select_related("name", "base").order_by("-start_date")
     if base is not None:
         cycles_qs = cycles_qs.filter(base=base)
     cycles = cycles_qs
-
-    prev_anchor = start - timedelta(days=1)
-    next_anchor = end + timedelta(days=1)
 
     breakdown = calculate_cycle_hours(cycle) if cycle is not None else None
 

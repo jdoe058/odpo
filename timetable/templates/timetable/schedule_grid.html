@@ -71,11 +71,11 @@
 </div>
 
 <div class="tab-panel" data-panel="lessons" hidden>
-  {% if not selected_cycle %}
-    <div class="hint">Выберите цикл, чтобы увидеть занятия.</div>
-  {% elif not lessons %}
-    <div class="hint">В выбранном цикле нет занятий.</div>
-  {% else %}
+    {% if not selected_cycle and not selected_base and not selected_employee %}
+      <div class="hint">Выберите преподавателя или базу, чтобы увидеть занятия.</div>
+    {% elif not lessons %}
+      <div class="hint">В выбранном периоде занятий нет.</div>
+    {% else %}
     <table class="lessons">
       <thead>
         <tr>
@@ -86,6 +86,8 @@
           <th>Часов</th>
           <th>Тема</th>
           <th>Преподаватель</th>
+          {% if not selected_cycle %}<th>Цикл</th>{% endif %}
+          {% if not selected_base %}<th>База</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -100,6 +102,8 @@
             <td>{{ l.hours }}</td>
             <td>{{ l.topic }}</td>
             <td>{{ l.employee.short_name }}</td>
+            {% if not selected_cycle %}<td>{{ l.cycle.name.name }}</td>{% endif %}
+            {% if not selected_base %}<td>{{ l.effective_base.name }}</td>{% endif %}
           </tr>
         {% endfor %}
       </tbody>
