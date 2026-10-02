@@ -14,6 +14,7 @@ from .services.grid import calculate_grid
 from .services.limits import (
     SCOPE_LABELS, calculate_overtime, find_violations, format_violation,
 )
+from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 
 from .forms import LessonForm
 from .models import Cycle, Lesson, Base, normalize_short_name
@@ -222,3 +223,27 @@ def cycle_import_template_view(request):
         'attachment; filename="cycle_import_template.xlsx"'
     )
     return response
+
+@login_required
+def ped_hours_view(request):
+    today = date.today()
+    month_param = request.GET.get("month", "").strip()
+
+    if month_param:
+        try:
+            year_str, month_str = month_param.split("-")
+            year, month = int(year_str), int(month_str)
+            if not (1 <= month <= 12):
+                raise ValueError
+        except (ValueError, AttributeError):
+            year, month = today.year, today.month
+    else:
+        year, month = today.year, today.month
+
+    report = calculate_ped_hours(year, month)
+
+    return render(request, "timetable/reports/ped_hours.html", {
+        "report": report,
+        "month_value": f"{year:04d}-{month:02d}",
+        "month_label": f"{MONTH_NAMES_RU[month]} {year}",
+    })

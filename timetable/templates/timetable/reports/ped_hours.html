@@ -1,0 +1,81 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Педагогические часы — {{ month_label }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/references.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Распределение часов за {{ month_label }}</h1>
+
+<div class="refs-block">
+  <form method="get" class="refs-form">
+    <div class="field">
+      <label for="id_month">Месяц</label>
+      <input type="month" name="month" id="id_month" value="{{ month_value }}">
+    </div>
+    <div class="actions">
+      <button type="submit">Показать</button>
+    </div>
+  </form>
+</div>
+
+<p class="muted">
+  Всего часов: <b>{{ report.total_hours }}</b>,
+  Всего расписаний: <b>{{ report.total_cycles }}</b>
+</p>
+
+{% if report.rows %}
+  <table class="lessons">
+    <thead>
+      <tr>
+        <th>Пед. часы</th>
+        <th>ДПП</th>
+        <th>Дата начала</th>
+        <th>Дата окончания</th>
+        <th>ФИО</th>
+        <th>База</th>
+        <th>Обучение</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in report.rows %}
+        <tr>
+          <td>{{ r.hours }}</td>
+          <td>{{ r.cycle_name }}</td>
+          <td>{{ r.start_date|date:"d.m.Y" }}</td>
+          <td>{{ r.end_date|date:"d.m.Y" }}</td>
+          <td>{{ r.compiled_by }}</td>
+          <td>{{ r.base }}</td>
+          <td>{{ r.funding }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="refs-block">
+    <h2>Итоги по заведующим</h2>
+    <table class="lessons">
+      <thead>
+        <tr>
+          <th>Заведующий</th>
+          <th>Часы</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in report.totals %}
+          <tr>
+            <td>{{ t.compiled_by }}</td>
+            <td>{{ t.hours }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="hint">За {{ month_label }} циклов не найдено.</div>
+{% endif %}
+{% endblock %}
