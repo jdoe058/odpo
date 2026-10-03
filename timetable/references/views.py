@@ -64,11 +64,3 @@ def export_view(request):
     filename = f"references_{date.today():%Y-%m-%d}.xlsx"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
-
-
-@login_required
-def reference_stub_view(request, slug):
-    spec = get_spec(slug)
-    if spec is None:
-        raise Http404
-    return render(request, "timetable/references/stub.html", {"spec": spec})

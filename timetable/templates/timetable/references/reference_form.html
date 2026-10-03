@@ -1,0 +1,40 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}
+  {% if is_create %}Новая запись{% else %}Изменение{% endif %} — {{ spec.title }}
+{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lesson-form.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>
+  {% if is_create %}Новая запись:{% else %}Изменение:{% endif %} {{ spec.title }}
+</h1>
+
+<form method="post" class="lesson-form">
+  {% csrf_token %}
+
+  {% for field in form %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}
+        <div class="muted" style="font-size:12px;margin-top:4px">
+          {{ field.help_text }}
+        </div>
+      {% endif %}
+      {% if field.errors %}
+        <div class="errors">{{ field.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <div class="actions">
+    <button type="submit">Сохранить</button>
+    <a class="button" href="{% url 'timetable:reference_list' spec.slug %}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

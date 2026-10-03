@@ -9,7 +9,7 @@
     </button>
     <div class="nav-submenu" role="menu">
       {% for spec in specs %}
-        <a role="menuitem" href="{% url 'timetable:reference_stub' spec.slug %}">{{ spec.title }}</a>
+        <a role="menuitem" href="{% url 'timetable:reference_list' spec.slug %}">{{ spec.title }}</a>
       {% endfor %}
       <div class="nav-separator"></div>
       <a role="menuitem" href="{% url 'timetable:references_export' %}">Выгрузить справочники</a>

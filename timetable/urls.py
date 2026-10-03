@@ -1,9 +1,8 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 from .exports.pdf.pdf_views import export_pdf_view
 from .exports.views import cycle_xlsx_export_view
-from .references import views as references_views
 
 app_name = "timetable"
 
@@ -24,9 +23,7 @@ urlpatterns = [
         export_pdf_view,
         name="cycle_export",
     ),
-    path("references/", references_views.exchange_view, name="references_exchange"),
-    path("references/export/", references_views.export_view, name="references_export"),
-    path("references/<slug:slug>/", references_views.reference_stub_view, name="reference_stub"),
+    path("references/", include("timetable.references.urls")),
     path(
         "cycle/import/",
         views.cycle_import_view,

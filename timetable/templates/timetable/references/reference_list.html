@@ -1,0 +1,65 @@
+{% extends "timetable/base.html" %}
+{% load static timetable_tags %}
+
+{% block title %}{{ spec.title }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>{{ spec.title }}</h1>
+
+<p class="cycle-actions">
+  <a class="button" href="{% url 'timetable:reference_create' spec.slug %}">
+    Добавить
+  </a>
+</p>
+
+{% if objects %}
+  <table class="lessons">
+    <thead>
+      <tr>
+        {% for col in spec.columns %}
+          <th>{{ col.header|default:col.name }}</th>
+        {% endfor %}
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for obj in objects %}
+        <tr>
+          {% for col in spec.columns %}
+            <td>{{ obj|get_attr:col.name }}</td>
+          {% endfor %}
+          <td>
+            <a href="{% url 'timetable:reference_edit' spec.slug obj.pk %}">Изменить</a>
+          </td>
+          <td>
+            <form method="post"
+                  action="{% url 'timetable:reference_delete' spec.slug obj.pk %}"
+                  class="inline-form"
+                  data-confirm="Удалить «{{ obj }}»?">
+              {% csrf_token %}
+              <button type="submit" class="link-button danger">Удалить</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="hint">Записей нет. Добавьте первую.</div>
+{% endif %}
+
+<script>
+document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+  f.addEventListener('submit', function (e) {
+    if (!window.confirm(f.getAttribute('data-confirm'))) {
+      e.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}
