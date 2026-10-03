@@ -2,7 +2,7 @@
 from datetime import date, datetime, time
 
 from openpyxl import load_workbook
-
+from django.core.exceptions import ValidationError
 
 def load_from_upload(file_obj):
     """Открывает XLSX из UploadedFile. data_only=True — только значения, не формулы."""
@@ -68,3 +68,9 @@ def cell_int(value) -> int | None:
         except ValueError:
             return None
     return None
+
+
+def validate_xlsx_extension(file) -> None:
+    """Проверка, что загруженный файл имеет расширение .xlsx."""
+    if not file.name.lower().endswith(".xlsx"):
+        raise ValidationError("Ожидается файл с расширением .xlsx.")

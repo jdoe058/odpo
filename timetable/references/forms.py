@@ -4,6 +4,8 @@ from django import forms
 from django.forms import modelform_factory
 from django_select2.forms import ModelSelect2Widget
 
+from timetable.xlsx_utils import validate_xlsx_extension
+
 from .registry import get_spec
 
 
@@ -67,13 +69,5 @@ class ReferenceImportForm(forms.Form):
     file = forms.FileField(
         label="XLSX-файл",
         widget=forms.ClearableFileInput(attrs={"accept": ".xlsx"}),
+        validators=[validate_xlsx_extension],
     )
-
-    def clean_file(self):
-        f = self.cleaned_data["file"]
-        if not f.name.lower().endswith(".xlsx"):
-            raise forms.ValidationError(
-                "Ожидается файл с расширением .xlsx."
-            )
-        return f
-

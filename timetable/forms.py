@@ -1,4 +1,6 @@
 from django import forms
+
+from timetable.xlsx_utils import validate_xlsx_extension
 from .models import Lesson
 from .services.ped_hours import MONTH_NAMES_RU, available_years
 
@@ -39,4 +41,14 @@ class PedHoursFilterForm(forms.Form):
         month_field.choices = [
             (i + 1, name) for i, name in enumerate(MONTH_NAMES_RU[1:])
         ]
-        
+
+
+class CycleImportForm(forms.Form):
+    """Загрузка XLSX для импорта цикла."""
+
+    file = forms.FileField(
+        label="XLSX-файл",
+        widget=forms.ClearableFileInput(attrs={"accept": ".xlsx"}),
+        validators=[validate_xlsx_extension],
+    )
+

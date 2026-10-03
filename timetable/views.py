@@ -17,7 +17,7 @@ from .services.limits import (
 )
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 
-from .forms import LessonForm, PedHoursFilterForm
+from .forms import CycleImportForm, LessonForm, PedHoursFilterForm
 from .models import Cycle, Lesson, Base, normalize_short_name
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
@@ -189,14 +189,13 @@ def lesson_edit_view(request, pk):
 @login_required
 def cycle_import_view(request):
     errors: list[str] = []
+    form = CycleImportForm()
 
     if request.method == "POST":
-        uploaded = request.FILES.get("file")
-        if uploaded is None:
-            errors = ["Файл не выбран."]
-        else:
+        form = CycleImportForm(request.POST, request.FILES)
+        if form.is_valid():
             try:
-                cycle = import_cycle_from_xlsx(uploaded)
+                cycle = import_cycle_from_xlsx(form.cleaned_data["file"])
             except CycleImportError as e:
                 errors = e.errors
             else:
@@ -208,8 +207,10 @@ def cycle_import_view(request):
                 url = reverse("timetable:schedule_grid")
                 return redirect(f"{url}?cycle={cycle.pk}")
 
-    return render(request, "timetable/cycle_import.html", {"errors": errors})
-
+    return render(request, "timetable/cycle_import.html", {
+        "form": form,
+        "errors": errors,
+    })
 
 @login_required
 def cycle_import_template_view(request):
