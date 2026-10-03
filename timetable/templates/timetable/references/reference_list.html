@@ -4,17 +4,32 @@
 {% block title %}{{ spec.title }}{% endblock %}
 
 {% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/filters.css' %}">
   <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
 {% endblock %}
 
 {% block content %}
 <h1>{{ spec.title }}</h1>
 
-<p class="cycle-actions">
-  <a class="button" href="{% url 'timetable:reference_create' spec.slug %}">
-    Добавить
-  </a>
-</p>
+<form method="get" class="filters" style="margin-bottom: 12px;">
+  <div class="filters-row">
+    <div class="field-inline">
+      <label for="id_q">Поиск</label>
+      <input type="search" name="q" id="id_q" value="{{ q }}"
+             placeholder="Часть названия">
+    </div>
+    <button type="submit">Найти</button>
+    {% if q %}
+      <a class="reset-link"
+         href="{% url 'timetable:reference_list' spec.slug %}">Сбросить</a>
+    {% endif %}
+    <div style="margin-left: auto;">
+      <a class="button" href="{% url 'timetable:reference_create' spec.slug %}">
+        Добавить
+      </a>
+    </div>
+  </div>
+</form>
 
 {% if objects %}
   <table class="lessons">

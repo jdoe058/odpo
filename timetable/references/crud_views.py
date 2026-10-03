@@ -1,7 +1,7 @@
 """Универсальные CRUD-вью для справочников из реестра."""
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -20,9 +20,23 @@ def _spec_or_404(slug: str):
 @login_required
 def reference_list(request, slug):
     spec = _spec_or_404(slug)
+    q = (request.GET.get("q") or "").strip()
+
+    qs = spec.model.objects.all()
+    if q:
+        cond = Q()
+        for col in spec.columns:
+            if col.kind == "str":
+                cond |= Q(**{f"{col.name}__icontains": q})
+            elif col.kind == "fk_name":
+                cond |= Q(**{f"{col.name}__{col.fk_attr}__icontains": q})
+        if cond:
+            qs = qs.filter(cond)
+
     return render(request, "timetable/references/reference_list.html", {
         "spec": spec,
-        "objects": spec.model.objects.all(),
+        "objects": qs,
+        "q": q,
     })
 
 

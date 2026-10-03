@@ -23,13 +23,19 @@ form.filters {
 }
 .filters-row label { font-size: 12px; color: var(--color-text-muted-alt); }
 .filters-row select,
-.filters-row input[type="date"] {
+.filters-row input[type="date"],
+.filters-row input[type="search"] {
   padding: 6px 8px;
   border: 1px solid var(--color-border-strong);
   border-radius: 4px;
   font: inherit;
   background: var(--color-surface);
 }
+
+.filters-row input[type="search"] {
+  min-width: 260px;
+}
+
 .filters-row button {
   padding: 7px 16px;
   border: none;
@@ -72,4 +78,15 @@ form.filters {
   background: var(--color-primary);
   color: var(--color-primary-fg);
   font-weight: 600;
+}
+.reset-link {
+  font-size: 13px;
+  color: var(--color-text-muted-alt);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+.reset-link:hover {
+  background: var(--color-surface-subtle);
+  color: var(--color-danger);
 }
