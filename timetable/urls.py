@@ -8,6 +8,7 @@ app_name = "timetable"
 
 urlpatterns = [
     path("", views.ScheduleGrid.as_view(), name="schedule_grid"),
+    path("lessons/", views.ScheduleLessons.as_view(), name="schedule_lessons"),
     path(
         "lessons/<int:pk>/edit/",
         views.lesson_edit_view,

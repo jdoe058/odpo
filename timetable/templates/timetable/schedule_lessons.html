@@ -1,0 +1,73 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Занятия — {{ start|date:"d.m.Y" }} — {{ end|date:"d.m.Y" }}{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/filters.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/breakdown.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/overtime.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Занятия: {{ start|date:"d.m.Y" }} — {{ end|date:"d.m.Y" }}</h1>
+
+{% include "timetable/_overtime_block.html" %}
+
+{% include "timetable/_schedule_filters.html" %}
+
+{% if selected_cycle %}
+<div class="cycle-actions">
+  {% for kind in export_kinds %}
+    <a class="button"
+       href="{% url 'timetable:cycle_export' selected_cycle.pk kind.code %}">
+      📄 {{ kind.name }}
+    </a>
+  {% endfor %}
+  <a class="button"
+     href="{% url 'timetable:cycle_export_xlsx' selected_cycle.pk %}">
+    📄 XLSX
+  </a>
+</div>
+{% endif %}
+
+{% if not selected_cycle and not base and not selected_employee %}
+  <div class="hint">Выберите цикл, базу или преподавателя, чтобы увидеть занятия.</div>
+{% elif not lessons %}
+  <div class="hint">В выбранном периоде занятий нет.</div>
+{% else %}
+  <table class="lessons">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Дата</th>
+        <th>Время</th>
+        <th>Тип</th>
+        <th>Часов</th>
+        <th>Тема</th>
+        <th>Преподаватель</th>
+        {% if not selected_cycle %}<th>Цикл</th>{% endif %}
+        {% if not base %}<th>База</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lessons %}
+        <tr>
+          <td>
+            <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}">✎</a>
+          </td>
+          <td>{{ l.date|date:"d.m.Y" }}</td>
+          <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
+          <td>{{ l.lesson_type.name }}</td>
+          <td>{{ l.hours }}</td>
+          <td>{{ l.topic }}</td>
+          <td>{{ l.employee.short_name }}</td>
+          {% if not selected_cycle %}<td>{{ l.cycle.name.name }}</td>{% endif %}
+          {% if not base %}<td>{{ l.effective_base.name }}</td>{% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

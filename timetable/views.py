@@ -12,7 +12,7 @@ from django.views.generic import TemplateView
 
 from timetable.exports.kinds import all_specs
 from timetable.schedule_filter import (
-    ScheduleFilterMixin, filter_cycles, filter_lessons,
+    ScheduleFilterMixin, build_common_context, filter_lessons,
 )
 from timetable.services.cycle_hours import calculate_cycle_hours
 
@@ -32,23 +32,38 @@ class ScheduleGrid(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        data = self.filter_data
+        ctx.update(build_common_context(self))
 
-        start = data["resolved_start"]
-        end = data["resolved_end"]
+        data = self.filter_data
         cycle = data.get("cycle")
-        base = data.get("base")
 
         grid = calculate_grid(
-            start, end, cycle=cycle, base=base,
+            ctx["start"], ctx["end"],
+            cycle=cycle, base=data.get("base"),
             employee_q=data["employee_q"],
         )
+        breakdown = (
+            calculate_cycle_hours(cycle) if cycle is not None else None
+        )
 
-        overtime = []
-        for scope in ("day", "week", "year"):
-            items = calculate_overtime(scope)
-            if items:
-                overtime.append((SCOPE_LABELS[scope], items))
+        ctx.update({
+            "grid": grid,
+            "breakdown": breakdown,
+            "export_kinds": all_specs(),
+        })
+        return ctx
+
+
+class ScheduleLessons(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
+    template_name = "timetable/schedule_lessons.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(build_common_context(self))
+
+        data = self.filter_data
+        cycle = data.get("cycle")
+        base = data.get("base")
 
         lessons = []
         if cycle is not None:
@@ -62,7 +77,7 @@ class ScheduleGrid(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
         elif base is not None or data["employee_query"]:
             qs = (
                 Lesson.objects
-                .filter(date__gte=start, date__lte=end)
+                .filter(date__gte=ctx["start"], date__lte=ctx["end"])
                 .select_related(
                     "lesson_type", "employee", "cycle", "cycle__name", "base",
                 )
@@ -70,33 +85,13 @@ class ScheduleGrid(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
             )
             lessons = filter_lessons(qs, data)
 
-        cycles_qs = (
-            Cycle.objects
-            .select_related("name", "base")
-            .order_by("-start_date")
-        )
-        cycles = filter_cycles(cycles_qs, data)
-
-        breakdown = (
-            calculate_cycle_hours(cycle) if cycle is not None else None
-        )
-
         ctx.update({
-            "form": self.filter_form,
-            "grid": grid,
-            "overtime": overtime,
             "lessons": lessons,
-            "period": data["period"],
-            "cycles": cycles,
-            "selected_cycle": cycle,
             "export_kinds": all_specs(),
-            "prev_anchor": start - timedelta(days=1),
-            "next_anchor": end + timedelta(days=1),
-            "breakdown": breakdown,
-            "selected_employee": data["employee_query"],
-            "bases": Base.objects.order_by("name"),
         })
         return ctx
+    
+
 @login_required
 def lesson_edit_view(request, pk):
     lesson = get_object_or_404(

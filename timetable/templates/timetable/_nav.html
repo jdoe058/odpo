@@ -1,7 +1,8 @@
 {% load timetable_tags %}
 {% get_reference_specs as specs %}
 <header>
-  <a href="{% url 'timetable:schedule_grid' %}">Главная</a>
+  <a href="{% url 'timetable:schedule_grid' %}">Сетка</a>
+  <a href="{% url 'timetable:schedule_lessons' %}">Занятия</a>
 
   <span class="nav-item has-submenu" id="nav-references">
     <button type="button" class="nav-toggle" aria-haspopup="true" aria-expanded="false">
