@@ -44,7 +44,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     search_fields = ("short_name",)
     ordering = ("short_name",)
     autocomplete_fields = ("position", "base")
-    actions = ["change_base"]
+    actions = ["change_base", "clear_base"]
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -67,6 +67,15 @@ class EmployeeAdmin(admin.ModelAdmin):
     @admin.display(description="Утверждает", boolean=True)
     def can_approve(self, obj):
         return obj.can_approve
+
+    @admin.action(description="Очистить базу у выбранных сотрудников")
+    def clear_base(self, request, queryset):
+        updated = queryset.update(base=None)
+        self.message_user(
+            request,
+            f"База очищена у {updated} сотрудников.",
+            messages.SUCCESS,
+        )
 
     @admin.action(description="Сменить базу у выбранных сотрудников")
     def change_base(self, request, queryset):
