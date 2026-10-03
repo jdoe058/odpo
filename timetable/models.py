@@ -15,6 +15,7 @@ def normalize_name(value) -> str:
     """Схлопывает пробелы и приводит к верхнему регистру."""
     return " ".join(str(value or "").split()).upper()
 
+
 def normalize_short_name(value: str) -> str:
     """
     Приводит ФИО к виду «ФАМИЛИЯ И.И.»:
@@ -38,12 +39,14 @@ def normalize_short_name(value: str) -> str:
 
     return last_name + " " + "".join(f"{ch}." for ch in initials_letters)
 
+
 def validate_short_name(value: str) -> None:
     """Проверить формат после нормализации."""
     if not SHORT_NAME_RE.match(value):
         raise ValidationError(
             "Укажите фамилию и инициалы в верхнем регистре, например: ИВАНОВ И.И."
         )
+
 
 class Position(models.Model):
     """Должность сотрудника."""
@@ -100,6 +103,7 @@ class Position(models.Model):
     @property
     def can_teach(self) -> bool:
         return self.max_hours_per_day > 0
+
 
 class Employee(models.Model):
     """Сотрудник."""
@@ -172,6 +176,7 @@ class Employee(models.Model):
     def can_approve(self) -> bool:
         return self.position.can_approve
 
+
 class Base(models.Model):
     name = models.CharField(
         max_length=255,
@@ -186,6 +191,7 @@ class Base(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class LessonType(models.Model):
     class Category(models.TextChoices):
@@ -217,6 +223,7 @@ class LessonType(models.Model):
     def __str__(self):
         return f"{self.code} — {self.name}"
 
+
 class FundingType(models.Model):
     name = models.CharField(
         max_length=255,
@@ -232,6 +239,7 @@ class FundingType(models.Model):
     def __str__(self):
         return self.name
 
+
 class CycleName(models.Model):
     name = models.CharField(
         max_length=255,
@@ -246,6 +254,7 @@ class CycleName(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Cycle(models.Model):
     name = models.ForeignKey(
@@ -303,6 +312,7 @@ class Cycle(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.start_date:%d.%m.%Y} — {self.end_date:%d.%m.%Y})"
+
 
 class Lesson(models.Model):
     cycle = models.ForeignKey(
@@ -381,3 +391,71 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
+
+
+class Discipline(models.Model):
+    """Дисциплина (акушерское дело, скорая помощь, ...)."""
+
+    name_full = models.CharField(
+        "Полное название", max_length=255, unique=True,
+    )
+    name_short = models.CharField(
+        "Краткое название", max_length=100,
+    )
+    sort_order = models.PositiveSmallIntegerField(
+        "Порядок сортировки", default=100,
+    )
+
+    class Meta:
+        verbose_name = "Дисциплина"
+        verbose_name_plural = "Дисциплины"
+        ordering = ["sort_order", "name_short"]
+
+    def __str__(self) -> str:
+        return self.name_short
+
+
+class WorkProgram(models.Model):
+    """Рабочая программа: дисциплина + год + вид + часы."""
+
+    class Kind(models.TextChoices):
+        PP = "ПП", "Профессиональная переподготовка"
+        PK = "ПК", "Повышение квалификации"
+
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.PROTECT,
+        related_name="work_programs",
+        verbose_name="Дисциплина",
+    )
+    academic_year = models.PositiveSmallIntegerField("Год")
+    kind = models.CharField("Вид", max_length=2, choices=Kind.choices)
+    hours = models.PositiveSmallIntegerField("Часы")
+
+    class Meta:
+        verbose_name = "Рабочая программа"
+        verbose_name_plural = "Рабочие программы"
+        ordering = ["-academic_year", "kind", "discipline__name_short"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["discipline", "academic_year", "kind", "hours"],
+                name="work_program_unique",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def code(self) -> str:
+        """2025_ПК_Акушерское_дело_144"""
+        disc = self.discipline.name_short.replace(" ", "_")
+        return f"{self.academic_year}_{self.kind}_{disc}_{self.hours}"
+
+    @property
+    def title(self) -> str:
+        """2025 ПК Акушерское дело 144"""
+        return (
+            f"{self.academic_year} {self.kind} "
+            f"{self.discipline.name_short} {self.hours}"
+        )

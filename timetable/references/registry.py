@@ -1,5 +1,6 @@
 """
-Реестр справочников: единый источник истины для меню, обмена XLSX и CRUD-страниц.
+Реестр справочников: единый источник истины для меню, обмена XLSX
+и CRUD-страниц.
 
 Не импортирует Django-настройки сам — только модели. Загружается
 только тогда, когда Django уже готов (после apps.ready).
@@ -8,8 +9,8 @@ from dataclasses import dataclass
 from typing import Callable
 
 from timetable.models import (
-    Base, CycleName, Employee, FundingType, LessonType, Position,
-    normalize_short_name,
+    Base, CycleName, Discipline, Employee, FundingType, LessonType,
+    Position, WorkProgram, normalize_short_name,
 )
 
 
@@ -28,7 +29,7 @@ class ReferenceSpec:
     slug: str
     title: str
     model: type
-    upsert_key: str
+    upsert_key: str | tuple[str, ...]  # одно поле или составной ключ
     import_order: int
     columns: tuple[Column, ...]
     key_normalizer: Callable[[str], str] | None = None
@@ -132,7 +133,35 @@ SPECS: tuple[ReferenceSpec, ...] = (
         search_fields=("name",),
         add_another_prefill=("category",),
     ),
+    ReferenceSpec(
+        slug="disciplines",
+        title="Дисциплины",
+        model=Discipline,
+        upsert_key="name_full",
+        import_order=70,
+        columns=(
+            Column("name_full", "str", header="Полное название"),
+            Column("name_short", "str", header="Краткое название"),
+            Column("sort_order", "int", header="Порядок сортировки"),
+        ),
+        list_columns=("name_full", "name_short"),
+        search_fields=("name_full", "name_short"),
+    ),
+    ReferenceSpec(
+        slug="work_programs",
+        title="Рабочие программы",
+        model=WorkProgram,
+        upsert_key=("discipline", "academic_year", "kind", "hours"),
+        import_order=80,
+        columns=(
+            Column("discipline", "fk_name", header="Дисциплина"),
+            Column("academic_year", "int", header="Год"),
+            Column("kind", "str", header="Вид"),
+            Column("hours", "int", header="Часы"),
+        ),
+    ),
 )
+
 
 def all_specs() -> tuple[ReferenceSpec, ...]:
     return SPECS

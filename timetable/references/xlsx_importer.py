@@ -171,30 +171,46 @@ def _resolve_foreign_keys(row, row_idx, spec, columns, result: ParseResult) -> b
 
 
 def _resolve_upsert_key(row, row_idx, spec, result: ParseResult) -> bool:
-    key_value = row.get(spec.upsert_key)
+    keys = (
+        spec.upsert_key
+        if isinstance(spec.upsert_key, tuple)
+        else (spec.upsert_key,)
+    )
 
-    if spec.key_normalizer is not None and key_value is not None:
-        key_value = spec.key_normalizer(key_value)
-        row[spec.upsert_key] = key_value
+    lookup: dict = {}
+    for key in keys:
+        # FK-поле уже разрешилось в `<key>_id` в предыдущем шаге.
+        if f"{key}_id" in row:
+            lookup[f"{key}_id"] = row[f"{key}_id"]
+        else:
+            lookup[key] = row.get(key)
 
-    if not key_value:
+    # Нормализация — только для одиночного текстового ключа.
+    if isinstance(spec.upsert_key, str) and spec.key_normalizer is not None:
+        value = lookup.get(spec.upsert_key)
+        if value is not None:
+            value = spec.key_normalizer(value)
+            lookup[spec.upsert_key] = value
+            row[spec.upsert_key] = value
+
+    missing = [k for k, v in lookup.items() if v in (None, "")]
+    if missing:
         result.errors.append(
-            f"[{spec.title}], строка {row_idx}: пустое значение ключа "
-            f"«{spec.upsert_key}»"
+            f"[{spec.title}], строка {row_idx}: пустой ключ "
+            f"({', '.join(missing)})"
         )
         return False
 
-    obj = spec.model.objects.filter(**{spec.upsert_key: key_value}).first()
+    obj = spec.model.objects.filter(**lookup).first()
     if obj is None:
         result.errors.append(
-            f"[{spec.title}], строка {row_idx}: запись с "
-            f"{spec.upsert_key}=«{key_value}» не найдена"
+            f"[{spec.title}], строка {row_idx}: запись по ключу "
+            f"{lookup} не найдена"
         )
         return False
 
     row["_pk"] = obj.pk
     return True
-
 
 # --- Типы ---------------------------------------------------------------
 
