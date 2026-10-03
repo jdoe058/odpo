@@ -25,7 +25,7 @@ def reference_list(request, slug):
     qs = spec.model.objects.all()
     if q:
         cond = Q()
-        for col in spec.columns:
+        for col in spec.searchable_columns():
             if col.kind == "str":
                 cond |= Q(**{f"{col.name}__icontains": q})
             elif col.kind == "fk_name":
@@ -37,6 +37,7 @@ def reference_list(request, slug):
         "spec": spec,
         "objects": qs,
         "q": q,
+        "columns": spec.visible_columns(),
     })
 
 

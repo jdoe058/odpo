@@ -29,13 +29,31 @@ class Column:
 
 @dataclass(frozen=True)
 class ReferenceSpec:
-    slug: str               # маркер [slug] в CSV, латиница
-    title: str              # человекочитаемое название (комментарий, меню)
+    slug: str
+    title: str
     model: type
-    upsert_key: str         # по какому полю искать существующую запись
-    import_order: int       # порядок секций в файле (жёсткий)
+    upsert_key: str
+    import_order: int
     columns: tuple[Column, ...]
     key_normalizer: Callable[[str], str] | None = None
+    list_columns: tuple[str, ...] = ()
+    search_fields: tuple[str, ...] = ()
+
+    def visible_columns(self) -> tuple[Column, ...]:
+        """Колонки для отображения в списке."""
+        if not self.list_columns:
+            return self.columns
+        by_name = {c.name: c for c in self.columns}
+        return tuple(by_name[n] for n in self.list_columns if n in by_name)
+
+    def searchable_columns(self) -> tuple[Column, ...]:
+        """Колонки, по которым работает поиск."""
+        if self.search_fields:
+            by_name = {c.name: c for c in self.columns}
+            return tuple(by_name[n] for n in self.search_fields if n in by_name)
+        return tuple(
+            c for c in self.columns if c.kind in ("str", "fk_name")
+        )
 
 
 SPECS: tuple[ReferenceSpec, ...] = (
@@ -54,6 +72,11 @@ SPECS: tuple[ReferenceSpec, ...] = (
             Column("can_approve", "bool", header="Утверждает"),
             Column("sort_order", "int", header="Порядок сортировки"),
         ),
+        list_columns=(
+            "name", "max_hours_per_day", "max_hours_per_week",
+            "max_hours_per_year", "can_sign", "can_approve",
+        ),
+        search_fields=("name",),
     ),
     ReferenceSpec(
         slug="employees",
@@ -67,6 +90,8 @@ SPECS: tuple[ReferenceSpec, ...] = (
             Column("base", "fk_name", header="База"),
         ),
         key_normalizer=normalize_short_name,
+        list_columns=("short_name", "position", "base"),
+        search_fields=("short_name", ),
     ),
     ReferenceSpec(
         slug="bases",
@@ -105,6 +130,8 @@ SPECS: tuple[ReferenceSpec, ...] = (
             Column("counts_in_hours", "bool", header="Учитывать часы"),
             Column("sort_order", "int", header="Порядок сортировки"),
         ),
+        list_columns=("code", "name", "category"),
+        search_fields=("name",),
     ),
 )
 

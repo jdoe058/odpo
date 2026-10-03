@@ -35,7 +35,7 @@
   <table class="lessons">
     <thead>
       <tr>
-        {% for col in spec.columns %}
+        {% for col in columns %}
           <th>{{ col.header|default:col.name }}</th>
         {% endfor %}
         <th></th>
@@ -45,7 +45,7 @@
     <tbody>
       {% for obj in objects %}
         <tr>
-          {% for col in spec.columns %}
+          {% for col in columns %}
             <td>{{ obj|get_attr:col.name }}</td>
           {% endfor %}
           <td>
