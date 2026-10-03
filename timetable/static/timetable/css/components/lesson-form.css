@@ -32,13 +32,4 @@ form.lesson-form .actions {
   gap: 8px;
   align-items: center;
 }
-form.lesson-form .actions button {
-  padding: 7px 16px;
-  border: none;
-  background: var(--color-primary);
-  color: var(--color-primary-fg);
-  border-radius: 3px;
-  cursor: pointer;
-  font: inherit;
-}
-form.lesson-form .actions button:hover { background: var(--color-primary-hover); }
+

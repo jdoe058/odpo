@@ -10,9 +10,7 @@
   /* Границы */
   --color-border:              #dde1e7;
   --color-border-light:        #e3e7ec;
-  --color-border-grid:         #ddd;
   --color-border-strong:       #c8ccd2;
-  --color-border-muted:        #cdd5df;
 
   /* Текст */
   --color-text:                #222;
@@ -20,7 +18,6 @@
   --color-text-muted:          #555;
   --color-text-muted-alt:      #666;
   --color-text-muted-strong:   #777;
-  --color-text-muted-light:    #888;
   --color-text-disabled:       #ccc;
 
   /* Бренд */
@@ -49,18 +46,6 @@ body {
   background: var(--color-bg);
 }
 
-header {
-  background: var(--color-primary);
-  color: var(--color-primary-fg);
-  padding: 12px 20px;
-}
-header a {
-  color: var(--color-primary-fg-muted);
-  text-decoration: none;
-  margin-right: 16px;
-}
-header a:hover { color: var(--color-primary-fg); }
-
 main {
   padding: 20px;
   max-width: 1400px;
@@ -69,24 +54,63 @@ main {
 
 h1 { font-size: 20px; margin: 0 0 16px; }
 
-a.button {
-  display: inline-block;
-  padding: 4px 10px;
-  background: var(--color-primary);
-  color: var(--color-primary-fg);
-  border-radius: 3px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-}
-a.button:hover { background: var(--color-primary-hover); }
-
 .muted { color: var(--color-text-muted-strong); }
 
+/* ===================== Кнопки ===================== */
+a.button,
+.filters-row button,
+.refs-form button[type="submit"],
+form.lesson-form .actions button {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+  border: none;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.button:hover,
+.filters-row button:hover,
+.refs-form button[type="submit"]:hover,
+form.lesson-form .actions button:hover {
+  background: var(--color-primary-hover);
+}
+
 /* ===================== Шапка ===================== */
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+  padding: 12px 20px;
+}
+
+header a {
+  color: var(--color-primary-fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+header a:hover { color: var(--color-primary-fg); }
+
 .user-box {
-  float: right;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.user-box form {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .link-button {
@@ -96,8 +120,8 @@ a.button:hover { background: var(--color-primary-hover); }
   cursor: pointer;
   font: inherit;
   padding: 0;
-  margin-left: 8px;
 }
+.link-button:hover { color: var(--color-primary-fg); }
 
 /* ===================== Сообщения ===================== */
 ul.messages {

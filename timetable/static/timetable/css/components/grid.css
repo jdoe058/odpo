@@ -1,7 +1,7 @@
 table.grid { border-collapse: collapse; background: var(--color-surface); }
 table.grid th,
 table.grid td {
-  border: 1px solid var(--color-border-grid);
+  border: 1px solid var(--color-border);
   padding: 4px 8px;
   font-size: 13px;
 }
@@ -23,4 +23,3 @@ table.grid .is-over {
   font-weight: 600;
 }
 table.grid .is-weekend { background: var(--color-surface-weekend); }
-table.grid tfoot th { background: var(--color-surface-subtle); }

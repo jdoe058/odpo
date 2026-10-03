@@ -25,5 +25,5 @@
 }
 .hours-breakdown .total-col {
   background: var(--color-surface-subtle);
-  border-left: 2px solid var(--color-border-muted);
+  border-left: 2px solid var(--color-border-strong);
 }
