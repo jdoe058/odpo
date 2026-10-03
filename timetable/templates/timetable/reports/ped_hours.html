@@ -4,45 +4,30 @@
 {% block title %}Педагогические часы — {{ month_label }}{% endblock %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'timetable/css/components/references.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/filters.css' %}">
   <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
 {% endblock %}
 
 {% block content %}
 <h1>Распределение часов за {{ month_label }}</h1>
 
-<div class="refs-block">
-  <form method="get" class="refs-form">
-    <div class="filters-row">
-      <div class="field-inline">
-        <label for="id_month">Месяц</label>
-        <select name="month" id="id_month">
-          {% for m in month_names %}
-            <option value="{{ forloop.counter }}"
-                    {% if forloop.counter == selected_month %}selected{% endif %}>
-              {{ m }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="field-inline">
-        <label for="id_year">Год</label>
-        <select name="year" id="id_year">
-          {% for y in years %}
-            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
-          {% endfor %}
-        </select>
-      </div>
+<form method="get" class="filters">
+  <div class="filters-row">
+    <div class="field-inline">
+      {{ form.month.label_tag }}
+      {{ form.month }}
     </div>
-    <div class="actions">
-      <button type="submit">Показать</button>
-      <a class="button"
-         href="{% url 'timetable:ped_hours_export' %}?year={{ selected_year }}&month={{ selected_month }}">
-        Скачать XLSX
-      </a>
+    <div class="field-inline">
+      {{ form.year.label_tag }}
+      {{ form.year }}
     </div>
-  </form>
-</div>
+    <button type="submit">Показать</button>
+    <a class="button"
+       href="{% url 'timetable:ped_hours_export' %}?year={{ report.year }}&month={{ report.month }}">
+      Скачать XLSX
+    </a>
+  </div>
+</form>
 
 <p class="muted">
   Всего часов: <b>{{ report.total_hours }}</b>,
@@ -99,4 +84,14 @@
 {% else %}
   <div class="hint">За {{ month_label }} циклов не найдено.</div>
 {% endif %}
+
+<script>
+  (function () {
+    const form = document.querySelector('form.filters');
+    if (!form) return;
+    form.querySelectorAll('select').forEach(function (sel) {
+      sel.addEventListener('change', function () { form.submit(); });
+    });
+  })();
+</script>
 {% endblock %}

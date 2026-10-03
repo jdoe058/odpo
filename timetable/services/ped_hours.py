@@ -5,7 +5,7 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
 
-from django.db.models import Sum
+from django.db.models import Min, Sum
 
 from timetable.models import Cycle
 
@@ -51,6 +51,17 @@ def month_bounds(year: int, month: int) -> tuple[date, date]:
     last_day = monthrange(year, month)[1]
     return date(year, month, 1), date(year, month, last_day)
 
+def available_years() -> list[int]:
+    """
+    Годы для селекта: от минимального года цикла до текущего+1.
+    Минимум 5 лет в списке, даже если циклов мало.
+    """
+    today = date.today()
+    min_date = Cycle.objects.aggregate(m=Min("start_date"))["m"]
+    start = min_date.year if min_date else today.year - 2
+    start = min(start, today.year - 2)
+    end = max(today.year + 1, start + 4)
+    return list(range(start, end + 1))
 
 def calculate_ped_hours(year: int, month: int) -> PedHoursReport:
     """
@@ -70,7 +81,7 @@ def calculate_ped_hours(year: int, month: int) -> PedHoursReport:
 
     rows = [
         PedHoursRow(
-            hours=c.total_hours or 0,
+            hours=getattr(c, "total_hours", 0) or 0,
             cycle_name=c.name.name,
             start_date=c.start_date,
             end_date=c.end_date,

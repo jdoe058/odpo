@@ -1,5 +1,6 @@
 from django import forms
 from .models import Lesson
+from .services.ped_hours import MONTH_NAMES_RU, available_years
 
 
 class LessonForm(forms.ModelForm):
@@ -21,3 +22,21 @@ class LessonForm(forms.ModelForm):
         widgets = {
             "time_start": forms.TimeInput(attrs={"type": "time"}),
         }
+
+class PedHoursFilterForm(forms.Form):
+    """Фильтр отчёта «Педагогические часы»."""
+
+    year = forms.ChoiceField(label="Год")
+    month = forms.ChoiceField(label="Месяц")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        year_field: forms.ChoiceField = self.fields["year"]  # type: ignore[assignment]
+        year_field.choices = [(y, y) for y in available_years()]
+
+        month_field: forms.ChoiceField = self.fields["month"]  # type: ignore[assignment]
+        month_field.choices = [
+            (i + 1, name) for i, name in enumerate(MONTH_NAMES_RU[1:])
+        ]
+        

@@ -17,7 +17,7 @@ from .services.limits import (
 )
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 
-from .forms import LessonForm
+from .forms import LessonForm, PedHoursFilterForm
 from .models import Cycle, Lesson, Base, normalize_short_name
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
@@ -229,32 +229,32 @@ def cycle_import_template_view(request):
 @login_required
 def ped_hours_view(request):
     today = date.today()
-    year, month = _parse_year_month(request)
+    form = PedHoursFilterForm(request.GET or None)
+
+    if form.is_valid():
+        year = int(form.cleaned_data["year"])
+        month = int(form.cleaned_data["month"])
+    else:
+        year, month = today.year, today.month
+        form = PedHoursFilterForm(initial={"year": year, "month": month})
+
     report = calculate_ped_hours(year, month)
 
     return render(request, "timetable/reports/ped_hours.html", {
         "report": report,
-        "selected_year": year,
-        "selected_month": month,
-        "years": _available_years(),
-        "month_names": MONTH_NAMES_RU[1:],
+        "form": form,
+        "month_label": f"{MONTH_NAMES_RU[month]} {year}",
     })
 
 @login_required
 def ped_hours_export_view(request):
-    year, month = _parse_year_month(request)
-    report = calculate_ped_hours(year, month)
-    content = ped_hours_to_xlsx_bytes(report)
-
     today = date.today()
-    month_param = request.GET.get("month", "").strip()
+    form = PedHoursFilterForm(request.GET or None)
 
-    try:
-        year_str, month_str = month_param.split("-")
-        year, month = int(year_str), int(month_str)
-        if not (1 <= month <= 12):
-            raise ValueError
-    except (ValueError, AttributeError):
+    if form.is_valid():
+        year = int(form.cleaned_data["year"])
+        month = int(form.cleaned_data["month"])
+    else:
         year, month = today.year, today.month
 
     report = calculate_ped_hours(year, month)
@@ -273,33 +273,3 @@ def ped_hours_export_view(request):
         f"filename*=UTF-8''{quote(filename)}"
     )
     return response
-
-def _parse_year_month(request) -> tuple[int, int]:
-    """Читает year+month из GET. Невалидное → текущий месяц."""
-    today = date.today()
-    try:
-        year = int(request.GET.get("year", ""))
-        month = int(request.GET.get("month", ""))
-        if not (1 <= month <= 12):
-            raise ValueError
-        if not (2000 <= year <= 2100):
-            raise ValueError
-    except (ValueError, TypeError):
-        return today.year, today.month
-    return year, month
-
-
-def _available_years() -> list[int]:
-    """Годы, которые показываем в селекте: от минимального года цикла
-    до текущего + 1, минимум 5 лет."""
-    today = date.today()
-    from django.db.models import Min
-    from .models import Cycle
-
-    min_year = (
-        Cycle.objects.aggregate(m=Min("start_date"))["m"]
-    )
-    start = min_year.year if min_year else today.year - 2
-    start = min(start, today.year - 2)
-    end = max(today.year + 1, start + 4)
-    return list(range(start, end + 1))
