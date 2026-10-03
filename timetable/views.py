@@ -19,13 +19,14 @@ from timetable.services.cycle_hours import calculate_cycle_hours
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
 from .exports.cycle_xlsx_export import build_cycle_import_template
 from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
-from .forms import CycleImportForm, LessonForm, PedHoursFilterForm
-from .models import Base, Cycle, Lesson
+from .forms import CycleImportForm, LessonForm
+from .models import Lesson
 from .services.grid import calculate_grid
 from .services.limits import (
-    SCOPE_LABELS, calculate_overtime, find_violations, format_violation,
+    find_violations, format_violation,
 )
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
+from .ped_hours_filter import PedHoursFilterForm, PedHoursFilterMixin
 
 class ScheduleGrid(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
     template_name = "timetable/schedule_grid.html"
@@ -160,6 +161,7 @@ def cycle_import_view(request):
         "errors": errors,
     })
 
+
 @login_required
 def cycle_import_template_view(request):
     content = build_cycle_import_template()
@@ -175,36 +177,32 @@ def cycle_import_template_view(request):
     )
     return response
 
-@login_required
-def ped_hours_view(request):
-    today = date.today()
-    form = PedHoursFilterForm(request.GET or None)
 
-    if form.is_valid():
-        year = int(form.cleaned_data["year"])
-        month = int(form.cleaned_data["month"])
-    else:
-        year, month = today.year, today.month
-        form = PedHoursFilterForm(initial={"year": year, "month": month})
+class PedHoursReport(LoginRequiredMixin, PedHoursFilterMixin, TemplateView):
+    template_name = "timetable/reports/ped_hours.html"
 
-    report = calculate_ped_hours(year, month)
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
 
-    return render(request, "timetable/reports/ped_hours.html", {
-        "report": report,
-        "form": form,
-        "month_label": f"{MONTH_NAMES_RU[month]} {year}",
-    })
+        year = self.filter_data["year"]
+        month = self.filter_data["month"]
+
+        report = calculate_ped_hours(year, month)
+
+        ctx.update({
+            "form": self.filter_form,
+            "report": report,
+            "month_label": f"{MONTH_NAMES_RU[month]} {year}",
+        })
+        return ctx
+
 
 @login_required
 def ped_hours_export_view(request):
-    today = date.today()
-    form = PedHoursFilterForm(request.GET or None)
-
-    if form.is_valid():
-        year = int(form.cleaned_data["year"])
-        month = int(form.cleaned_data["month"])
-    else:
-        year, month = today.year, today.month
+    form = PedHoursFilterForm(request.GET)
+    form.is_valid()
+    year = form.cleaned_data["year"]
+    month = form.cleaned_data["month"]
 
     report = calculate_ped_hours(year, month)
     content = ped_hours_to_xlsx_bytes(report)
