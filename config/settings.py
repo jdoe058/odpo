@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_select2',
     'timetable',
 ]
 
@@ -120,6 +121,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+# django-select2 требует настроенный кэш.
+# Для одного сервера хватает LocMemCache.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "timetable-cache",
+    },
+}
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration

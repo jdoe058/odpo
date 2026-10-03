@@ -35,6 +35,7 @@ urlpatterns = [
         auth_views.LogoutView.as_view(),
         name="logout",
     ),
+    path("select2/", include("django_select2.urls")),
     path("", include("timetable.urls")),
 ]
 
