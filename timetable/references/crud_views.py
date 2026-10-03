@@ -6,7 +6,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import get_form_class
+from .forms import ReferenceSearchForm, get_form_class
 from .registry import get_spec
 
 
@@ -20,7 +20,11 @@ def _spec_or_404(slug: str):
 @login_required
 def reference_list(request, slug):
     spec = _spec_or_404(slug)
-    q = (request.GET.get("q") or "").strip()
+
+    form = ReferenceSearchForm(request.GET or None)
+    q = ""
+    if form.is_valid():
+        q = form.cleaned_data.get("q", "").strip()
 
     qs = spec.model.objects.all()
     if q:
@@ -36,10 +40,10 @@ def reference_list(request, slug):
     return render(request, "timetable/references/reference_list.html", {
         "spec": spec,
         "objects": qs,
+        "form": form,
         "q": q,
         "columns": spec.visible_columns(),
     })
-
 
 @login_required
 def reference_create(request, slug):

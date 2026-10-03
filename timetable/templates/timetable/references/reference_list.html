@@ -14,9 +14,8 @@
 <form method="get" class="filters" style="margin-bottom: 12px;">
   <div class="filters-row">
     <div class="field-inline">
-      <label for="id_q">Поиск</label>
-      <input type="search" name="q" id="id_q" value="{{ q }}"
-             placeholder="Часть названия">
+      {{ form.q.label_tag }}
+      {{ form.q }}
     </div>
     <button type="submit">Найти</button>
     {% if q %}

@@ -1,6 +1,6 @@
-"""Динамические ModelForm для справочников из реестра."""
 from functools import lru_cache
 
+from django import forms
 from django.forms import modelform_factory
 from django_select2.forms import ModelSelect2Widget
 
@@ -45,4 +45,17 @@ def get_form_class(slug: str):
         spec.model,
         fields=[c.name for c in spec.columns],
         widgets=widgets,
+    )
+
+class ReferenceSearchForm(forms.Form):
+    """Поле поиска в списке справочника. GET, все поля необязательные."""
+
+    q = forms.CharField(
+        required=False,
+        label="Поиск",
+        widget=forms.TextInput(attrs={
+            "type": "search",
+            "placeholder": "Часть названия",
+            "style": "min-width: 260px;",
+        }),
     )
