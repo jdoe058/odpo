@@ -49,6 +49,7 @@ def get_form_class(slug: str):
         widgets=widgets,
     )
 
+
 class ReferenceSearchForm(forms.Form):
     """Поле поиска в списке справочника. GET, все поля необязательные."""
 

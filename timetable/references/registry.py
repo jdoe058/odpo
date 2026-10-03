@@ -1,6 +1,5 @@
 """
-Реестр справочников: единый источник истины для меню, обмена CSV
-и (в будущем) CRUD-страниц.
+Реестр справочников: единый источник истины для меню, обмена XLSX и CRUD-страниц.
 
 Не импортирует Django-настройки сам — только модели. Загружается
 только тогда, когда Django уже готов (после apps.ready).
@@ -16,15 +15,12 @@ from timetable.models import (
 
 @dataclass(frozen=True)
 class Column:
-    """Колонка CSV, привязанная к полю модели."""
+    """Колонка справочника, привязанная к полю модели."""
 
     name: str
     kind: str               # str | int | int_nullable | bool | fk_name
     header: str = ""
     fk_attr: str = "name"   # для kind="fk_name": по какому полю искать
-
-    def csv_header(self) -> str:
-        return self.header or self.name
 
 
 @dataclass(frozen=True)
@@ -92,7 +88,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         ),
         key_normalizer=normalize_short_name,
         list_columns=("short_name", "position", "base"),
-        search_fields=("short_name", ),
+        search_fields=("short_name",),
         add_another_prefill=("position", "base"),
     ),
     ReferenceSpec(
@@ -134,7 +130,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         ),
         list_columns=("code", "name", "category"),
         search_fields=("name",),
-        add_another_prefill=("category", ),
+        add_another_prefill=("category",),
     ),
 )
 

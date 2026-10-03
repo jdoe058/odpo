@@ -1,14 +1,16 @@
+"""Обмен справочниками: выгрузка и импорт XLSX."""
 import base64
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import render
 from datetime import date
-from . import xlsx_importer
-from . import xlsx_export
-from .forms import ReferenceImportForm
-from .registry import get_spec, specs_in_import_order
+
+from timetable.references import xlsx_export
+from timetable.references import xlsx_importer
+from timetable.references.forms import ReferenceImportForm
+from timetable.references.registry import specs_in_import_order
 
 
 SESSION_KEY = "references_import_content"
@@ -50,6 +52,7 @@ def exchange_view(request):
         "form": form,
         "import_result": import_result,
     })
+
 
 @login_required
 def export_view(request):
