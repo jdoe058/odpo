@@ -1,107 +1,102 @@
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from django.urls import reverse
-from django.http import HttpResponse
-from django.db.models import Q
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.generic import TemplateView
 
+from timetable.exports.kinds import all_specs
+from timetable.schedule_filter import (
+    ScheduleFilterMixin, filter_cycles, filter_lessons,
+)
 from timetable.services.cycle_hours import calculate_cycle_hours
-from .services.periods import resolve_period
+
+from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
+from .exports.cycle_xlsx_export import build_cycle_import_template
+from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
+from .forms import CycleImportForm, LessonForm, PedHoursFilterForm
+from .models import Base, Cycle, Lesson
 from .services.grid import calculate_grid
 from .services.limits import (
     SCOPE_LABELS, calculate_overtime, find_violations, format_violation,
 )
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 
-from .forms import (
-    CycleImportForm, LessonForm, PedHoursFilterForm, ScheduleFilterForm,
-)
-from .models import Cycle, Lesson, Base, normalize_short_name
-from timetable.exports.kinds import all_specs
-from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
-from .exports.cycle_xlsx_export import build_cycle_import_template
-from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
+class ScheduleGrid(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
+    template_name = "timetable/schedule_grid.html"
 
-@login_required
-def schedule_grid_view(request):
-    form = ScheduleFilterForm(request.GET)
-    form.is_valid()   # всегда True благодаря «снисходительным» полям
-    data = form.cleaned_data
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        data = self.filter_data
 
-    period = data["period"]
-    start = data["resolved_start"]
-    end = data["resolved_end"]
-    cycle = data.get("cycle")
-    base = data.get("base")
-    employee_q = data["employee_q"]
-    employee_query = data["employee_query"]
+        start = data["resolved_start"]
+        end = data["resolved_end"]
+        cycle = data.get("cycle")
+        base = data.get("base")
 
-    grid = calculate_grid(start, end, cycle=cycle, base=base, employee_q=employee_q)
-
-    overtime = []
-    for scope in ("day", "week", "year"):
-        items = calculate_overtime(scope)
-        if items:
-            overtime.append((SCOPE_LABELS[scope], items))
-
-    lessons = []
-    if cycle is not None:
-        qs = (
-            Lesson.objects
-            .filter(cycle=cycle)
-            .select_related("lesson_type", "employee", "cycle", "cycle__name")
-            .order_by("date", "time_start")
+        grid = calculate_grid(
+            start, end, cycle=cycle, base=base,
+            employee_q=data["employee_q"],
         )
-        if base is not None:
-            qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
-        if employee_query:
-            qs = qs.filter(employee_q)
-        lessons = qs
-    elif base is not None or employee_query:
-        qs = (
-            Lesson.objects
-            .filter(date__gte=start, date__lte=end)
-            .select_related(
-                "lesson_type", "employee", "cycle", "cycle__name", "base",
+
+        overtime = []
+        for scope in ("day", "week", "year"):
+            items = calculate_overtime(scope)
+            if items:
+                overtime.append((SCOPE_LABELS[scope], items))
+
+        lessons = []
+        if cycle is not None:
+            qs = (
+                Lesson.objects
+                .filter(cycle=cycle)
+                .select_related("lesson_type", "employee", "cycle", "cycle__name")
+                .order_by("date", "time_start")
             )
-            .order_by("date", "time_start")
+            lessons = filter_lessons(qs, data)
+        elif base is not None or data["employee_query"]:
+            qs = (
+                Lesson.objects
+                .filter(date__gte=start, date__lte=end)
+                .select_related(
+                    "lesson_type", "employee", "cycle", "cycle__name", "base",
+                )
+                .order_by("date", "time_start")
+            )
+            lessons = filter_lessons(qs, data)
+
+        cycles_qs = (
+            Cycle.objects
+            .select_related("name", "base")
+            .order_by("-start_date")
         )
-        if base is not None:
-            qs = qs.filter(Q(base=base) | Q(base__isnull=True, cycle__base=base))
-        if employee_query:
-            qs = qs.filter(employee_q)
-        lessons = qs
+        cycles = filter_cycles(cycles_qs, data)
 
-    prev_anchor = start - timedelta(days=1)
-    next_anchor = end + timedelta(days=1)
+        breakdown = (
+            calculate_cycle_hours(cycle) if cycle is not None else None
+        )
 
-    cycles_qs = Cycle.objects.select_related("name", "base").order_by("-start_date")
-    if base is not None:
-        cycles_qs = cycles_qs.filter(base=base)
-    cycles = cycles_qs
-
-    breakdown = calculate_cycle_hours(cycle) if cycle is not None else None
-
-    return render(request, "timetable/schedule_grid.html", {
-        "form": form,
-        "grid": grid,
-        "overtime": overtime,
-        "lessons": lessons,
-        "period": period,
-        "cycles": cycles,
-        "selected_cycle": cycle,
-        "export_kinds": all_specs(),
-        "prev_anchor": prev_anchor,
-        "next_anchor": next_anchor,
-        "breakdown": breakdown,
-        "selected_employee": employee_query,
-        "bases": Base.objects.order_by("name"),
-    })
-
+        ctx.update({
+            "form": self.filter_form,
+            "grid": grid,
+            "overtime": overtime,
+            "lessons": lessons,
+            "period": data["period"],
+            "cycles": cycles,
+            "selected_cycle": cycle,
+            "export_kinds": all_specs(),
+            "prev_anchor": start - timedelta(days=1),
+            "next_anchor": end + timedelta(days=1),
+            "breakdown": breakdown,
+            "selected_employee": data["employee_query"],
+            "bases": Base.objects.order_by("name"),
+        })
+        return ctx
 @login_required
 def lesson_edit_view(request, pk):
     lesson = get_object_or_404(

@@ -7,7 +7,7 @@ from .exports.views import cycle_xlsx_export_view
 app_name = "timetable"
 
 urlpatterns = [
-    path("", views.schedule_grid_view, name="schedule_grid"),
+    path("", views.ScheduleGrid.as_view(), name="schedule_grid"),
     path(
         "lessons/<int:pk>/edit/",
         views.lesson_edit_view,
