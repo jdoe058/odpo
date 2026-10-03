@@ -38,6 +38,7 @@ class ReferenceSpec:
     key_normalizer: Callable[[str], str] | None = None
     list_columns: tuple[str, ...] = ()
     search_fields: tuple[str, ...] = ()
+    add_another_prefill: tuple[str, ...] = ()
 
     def visible_columns(self) -> tuple[Column, ...]:
         """Колонки для отображения в списке."""
@@ -92,6 +93,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         key_normalizer=normalize_short_name,
         list_columns=("short_name", "position", "base"),
         search_fields=("short_name", ),
+        add_another_prefill=("position", "base"),
     ),
     ReferenceSpec(
         slug="bases",
@@ -132,6 +134,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         ),
         list_columns=("code", "name", "category"),
         search_fields=("name",),
+        add_another_prefill=("category", ),
     ),
 )
 

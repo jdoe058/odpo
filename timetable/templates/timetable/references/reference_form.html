@@ -35,7 +35,10 @@
   {% endfor %}
 
   <div class="actions">
-    <button type="submit">Сохранить</button>
+    <button type="submit" name="_save" value="1">Сохранить</button>
+    <button type="submit" name="_addanother" value="1">
+      Сохранить и создать новый
+    </button>
     <a class="button" href="{% url 'timetable:reference_list' spec.slug %}">Отмена</a>
   </div>
 </form>
