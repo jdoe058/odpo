@@ -3,7 +3,8 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from django import forms
 from .models import (
-    Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
+    Base, Cycle, CycleName, Discipline, Employee, FundingType,
+    Lesson, LessonType, Position, WorkProgram,
 )
 
 
@@ -27,12 +28,14 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     ordering = ("sort_order", "name")
 
+
 class ChangeBaseForm(forms.Form):
     base = forms.ModelChoiceField(
         queryset=Base.objects.order_by("name"),
         label="Новая база",
         required=True,
     )
+
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -105,10 +108,12 @@ class EmployeeAdmin(admin.ModelAdmin):
             },
         )
 
+
 @admin.register(Base)
 class BaseAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
+
 
 @admin.register(LessonType)
 class LessonTypeAdmin(admin.ModelAdmin):
@@ -118,15 +123,18 @@ class LessonTypeAdmin(admin.ModelAdmin):
     search_fields = ("code", "name")
     ordering = ("sort_order",)
 
+
 @admin.register(FundingType)
 class FundingTypeAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
+
 @admin.register(CycleName)
 class CycleNameAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
+
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
@@ -137,6 +145,7 @@ class LessonAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
     autocomplete_fields = ("cycle", "lesson_type", "employee")
 
+
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
@@ -146,3 +155,24 @@ class CycleAdmin(admin.ModelAdmin):
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
+
+
+@admin.register(Discipline)
+class DisciplineAdmin(admin.ModelAdmin):
+    list_display = ("name_full", "name_short", "sort_order")
+    list_editable = ("name_short", "sort_order")
+    search_fields = ("name_full", "name_short")
+    ordering = ("sort_order", "name_short")
+
+
+@admin.register(WorkProgram)
+class WorkProgramAdmin(admin.ModelAdmin):
+    list_display = ("academic_year", "kind", "discipline", "hours", "title")
+    list_filter = ("academic_year", "kind", "discipline")
+    search_fields = ("discipline__name_full", "discipline__name_short")
+    autocomplete_fields = ("discipline",)
+    ordering = ("-academic_year", "kind", "discipline__name_short")
+
+    @admin.display(description="Название")
+    def title(self, obj):
+        return obj.title
