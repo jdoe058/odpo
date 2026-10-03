@@ -1,4 +1,7 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin import helpers
+from django.template.response import TemplateResponse
+from django import forms
 from .models import (
     Employee, Position, Base, LessonType, FundingType, CycleName, Cycle, Lesson, 
 )
@@ -24,6 +27,13 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     ordering = ("sort_order", "name")
 
+class ChangeBaseForm(forms.Form):
+    base = forms.ModelChoiceField(
+        queryset=Base.objects.order_by("name"),
+        label="Новая база",
+        required=True,
+    )
+
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = (
@@ -34,6 +44,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     search_fields = ("short_name",)
     ordering = ("short_name",)
     autocomplete_fields = ("position", "base")
+    actions = ["change_base"]
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -56,6 +67,34 @@ class EmployeeAdmin(admin.ModelAdmin):
     @admin.display(description="Утверждает", boolean=True)
     def can_approve(self, obj):
         return obj.can_approve
+
+    @admin.action(description="Сменить базу у выбранных сотрудников")
+    def change_base(self, request, queryset):
+        if "apply" in request.POST:
+            form = ChangeBaseForm(request.POST)
+            if form.is_valid():
+                base = form.cleaned_data["base"]
+                updated = queryset.update(base=base)
+                self.message_user(
+                    request,
+                    f"База «{base}» установлена у {updated} сотрудников.",
+                    messages.SUCCESS,
+                )
+                return None   # возврат в список
+        else:
+            form = ChangeBaseForm()
+
+        return TemplateResponse(
+            request,
+            "admin/timetable/employee/change_base.html",
+            {
+                "title": "Смена базы",
+                "queryset": queryset,
+                "form": form,
+                "opts": self.model._meta,
+                "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+            },
+        )
 
 @admin.register(Base)
 class BaseAdmin(admin.ModelAdmin):
