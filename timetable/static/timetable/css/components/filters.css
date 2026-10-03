@@ -5,23 +5,26 @@ form.filters {
   padding: 14px 16px;
   margin-bottom: 16px;
 }
+
 .filters-row {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
   align-items: flex-end;
 }
+
 .filters-row > div {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .filters-row > div.field-inline {
   flex-direction: row;
   align-items: center;
   gap: 6px;
 }
-.filters-row label { font-size: 12px; color: var(--color-text-muted-alt); }
+
 .filters-row select,
 .filters-row input[type="date"],
 .filters-row input[type="search"] {
@@ -32,11 +35,10 @@ form.filters {
   background: var(--color-surface);
 }
 
-.filters-row input[type="search"] {
-  min-width: 260px;
-}
+.filters-row input[type="search"] { min-width: 260px; }
 
 .summary { margin: 0 0 12px; color: var(--color-text-muted); }
+
 .hint {
   padding: 32px;
   text-align: center;
@@ -68,6 +70,7 @@ form.filters {
   color: var(--color-primary-fg);
   font-weight: 600;
 }
+
 .reset-link {
   font-size: 13px;
   color: var(--color-text-muted-alt);

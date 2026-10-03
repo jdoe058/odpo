@@ -4,6 +4,7 @@ table.lessons {
   background: var(--color-surface);
   font-size: 13px;
 }
+
 table.lessons th,
 table.lessons td {
   border: 1px solid var(--color-border-light);
@@ -11,11 +12,10 @@ table.lessons td {
   text-align: left;
   vertical-align: top;
 }
+
 table.lessons th {
   background: var(--color-surface-subtle);
   font-weight: 600;
 }
-table.lessons tr:nth-child(even) td {
-  background: var(--color-surface-stripe);
-}
+
 table.lessons a { color: var(--color-primary); }

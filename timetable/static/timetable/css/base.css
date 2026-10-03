@@ -4,7 +4,6 @@
   --color-bg:                  #f5f5f5;
   --color-surface:             #fff;
   --color-surface-subtle:      #eef2f6;
-  --color-surface-stripe:      #fafbfc;
   --color-surface-weekend:     #fafafa;
 
   /* Границы */
@@ -56,6 +55,11 @@ h1 { font-size: 20px; margin: 0 0 16px; }
 
 .muted { color: var(--color-text-muted-strong); }
 
+label {
+  font-size: 12px;
+  color: var(--color-text-muted-alt);
+}
+
 /* ===================== Кнопки ===================== */
 a.button,
 .filters-row button,
@@ -78,6 +82,38 @@ a.button:hover,
 .refs-form button[type="submit"]:hover,
 form.lesson-form .actions button:hover {
   background: var(--color-primary-hover);
+}
+
+/* ===================== Формы ===================== */
+.field { margin-bottom: 14px; }
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.field input:not([type="checkbox"]):not([type="radio"]),
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  font: inherit;
+  background: var(--color-surface);
+}
+
+.field .errors {
+  color: var(--color-danger);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* ===================== Шапка ===================== */
