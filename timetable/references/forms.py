@@ -59,3 +59,21 @@ class ReferenceSearchForm(forms.Form):
             "style": "min-width: 260px;",
         }),
     )
+
+
+class ReferenceImportForm(forms.Form):
+    """Загрузка XLSX-файла со справочниками."""
+
+    file = forms.FileField(
+        label="XLSX-файл",
+        widget=forms.ClearableFileInput(attrs={"accept": ".xlsx"}),
+    )
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+        if not f.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError(
+                "Ожидается файл с расширением .xlsx."
+            )
+        return f
+

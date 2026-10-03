@@ -7,6 +7,7 @@ from django.shortcuts import render
 from datetime import date
 from . import xlsx_importer
 from . import xlsx_export
+from .forms import ReferenceImportForm
 from .registry import get_spec, specs_in_import_order
 
 
@@ -16,16 +17,15 @@ SESSION_KEY = "references_import_content"
 @login_required
 def exchange_view(request):
     import_result = None
+    form = ReferenceImportForm()
 
     if request.method == "POST":
         action = request.POST.get("action")
 
         if action == "check":
-            uploaded = request.FILES.get("file")
-            if uploaded is None:
-                messages.error(request, "Файл не выбран.")
-            else:
-                content = uploaded.read()
+            form = ReferenceImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                content = form.cleaned_data["file"].read()
                 request.session[SESSION_KEY] = base64.b64encode(content).decode("ascii")
                 import_result = xlsx_importer.parse_and_validate(content)
 
@@ -47,9 +47,9 @@ def exchange_view(request):
 
     return render(request, "timetable/references/exchange.html", {
         "specs": specs_in_import_order(),
+        "form": form,
         "import_result": import_result,
     })
-
 
 @login_required
 def export_view(request):

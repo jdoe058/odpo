@@ -32,8 +32,11 @@
   <form method="post" enctype="multipart/form-data" class="refs-form">
     {% csrf_token %}
     <div class="field">
-      <label for="id_file">XLSX-файл</label>
-      <input type="file" name="file" id="id_file" accept=".xlsx">
+      {{ form.file.label_tag }}
+      {{ form.file }}
+      {% if form.file.errors %}
+        <div class="errors">{{ form.file.errors|join:", " }}</div>
+      {% endif %}
     </div>
     <div class="actions">
       <button type="submit" name="action" value="check">Проверить</button>
