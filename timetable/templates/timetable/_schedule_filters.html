@@ -1,29 +1,23 @@
 <form method="get" class="filters" id="schedule-filters">
-  <input type="hidden" name="period" value="{{ period }}">
+  <input type="hidden" name="period" value="{{ form.period.value|default:'week' }}">
+  <input type="hidden" name="anchor" value="{{ form.anchor.value|default:'' }}">
+
   <div class="filters-row">
     <div>
-      <label for="id_employee">Преподаватели</label>
-      <input type="text" name="employee" id="id_employee"
-             value="{{ selected_employee }}"
-             placeholder="МАРКОВ, СОКОЛОВА">
+      <label for="{{ form.employee.id_for_label }}">Преподаватели</label>
+      {{ form.employee }}
     </div>
     <div>
-      <label for="id_base">База</label>
-      <select name="base" id="id_base">
-        <option value="">— все базы —</option>
-        {% for b in bases %}
-          <option value="{{ b.pk }}" {% if selected_base == b.pk|stringformat:"s" %}selected{% endif %}>
-            {{ b.name }}
-          </option>
-        {% endfor %}
-      </select>
+      <label for="{{ form.base.id_for_label }}">База</label>
+      {{ form.base }}
     </div>
     <div>
       <label for="id_cycle">Цикл</label>
       <select name="cycle" id="id_cycle">
         <option value="">— все —</option>
         {% for c in cycles %}
-          <option value="{{ c.pk }}" data-base="{{ c.base_id }}" {% if selected_cycle.pk == c.pk %}selected{% endif %}>
+          <option value="{{ c.pk }}" data-base="{{ c.base_id }}"
+                  {% if selected_cycle.pk == c.pk %}selected{% endif %}>
             {{ c.start_date|date:"d.m.Y" }} {{ c.name|truncatechars:40 }}
           </option>
         {% endfor %}
@@ -52,14 +46,12 @@
 
     {% if period == 'custom' %}
       <div class="field-inline">
-        <label for="id_start">С</label>
-        <input type="date" name="start" id="id_start"
-               value="{{ grid.start|date:'Y-m-d' }}">
+        <label for="{{ form.start.id_for_label }}">С</label>
+        {{ form.start }}
       </div>
       <div class="field-inline">
-        <label for="id_end">По</label>
-        <input type="date" name="end" id="id_end"
-               value="{{ grid.end|date:'Y-m-d' }}">
+        <label for="{{ form.end.id_for_label }}">По</label>
+        {{ form.end }}
       </div>
     {% endif %}
 
@@ -71,7 +63,7 @@
     {% endif %}
 
     <div class="period-nav">
-      <a class="button" href="{% querystring base=None cycle=None employee=None period='week' anchor=None %}">X</a>
+      <a href="{% querystring base=None cycle=None employee=None period='week' anchor=None %}">Сбросить</a>
     </div>
   </div>
 </form>

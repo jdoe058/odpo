@@ -17,7 +17,9 @@ from .services.limits import (
 )
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 
-from .forms import CycleImportForm, LessonForm, PedHoursFilterForm
+from .forms import (
+    CycleImportForm, LessonForm, PedHoursFilterForm, ScheduleFilterForm,
+)
 from .models import Cycle, Lesson, Base, normalize_short_name
 from timetable.exports.kinds import all_specs
 from .cycle_xlsx_import import CycleImportError, import_cycle_from_xlsx
@@ -26,62 +28,19 @@ from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
 
 @login_required
 def schedule_grid_view(request):
-    period = request.GET.get("period", "week")
-    start_str = request.GET.get("start")
-    end_str = request.GET.get("end")
-    cycle_id = request.GET.get("cycle")
-    anchor_str = request.GET.get("anchor")
-    base_id = request.GET.get("base") or ""
+    form = ScheduleFilterForm(request.GET)
+    form.is_valid()   # всегда True благодаря «снисходительным» полям
+    data = form.cleaned_data
 
-    cycle = None
-    if cycle_id:
-        cycle = (
-            Cycle.objects
-            .select_related("name", "base", "funding_type")
-            .filter(pk=cycle_id)
-            .first()
-        )
-    base = None
-    if base_id:
-        base = Base.objects.filter(pk=base_id).first()
-        if base is None:
-            base_id = ""
+    period = data["period"]
+    start = data["resolved_start"]
+    end = data["resolved_end"]
+    cycle = data.get("cycle")
+    base = data.get("base")
+    employee_q = data["employee_q"]
+    employee_query = data["employee_query"]
 
-    anchor = None
-    if anchor_str:
-        try:
-            anchor = date.fromisoformat(anchor_str)
-        except ValueError:
-            anchor = None
-
-    if anchor is None and cycle is not None:
-        anchor = cycle.start_date
-
-    try:
-        if period in ("week", "month", "year"):
-            start, end = resolve_period(period, anchor)
-        elif period == "custom":
-            start = date.fromisoformat(start_str) if start_str else None
-            end = date.fromisoformat(end_str) if end_str else None
-            start, end = resolve_period("custom", start=start, end=end)
-        else:
-            start, end = resolve_period(period)
-    except (TypeError, ValueError):
-        period = "week"
-        start, end = resolve_period(period)
-
-    employee_query = (request.GET.get("employee") or "").strip()
-    employee_q = Q()
-    if employee_query:
-        for part in employee_query.split(","):
-            part = part.strip()
-            if not part:
-                continue
-            normalized = normalize_short_name(part)
-            if normalized:
-                employee_q |= Q(employee__short_name__contains=normalized)
-
-    grid = calculate_grid(start, end, cycle=cycle, base=base, employee_q=employee_q,)
+    grid = calculate_grid(start, end, cycle=cycle, base=base, employee_q=employee_q)
 
     overtime = []
     for scope in ("day", "week", "year"):
@@ -128,6 +87,7 @@ def schedule_grid_view(request):
     breakdown = calculate_cycle_hours(cycle) if cycle is not None else None
 
     return render(request, "timetable/schedule_grid.html", {
+        "form": form,
         "grid": grid,
         "overtime": overtime,
         "lessons": lessons,
@@ -138,11 +98,9 @@ def schedule_grid_view(request):
         "prev_anchor": prev_anchor,
         "next_anchor": next_anchor,
         "breakdown": breakdown,
-        "selected_base": base_id,
         "selected_employee": employee_query,
         "bases": Base.objects.order_by("name"),
     })
-
 
 @login_required
 def lesson_edit_view(request, pk):
