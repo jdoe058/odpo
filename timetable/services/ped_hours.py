@@ -63,7 +63,7 @@ def available_years() -> list[int]:
     end = max(today.year + 1, start + 4)
     return list(range(start, end + 1))
 
-def calculate_ped_hours(year: int, month: int) -> PedHoursReport:
+def calculate_ped_hours(year: int, month: int, funding=None) -> PedHoursReport:
     """
     Отчёт за месяц: циклы, чей период пересекается с месяцем.
 
@@ -78,6 +78,8 @@ def calculate_ped_hours(year: int, month: int) -> PedHoursReport:
         .select_related("name", "base", "funding_type", "compiled_by")
         .annotate(total_hours=Sum("lessons__hours"))
     )
+    if funding is not None:
+        cycles = cycles.filter(funding_type=funding)
 
     rows = [
         PedHoursRow(

@@ -4,6 +4,7 @@ from typing import cast
 
 from django import forms
 
+from timetable.models import FundingType
 from timetable.services.ped_hours import MONTH_NAMES_RU, available_years
 
 
@@ -12,6 +13,13 @@ class PedHoursFilterForm(forms.Form):
 
     year = forms.ChoiceField(required=False, label="Год")
     month = forms.ChoiceField(required=False, label="Месяц")
+
+    funding = forms.ModelChoiceField(
+        required=False,
+        label="Финансирование",
+        queryset=FundingType.objects.all(),
+        empty_label="— все —",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,4 +48,6 @@ class PedHoursFilterForm(forms.Form):
 
         cleaned["year"] = year
         cleaned["month"] = month
+        cleaned["funding"] = cleaned.get("funding")
         return cleaned
+

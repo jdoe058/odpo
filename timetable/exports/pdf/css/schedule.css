@@ -27,7 +27,7 @@ table.schedule tr {
 
 /* Ширины колонок */
 table.schedule .col-date    { width: 22mm; white-space: nowrap; }
-table.schedule .col-time    { width: 28mm; white-space: nowrap; }
+table.schedule .col-time    { width: 23mm; white-space: nowrap; }
 table.schedule .col-hours   { width: 10mm; text-align: center; }
-table.schedule .col-type    { width: 32mm; }
-table.schedule .col-teacher { width: 32mm; }
+table.schedule .col-type    { width: 39mm; }
+table.schedule .col-teacher { width: 37mm; }

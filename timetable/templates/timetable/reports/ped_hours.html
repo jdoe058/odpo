@@ -21,9 +21,13 @@
       {{ form.year.label_tag }}
       {{ form.year }}
     </div>
+    <div class="field-inline">
+      {{ form.funding.label_tag }}
+      {{ form.funding }}
+    </div>
     <button type="submit">Показать</button>
     <a class="button"
-       href="{% url 'timetable:ped_hours_export' %}?year={{ report.year }}&month={{ report.month }}">
+       href="{% url 'timetable:ped_hours_export' %}?year={{ report.year }}&month={{ report.month }}{% if form.funding.value %}&funding={{ form.funding.value }}{% endif %}">
       Скачать XLSX
     </a>
   </div>
