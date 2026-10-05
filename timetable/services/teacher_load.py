@@ -1,14 +1,16 @@
+"""Распределение педагогических часов по категориям."""
 from collections import defaultdict
 from dataclasses import dataclass
 
 from django.db.models import Sum
 
 
-CATEGORY_ORDER = ("lecture", "seminar", "practice")
+CATEGORY_ORDER = ("lecture", "seminar", "practice", "attestation")
 CATEGORY_LABELS = {
     "lecture": "Лекции",
     "seminar": "Занятия семинарского типа",
     "practice": "Практика",
+    "attestation": "Итоговая аттестация",
 }
 
 
@@ -19,6 +21,7 @@ class LoadRow:
     lecture: int
     seminar: int
     practice: int
+    attestation: int
     total: int
 
 
@@ -28,12 +31,13 @@ class TeacherLoad:
     total_lecture: int
     total_seminar: int
     total_practice: int
+    total_attestation: int
     grand_total: int
 
 
 def calculate_teacher_load(cycle) -> TeacherLoad:
     """
-    Часы преподавателей по трём фиксированным категориям.
+    Часы преподавателей по четырём категориям.
     Типы занятий без категории в отчёт не попадают.
     """
     data = (
@@ -45,7 +49,7 @@ def calculate_teacher_load(cycle) -> TeacherLoad:
     )
 
     per_emp: dict[int, dict[str, int]] = defaultdict(lambda: {
-        "lecture": 0, "seminar": 0, "practice": 0,
+        "lecture": 0, "seminar": 0, "practice": 0, "attestation": 0,
     })
     names: dict[int, str] = {}
 
@@ -67,17 +71,23 @@ def calculate_teacher_load(cycle) -> TeacherLoad:
             lecture=cells["lecture"],
             seminar=cells["seminar"],
             practice=cells["practice"],
-            total=cells["lecture"] + cells["seminar"] + cells["practice"],
+            attestation=cells["attestation"],
+            total=(
+                cells["lecture"] + cells["seminar"]
+                + cells["practice"] + cells["attestation"]
+            ),
         ))
 
     t_lec = sum(r.lecture for r in rows)
     t_sem = sum(r.seminar for r in rows)
     t_prac = sum(r.practice for r in rows)
+    t_att = sum(r.attestation for r in rows)
 
     return TeacherLoad(
         rows=tuple(rows),
         total_lecture=t_lec,
         total_seminar=t_sem,
         total_practice=t_prac,
-        grand_total=t_lec + t_sem + t_prac,
+        total_attestation=t_att,
+        grand_total=t_lec + t_sem + t_prac + t_att,
     )

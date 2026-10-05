@@ -42,6 +42,6 @@ table.load tr {
 }
 
 /* Ширины колонок */
-table.load .col-n       { width: 12mm; }
-table.load .col-teacher { width: 60mm; }
-table.load .col-num     { width: 22mm; }
+table.load .col-n         { width: 10mm; }
+table.load .col-teacher   { width: 52mm; }
+table.load .col-num       { width: 20mm; }

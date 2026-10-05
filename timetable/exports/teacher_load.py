@@ -9,13 +9,15 @@ def build_own_context(cycle) -> dict:
             {
                 "n": r.n, "teacher": r.teacher,
                 "lecture": r.lecture, "seminar": r.seminar,
-                "practice": r.practice, "total": r.total,
+                "practice": r.practice, "attestation": r.attestation,
+                "total": r.total,
             }
             for r in load.rows
         ],
         "total_lecture": load.total_lecture,
         "total_seminar": load.total_seminar,
         "total_practice": load.total_practice,
+        "total_attestation": load.total_attestation,
         "grand_total": load.grand_total,
     }
 

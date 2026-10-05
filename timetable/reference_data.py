@@ -70,5 +70,5 @@ LESSON_TYPES: tuple[LessonTypeSpec, ...] = (
     LessonTypeSpec("4",  "практика 4",                  category="practice",    counts_in_hours=True, sort_order=24),
     LessonTypeSpec("5",  "практика 5",                  category="practice",    counts_in_hours=True, sort_order=25),
     LessonTypeSpec("6",  "практика 6",                  category="practice",    counts_in_hours=True, sort_order=26),        
-    LessonTypeSpec("9",  "итоговая аттестация",         category="",            counts_in_hours=True, sort_order=30),
+    LessonTypeSpec("9",  "итоговая аттестация",         category="attestation", counts_in_hours=True, sort_order=30),
 )

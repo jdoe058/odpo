@@ -198,6 +198,7 @@ class LessonType(models.Model):
         LECTURE = "lecture", "Лекции"
         SEMINAR = "seminar", "Занятия семинарского типа"
         PRACTICE = "practice", "Практика"
+        ATTESTATION = "attestation", "Итоговая аттестация"
 
     name = models.CharField(max_length=255, unique=True, verbose_name="Название")
     code = models.CharField(max_length=20, unique=True, verbose_name="Код")
