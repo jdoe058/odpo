@@ -186,8 +186,9 @@ class PedHoursReport(LoginRequiredMixin, PedHoursFilterMixin, TemplateView):
 
         year = self.filter_data["year"]
         month = self.filter_data["month"]
+        funding = self.filter_data.get("funding")
 
-        report = calculate_ped_hours(year, month)
+        report = calculate_ped_hours(year, month, funding=funding)
 
         ctx.update({
             "form": self.filter_form,
@@ -203,8 +204,9 @@ def ped_hours_export_view(request):
     form.is_valid()
     year = form.cleaned_data["year"]
     month = form.cleaned_data["month"]
+    funding = form.cleaned_data.get("funding")
 
-    report = calculate_ped_hours(year, month)
+    report = calculate_ped_hours(year, month, funding=funding)
     content = ped_hours_to_xlsx_bytes(report)
 
     response = HttpResponse(
