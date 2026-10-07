@@ -1,0 +1,61 @@
+{% extends "timetable/base.html" %}
+{% load static %}
+
+{% block title %}Циклы{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'timetable/css/components/filters.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1>Циклы</h1>
+
+<form method="get" class="filters" style="margin-bottom: 12px;">
+  <div class="filters-row">
+    <div class="field-inline">
+      {{ form.q.label_tag }}
+      {{ form.q }}
+    </div>
+    <div class="field-inline">
+      {{ form.base.label_tag }}
+      {{ form.base }}
+    </div>
+    <button type="submit">Найти</button>
+    <div style="margin-left: auto;">
+      <a class="button" href="{% url 'timetable:cycle_create' %}">Добавить</a>
+    </div>
+  </div>
+</form>
+
+{% if cycles %}
+  <table class="lessons">
+    <thead>
+      <tr>
+        <th>Название</th>
+        <th>База</th>
+        <th>Финансирование</th>
+        <th>Период</th>
+        <th>Составил</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in cycles %}
+        <tr>
+          <td>{{ c.name.name }}</td>
+          <td>{{ c.base.name }}</td>
+          <td>{{ c.funding_type.name }}</td>
+          <td>{{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }}</td>
+          <td>{{ c.compiled_by.short_name }}</td>
+          <td><a href="{% url 'timetable:cycle_edit' c.pk %}">Изменить</a></td>
+          <td><a href="{% url 'timetable:cycle_delete' c.pk %}">Удалить</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="hint">Циклов не найдено.</div>
+{% endif %}
+{% endblock %}

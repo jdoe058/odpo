@@ -1,0 +1,27 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}Удаление цикла{% endblock %}
+
+{% block content %}
+<h1>Удалить цикл?</h1>
+
+<p>
+  Цикл: <b>{{ object.name.name }}</b><br>
+  Период: {{ object.start_date|date:"d.m.Y" }} — {{ object.end_date|date:"d.m.Y" }}<br>
+  База: {{ object.base.name }}
+</p>
+
+{% if lessons_count %}
+  <p style="color:#7a5c00; background:#fffbea; padding:10px 14px; border-left:4px solid #c9a227; border-radius:4px;">
+    У цикла <b>{{ lessons_count }}</b> занятий. Они тоже будут удалены.
+  </p>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="actions">
+    <button type="submit" class="button">Удалить всё</button>
+    <a class="button" href="{% url 'timetable:cycle_list' %}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

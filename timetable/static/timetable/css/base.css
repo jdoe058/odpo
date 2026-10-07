@@ -61,7 +61,7 @@ label {
 }
 
 /* ===================== Кнопки ===================== */
-a.button,
+.button,
 .filters-row button,
 .refs-form button[type="submit"],
 form.lesson-form .actions button {
@@ -77,7 +77,7 @@ form.lesson-form .actions button {
   cursor: pointer;
 }
 
-a.button:hover,
+.button:hover,
 .filters-row button:hover,
 .refs-form button[type="submit"]:hover,
 form.lesson-form .actions button:hover {

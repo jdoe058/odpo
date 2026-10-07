@@ -24,6 +24,7 @@ urlpatterns = [
         export_pdf_view,
         name="cycle_export",
     ),
+    path("cycles/", include("timetable.cycles.urls")),
     path("references/", include("timetable.references.urls")),
     path(
         "cycle/import/",
