@@ -3,7 +3,7 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from django import forms
 from .models import (
-    Base, Cycle, CycleName, Discipline, Employee, FundingType,
+    Base, Cycle, CycleName, Discipline, EducationKind, Employee, FundingType,
     Lesson, LessonType, Position, WorkProgram,
 )
 
@@ -146,15 +146,54 @@ class LessonAdmin(admin.ModelAdmin):
     autocomplete_fields = ("cycle", "lesson_type", "employee")
 
 
+class ChangeKindForm(forms.Form):
+    """Форма для массовой смены вида у циклов."""
+
+    kind = forms.ChoiceField(
+        label="Новый вид",
+        choices=EducationKind.choices,
+    )
+
+
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
-        "start_date", "base", "name", "kind",
+        "start_date", "kind", "base", "name",
     )
     list_filter = ("name", "base")
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
     date_hierarchy = "start_date"
     autocomplete_fields = ("name", "compiled_by", "base")
+    actions = ["change_kind"]
+
+    @admin.action(description="Сменить вид у выбранных циклов")
+    def change_kind(self, request, queryset):
+        if "apply" in request.POST:
+            form = ChangeKindForm(request.POST)
+            if form.is_valid():
+                kind = form.cleaned_data["kind"]
+                updated = queryset.update(kind=kind)
+                display = dict(EducationKind.choices)[kind]
+                self.message_user(
+                    request,
+                    f"Вид «{display}» установлен у {updated} циклов.",
+                    messages.SUCCESS,
+                )
+                return None
+        else:
+            form = ChangeKindForm()
+
+        return TemplateResponse(
+            request,
+            "admin/timetable/cycle/change_kind.html",
+            {
+                "title": "Смена вида у циклов",
+                "queryset": queryset,
+                "form": form,
+                "opts": self.model._meta,
+                "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+            },
+        )
 
 
 @admin.register(Discipline)

@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <p>Выбрано циклов: <b>{{ queryset.count }}</b>.</p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% for obj in queryset %}
+      <input type="hidden"
+             name="{{ action_checkbox_name }}"
+             value="{{ obj.pk }}">
+    {% endfor %}
+
+    <input type="hidden" name="action" value="change_kind">
+    <input type="hidden" name="apply" value="1">
+
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row">
+          {{ field.errors }}
+          <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+          {{ field }}
+        </div>
+      {% endfor %}
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" value="Применить" class="default">
+      <a href="{% url 'admin:timetable_cycle_changelist' %}"
+         class="button cancel-link">Отмена</a>
+    </div>
+  </form>
+{% endblock %}
