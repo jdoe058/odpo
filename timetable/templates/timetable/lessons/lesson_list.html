@@ -48,6 +48,9 @@
         <th>Дата</th>
         <th>Время</th>
         <th>Тип</th>
+        <th>Категория</th>
+        <th>Группа</th>
+        <th>Отображение</th>
         <th>Часов</th>
         <th>Тема</th>
         <th>Преподаватель</th>
@@ -74,6 +77,9 @@
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
           <td>{{ l.lesson_type.name }}</td>
+          <td>{{ l.get_category_display }}</td>
+          <td>{{ l.group }}</td>
+          <td>{{ l.display_category }}</td>
           <td>{{ l.hours }}</td>
           <td>{{ l.topic }}</td>
           <td>{{ l.employee.short_name }}</td>

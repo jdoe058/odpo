@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <p>Выбрано занятий: <b>{{ queryset.count }}</b>.</p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% for obj in queryset %}
+      <input type="hidden"
+             name="{{ action_checkbox_name }}"
+             value="{{ obj.pk }}">
+    {% endfor %}
+
+    <input type="hidden" name="action" value="set_group">
+    <input type="hidden" name="apply" value="1">
+
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row">
+          {{ field.errors }}
+          <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="help">{{ field.help_text }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" value="Применить" class="default">
+      <a href="{% url 'admin:timetable_lesson_changelist' %}"
+         class="button cancel-link">Отмена</a>
+    </div>
+  </form>
+{% endblock %}

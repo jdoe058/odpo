@@ -84,6 +84,8 @@ class LessonCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                     "time_start": prev.available_from,
                     "employee": getattr(prev, "employee_id", None),
                     "base": getattr(prev, "base_id", None),
+                    "category": prev.category,
+                    "group": prev.group,
                 })
                 return initial
         if cycle_pk:

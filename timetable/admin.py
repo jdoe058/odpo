@@ -136,15 +136,58 @@ class CycleNameAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
+class SetGroupForm(forms.Form):
+    """Форма массовой установки группы для занятий."""
+
+    group = forms.CharField(
+        label="Новая группа",
+        max_length=50,
+        required=False,
+        help_text=(
+            "Оставьте пусто, чтобы очистить группу у выбранных занятий."
+        ),
+    )
+
+
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ("date", "time_start", "time_end", "hours",
-                    "lesson_type", "topic", "employee", "cycle")
-    list_filter = ("cycle", "lesson_type", "employee")
+                    "lesson_type", "category", "group",
+                    "topic", "employee", "cycle")
+    list_filter = ("cycle", "lesson_type", "category", "group", "employee")
     search_fields = ("topic", "employee__short_name")
     date_hierarchy = "date"
     autocomplete_fields = ("cycle", "lesson_type", "employee")
+    actions = ["set_group"]
 
+    @admin.action(description="Установить группу у выбранных занятий")
+    def set_group(self, request, queryset):
+        if "apply" in request.POST:
+            form = SetGroupForm(request.POST)
+            if form.is_valid():
+                group = form.cleaned_data["group"]
+                updated = queryset.update(group=group)
+                if group:
+                    msg = f"Группа «{group}» установлена у {updated} занятий."
+                else:
+                    msg = f"Группа очищена у {updated} занятий."
+                self.message_user(request, msg, messages.SUCCESS)
+                return None
+        else:
+            form = SetGroupForm()
+
+        return TemplateResponse(
+            request,
+            "admin/timetable/lesson/set_group.html",
+            {
+                "title": "Установка группы у занятий",
+                "queryset": queryset,
+                "form": form,
+                "opts": self.model._meta,
+                "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+            },
+        )
+    
 
 class ChangeKindForm(forms.Form):
     """Форма для массовой смены вида у циклов."""

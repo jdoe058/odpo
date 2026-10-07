@@ -365,6 +365,19 @@ class Lesson(models.Model):
         LessonType, on_delete=models.PROTECT,
         related_name="lessons", verbose_name="Тип занятия",
     )
+    category = models.CharField(
+        "Категория",
+        max_length=20,
+        choices=LessonCategory.choices,
+        blank=True,
+        default="",
+    )
+    group = models.CharField(
+        "Группа",
+        max_length=50,
+        blank=True,
+        default="",
+    )
     topic = models.CharField(
         max_length=255, blank=True, verbose_name="Тема",
     )
@@ -427,6 +440,16 @@ class Lesson(models.Model):
         """
         end_dt = datetime.combine(self.date, self.time_end)
         return (end_dt + timedelta(minutes=self.break_after_minutes)).time()
+
+    @property
+    def display_category(self) -> str:
+        """Категория с группой: «Практика 1», «Лекции», «Итоговая аттестация»."""
+        if not self.category:
+            return ""
+        label = self.get_category_display()
+        if self.group:
+            return f"{label} {self.group}"
+        return label
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"

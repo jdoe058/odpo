@@ -45,6 +45,8 @@ class LessonForm(forms.ModelForm):
             "time_start",
             "hours",
             "lesson_type",
+            "category",
+            "group",
             "topic",
             "employee",
             "break_after_minutes",
@@ -79,12 +81,12 @@ class LessonForm(forms.ModelForm):
         default_break = Lesson._meta.get_field("break_after_minutes").default
 
         if self.instance.pk:
-            # Редактирование: если у объекта дефолт — показываем пустое поле.
             if self.instance.break_after_minutes == default_break:
                 self.initial["break_after_minutes"] = ""
         else:
-            # Создание: всегда пустое поле, дефолт подставит clean_.
             self.initial["break_after_minutes"] = ""
+
+        self.fields["category"].required = True
 
     def clean_break_after_minutes(self):
         value = self.cleaned_data.get("break_after_minutes")
