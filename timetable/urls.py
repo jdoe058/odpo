@@ -11,7 +11,7 @@ urlpatterns = [
     path("lessons/", views.ScheduleLessons.as_view(), name="schedule_lessons"),
     path(
         "lessons/<int:pk>/edit/",
-        views.lesson_edit_view,
+        views.LessonEdit.as_view(),
         name="lesson_edit",
     ),
     path(
