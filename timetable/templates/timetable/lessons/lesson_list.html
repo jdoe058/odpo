@@ -29,6 +29,10 @@
      href="{% url 'timetable:cycle_export_xlsx' selected_cycle.pk %}">
     📄 XLSX
   </a>
+  <a class="button"
+     href="{% url 'timetable:lesson_create' %}?cycle={{ selected_cycle.pk }}&next={{ request.get_full_path|urlencode }}">
+    ➕ Добавить занятие
+  </a>
 </div>
 {% endif %}
 
@@ -56,6 +60,8 @@
         <tr>
           <td>
             <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}">✎</a>
+            <a href="{% url 'timetable:lesson_create' %}?after={{ l.pk }}&next={{ request.get_full_path|urlencode }}"
+               title="Добавить занятие после этого">➕</a>
           </td>
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>

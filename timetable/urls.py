@@ -8,12 +8,7 @@ app_name = "timetable"
 
 urlpatterns = [
     path("", views.ScheduleGrid.as_view(), name="schedule_grid"),
-    path("lessons/", views.ScheduleLessons.as_view(), name="schedule_lessons"),
-    path(
-        "lessons/<int:pk>/edit/",
-        views.LessonEdit.as_view(),
-        name="lesson_edit",
-    ),
+    path("lessons/", include("timetable.lessons.urls")),
     path(
         "cycle/<int:cycle_id>/export/xlsx/",
         cycle_xlsx_export_view,

@@ -1,19 +1,27 @@
 {% extends "timetable/base.html" %}
 {% load static %}
 
-{% block title %}Редактирование занятия{% endblock %}
+{% block title %}
+  {% if is_create %}Новое занятие{% else %}Редактирование занятия{% endif %}
+{% endblock %}
 
 {% block extra_head %}
+  <script src="{% static 'timetable/vendor/jquery/jquery-3.7.1.min.js' %}"></script>
+  {{ form.media }}
   <link rel="stylesheet" href="{% static 'timetable/css/components/lesson-form.css' %}">
 {% endblock %}
 
 {% block content %}
-<h1>Редактирование занятия</h1>
+<h1>
+  {% if is_create %}Новое занятие{% else %}Редактирование занятия{% endif %}
+</h1>
 
-<p class="muted">
-  Цикл: <b>{{ lesson.cycle.name.name }}</b> —
-  {{ lesson.cycle.start_date|date:"d.m.Y" }} — {{ lesson.cycle.end_date|date:"d.m.Y" }}
-</p>
+{% if not is_create %}
+  <p class="muted">
+    Цикл: <b>{{ object.cycle.name.name }}</b> —
+    {{ object.cycle.start_date|date:"d.m.Y" }} — {{ object.cycle.end_date|date:"d.m.Y" }}
+  </p>
+{% endif %}
 
 <form method="post" class="lesson-form">
   {% csrf_token %}
@@ -23,6 +31,11 @@
     <div class="field">
       <label for="{{ field.id_for_label }}">{{ field.label }}</label>
       {{ field }}
+      {% if field.help_text %}
+        <div class="muted" style="font-size:12px;margin-top:4px">
+          {{ field.help_text }}
+        </div>
+      {% endif %}
       {% if field.errors %}
         <div class="errors">{{ field.errors|join:", " }}</div>
       {% endif %}
@@ -34,7 +47,7 @@
     {% if next %}
       <a class="button" href="{{ next }}">Отмена</a>
     {% else %}
-      <a class="button" href="{% url 'timetable:schedule_grid' %}">Отмена</a>
+      <a class="button" href="{% url 'timetable:lesson_list' %}">Отмена</a>
     {% endif %}
   </div>
 </form>
