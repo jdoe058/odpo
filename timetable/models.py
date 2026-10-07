@@ -206,6 +206,15 @@ class Base(models.Model):
         return self.name
 
 
+class LessonCategory(models.TextChoices):
+    """Категория типа занятия. Используется в отчёте «Распределение часов»."""
+
+    LECTURE = "lecture", "Лекции"
+    SEMINAR = "seminar", "Занятия семинарского типа"
+    PRACTICE = "practice", "Практика"
+    ATTESTATION = "attestation", "Итоговая аттестация"
+
+
 class LessonType(models.Model):
     class Category(models.TextChoices):
         LECTURE = "lecture", "Лекции"
@@ -219,7 +228,7 @@ class LessonType(models.Model):
 
     category = models.CharField(
         max_length=20,
-        choices=Category.choices,
+        choices=LessonCategory.choices,
         blank=True,
         verbose_name="Категория в отчёте",
         help_text=(

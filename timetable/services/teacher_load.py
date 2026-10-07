@@ -4,14 +4,10 @@ from dataclasses import dataclass
 
 from django.db.models import Sum
 
+from timetable.models import LessonCategory
 
-CATEGORY_ORDER = ("lecture", "seminar", "practice", "attestation")
-CATEGORY_LABELS = {
-    "lecture": "Лекции",
-    "seminar": "Занятия семинарского типа",
-    "practice": "Практика",
-    "attestation": "Итоговая аттестация",
-}
+CATEGORY_ORDER = tuple(c.value for c in LessonCategory)
+CATEGORY_LABELS = dict(LessonCategory.choices)
 
 
 @dataclass(frozen=True)
