@@ -33,6 +33,7 @@
     <thead>
       <tr>
         <th>Название</th>
+        <th>Поток</th>
         <th>База</th>
         <th>Финансирование</th>
         <th>Период</th>
@@ -45,6 +46,7 @@
       {% for c in cycles %}
         <tr>
           <td>{{ c.name.name }}</td>
+          <td>{{ c.stream }}</td>
           <td>{{ c.base.name }}</td>
           <td>{{ c.funding_type.name }}</td>
           <td>{{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }}</td>

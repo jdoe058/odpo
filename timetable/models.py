@@ -275,6 +275,16 @@ class Cycle(models.Model):
         CycleName, on_delete=models.PROTECT,
         related_name="cycles", verbose_name="Название цикла",
     )
+    stream = models.CharField(
+        "Поток",
+        max_length=50,
+        blank=True,
+        default="",
+        help_text=(
+            "Номер или название потока. "
+            "Оставьте пустым, если поток не различается."
+        ),
+    )
     kind = models.CharField(
         "Вид",
         max_length=2,
@@ -311,8 +321,8 @@ class Cycle(models.Model):
                 name="cycle_end_after_start",
             ),
             models.UniqueConstraint(
-                fields=["name", "base", "start_date"],
-                name="cycle_unique_name_base_start",
+                fields=["name", "base", "start_date", "stream"],
+                name="cycle_unique_name_base_start_stream",
             ),
         ]
 
@@ -325,6 +335,13 @@ class Cycle(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.start_date:%d.%m.%Y} — {self.end_date:%d.%m.%Y})"
+
+    @property
+    def display_name(self) -> str:
+        """Название цикла с потоком, если он указан."""
+        if self.stream:
+            return f"{self.name.name} ({self.stream})"
+        return self.name.name
 
 
 class Lesson(models.Model):

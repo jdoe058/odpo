@@ -15,11 +15,12 @@ def cycle_to_xlsx_bytes(cycle: Cycle) -> bytes:
 
     ws = wb.worksheets[0]
     ws.title = SHEET_CYCLE
-    write_cycle_sheet_header(ws, values={
+    write_cycle_sheet_header(ws, values = {
         "compiled_by": cycle.compiled_by.short_name,
         "funding": cycle.funding_type.name,
         "base": cycle.base.name,
         "name": cycle.name.name,
+        "stream": cycle.stream,
         "start_date": cycle.start_date.isoformat(),
         "end_date": cycle.end_date.isoformat(),
     })

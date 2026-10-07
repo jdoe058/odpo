@@ -29,7 +29,7 @@ class CycleForm(forms.ModelForm):
     class Meta:
         model = Cycle
         fields = [
-            "name", "kind", "funding_type", "base",
+            "name", "stream", "kind", "funding_type", "base",
             "start_date", "end_date", "compiled_by",
         ]
         widgets = {

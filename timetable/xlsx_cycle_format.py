@@ -8,15 +8,18 @@ SHEET_CYCLE = "Цикл"
 SHEET_LESSONS = "Занятия"
 
 
-# (latin, russian_title) — порядок фиксирован и используется всеми потребителями.
 CYCLE_FIELDS = (
     ("compiled_by", "Составил"),
     ("funding", "Финансирование"),
     ("base", "База"),
     ("name", "Название цикла"),
+    ("stream", "Поток"),
     ("start_date", "Дата начала"),
     ("end_date", "Дата окончания"),
 )
+
+# Поля, которые необязательно заполнять при импорте.
+CYCLE_OPTIONAL_FIELDS = ("stream",)
 
 LESSON_FIELDS = (
     ("date", "Дата"),

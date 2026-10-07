@@ -16,14 +16,11 @@ from timetable.models import (
     LessonType,
 )
 from timetable.xlsx_cycle_format import (
-    CYCLE_FIELDS,
-    CYCLE_LATIN,
-    CYCLE_RU_TO_LATIN,
-    LESSON_FIELDS,
-    LESSON_LATIN_TO_INDEX,
-    SHEET_CYCLE,
-    SHEET_LESSONS,
+    CYCLE_FIELDS, CYCLE_LATIN, CYCLE_OPTIONAL_FIELDS, CYCLE_RU_TO_LATIN,
+    LESSON_FIELDS, LESSON_LATIN_TO_INDEX,
+    SHEET_CYCLE, SHEET_LESSONS,
 )
+
 from timetable.xlsx_utils import (
     cell_date,
     cell_int,
@@ -89,7 +86,9 @@ def _parse_cycle_sheet(ws, errors: list[str]) -> dict:
         result[key] = value
 
     for latin, ru in CYCLE_FIELDS:
-        if latin not in result:
+        if latin in CYCLE_OPTIONAL_FIELDS:
+            result.setdefault(latin, "")
+        elif latin not in result:
             errors.append(f"лист «{SHEET_CYCLE}»: не заполнено поле «{ru}»")
 
     return result
@@ -187,12 +186,15 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
     assert cycle_name is not None
     assert base is not None
 
+    stream = cell_str(cycle_data.get("stream", ""))
+
     if Cycle.objects.filter(
-        name=cycle_name, base=base, start_date=start_date
+        name=cycle_name, base=base, start_date=start_date, stream=stream,
     ).exists():
+        suffix = f" (поток «{stream}»)" if stream else ""
         raise CycleImportError([
             f"Цикл «{cycle_name.name}» на базе «{base.name}» "
-            f"с {start_date:%d.%m.%Y} уже существует."
+            f"с {start_date:%d.%m.%Y}{suffix} уже существует."
         ])
 
     lesson_objects, lesson_errors = _build_lessons(lesson_rows)
@@ -202,6 +204,7 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
     with transaction.atomic():
         cycle = Cycle.objects.create(
             name=cycle_name,
+            stream=stream,
             funding_type=funding,
             base=base,
             start_date=start_date,

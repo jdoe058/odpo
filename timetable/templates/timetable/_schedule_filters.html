@@ -18,7 +18,7 @@
         {% for c in cycles %}
           <option value="{{ c.pk }}" data-base="{{ c.base_id }}"
                   {% if selected_cycle.pk == c.pk %}selected{% endif %}>
-            {{ c.start_date|date:"d.m.Y" }} {{ c.name|truncatechars:40 }}
+            {{ c.start_date|date:"d.m.Y" }} {{ c.display_name|truncatechars:40 }}
           </option>
         {% endfor %}
       </select>
