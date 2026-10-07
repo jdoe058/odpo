@@ -203,7 +203,7 @@ class LessonType(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name="Название")
     code = models.CharField(max_length=20, unique=True, verbose_name="Код")
     sort_order = models.PositiveIntegerField(unique=True, verbose_name="Порядок сортировки")
-    counts_in_hours = models.BooleanField(default=True, verbose_name="Участвует в подсчёте часов")
+
     category = models.CharField(
         max_length=20,
         choices=Category.choices,

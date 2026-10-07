@@ -126,7 +126,6 @@ SPECS: tuple[ReferenceSpec, ...] = (
             Column("code", "str", header="Код"),
             Column("name", "str", header="Название"),
             Column("category", "str", header="Категория"),
-            Column("counts_in_hours", "bool", header="Учитывать часы"),
             Column("sort_order", "int", header="Порядок сортировки"),
         ),
         list_columns=("code", "name", "category"),

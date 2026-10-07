@@ -117,9 +117,9 @@ class BaseAdmin(admin.ModelAdmin):
 
 @admin.register(LessonType)
 class LessonTypeAdmin(admin.ModelAdmin):
-    list_display = ("code", "name", "category", "sort_order", "counts_in_hours")
-    list_editable = ("name", "category", "sort_order", "counts_in_hours")
-    list_filter = ("category", "counts_in_hours")
+    list_display = ("code", "name", "category", "sort_order")
+    list_editable = ("name", "category", "sort_order")
+    list_filter = ("category",)
     search_fields = ("code", "name")
     ordering = ("sort_order",)
 

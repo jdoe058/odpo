@@ -42,7 +42,6 @@ def calculate_teacher_load(cycle) -> TeacherLoad:
     """
     data = (
         cycle.lessons
-        .filter(lesson_type__counts_in_hours=True)
         .exclude(lesson_type__category="")
         .values("employee_id", "employee__short_name", "lesson_type__category")
         .annotate(h=Sum("hours"))

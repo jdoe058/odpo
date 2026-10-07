@@ -1,8 +1,12 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from django.db.models import Prefetch
 
+if TYPE_CHECKING:
+    from timetable.models import LessonType
+    
 
 @dataclass(frozen=True)
 class TypeBreakdown:
@@ -22,18 +26,16 @@ class CycleHours:
 
 def calculate_cycle_hours(cycle) -> CycleHours:
     """
-    Считает часы цикла по занятиям, у которых lesson_type.counts_in_hours=True.
+    Считает часы цикла по занятиям, разбивая по типам.
 
     Если lessons предзагружены через prefetch_lessons_for_hours(),
     функция работает без дополнительных SQL-запросов.
     """
     totals: dict[int, int] = defaultdict(int)
-    types: dict[int, object] = {}
+    types: dict[int, "LessonType"] = {}
 
     for lesson in cycle.lessons.all():
         lt = lesson.lesson_type
-        if not lt.counts_in_hours:
-            continue
         totals[lt.pk] += lesson.hours
         types[lt.pk] = lt
 

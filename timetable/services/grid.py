@@ -35,7 +35,7 @@ class Grid:
 
 def calculate_grid(start: date, end: date, cycle=None, base=None, employee_q=None) -> Grid:
     """
-    Сетка «преподаватели × дни». Только типы занятий с counts_in_hours=True.
+    Сетка «преподаватели × дни». 
     Если cycle задан — только занятия этого цикла.
     Если base задан — только занятия, фактически проходящие на этой базе:
     Lesson.base=base либо (Lesson.base is null и Cycle.base=base).
@@ -55,7 +55,6 @@ def calculate_grid(start: date, end: date, cycle=None, base=None, employee_q=Non
     qs = Lesson.objects.filter(
         date__gte=start,
         date__lte=end,
-        lesson_type__counts_in_hours=True,
     )
     if cycle is not None:
         qs = qs.filter(cycle=cycle)

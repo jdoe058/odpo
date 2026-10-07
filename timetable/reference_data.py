@@ -27,7 +27,6 @@ class LessonTypeSpec:
     code: str
     name: str
     category: str = ""        # "" | "lecture" | "seminar" | "practice"
-    counts_in_hours: bool = True
     sort_order: int = 100
 
 
@@ -60,15 +59,15 @@ POSITIONS: tuple[PositionSpec, ...] = (
 # --- Типы занятий -------------------------------------------------------
 
 LESSON_TYPES: tuple[LessonTypeSpec, ...] = (
-    LessonTypeSpec("0",  "лекция",                      category="lecture",     counts_in_hours=True, sort_order=10),
-    LessonTypeSpec("7",  "занятие семинарского типа 1", category="seminar",     counts_in_hours=True, sort_order=11),
-    LessonTypeSpec("8",  "занятие семинарского типа 2", category="seminar",     counts_in_hours=True, sort_order=12),
-    LessonTypeSpec("10", "занятие семинарского типа 3", category="seminar",     counts_in_hours=True, sort_order=13),
-    LessonTypeSpec("1",  "практика 1",                  category="practice",    counts_in_hours=True, sort_order=21),
-    LessonTypeSpec("2",  "практика 2",                  category="practice",    counts_in_hours=True, sort_order=22),
-    LessonTypeSpec("3",  "практика 3",                  category="practice",    counts_in_hours=True, sort_order=23),
-    LessonTypeSpec("4",  "практика 4",                  category="practice",    counts_in_hours=True, sort_order=24),
-    LessonTypeSpec("5",  "практика 5",                  category="practice",    counts_in_hours=True, sort_order=25),
-    LessonTypeSpec("6",  "практика 6",                  category="practice",    counts_in_hours=True, sort_order=26),        
-    LessonTypeSpec("9",  "итоговая аттестация",         category="attestation", counts_in_hours=True, sort_order=30),
+    LessonTypeSpec("0",  "лекция",                      category="lecture",     sort_order=10),
+    LessonTypeSpec("7",  "занятие семинарского типа 1", category="seminar",     sort_order=11),
+    LessonTypeSpec("8",  "занятие семинарского типа 2", category="seminar",     sort_order=12),
+    LessonTypeSpec("10", "занятие семинарского типа 3", category="seminar",     sort_order=13),
+    LessonTypeSpec("1",  "практика 1",                  category="practice",    sort_order=21),
+    LessonTypeSpec("2",  "практика 2",                  category="practice",    sort_order=22),
+    LessonTypeSpec("3",  "практика 3",                  category="practice",    sort_order=23),
+    LessonTypeSpec("4",  "практика 4",                  category="practice",    sort_order=24),
+    LessonTypeSpec("5",  "практика 5",                  category="practice",    sort_order=25),
+    LessonTypeSpec("6",  "практика 6",                  category="practice",    sort_order=26),
+    LessonTypeSpec("9",  "итоговая аттестация",         category="attestation", sort_order=30),
 )

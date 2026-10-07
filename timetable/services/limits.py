@@ -116,7 +116,7 @@ def find_violations(
     """
     new = [
         l for l in lessons
-        if l.lesson_type.counts_in_hours and l.hours and l.hours > 0
+        if l.hours and l.hours > 0
     ]
     if not new:
         return ()
@@ -197,7 +197,6 @@ def _check_scope(
     emp_ids = list({b.employee.pk for b in buckets.values()})
 
     qs = Lesson.objects.filter(
-        lesson_type__counts_in_hours=True,
         date__range=(min_date, max_date),
         employee_id__in=emp_ids,
     )
@@ -257,7 +256,7 @@ def calculate_overtime(
     bounds_fn = _BOUNDS[scope]
     limit_attr = _LIMIT_ATTR[scope]
 
-    qs = Lesson.objects.filter(lesson_type__counts_in_hours=True)
+    qs = Lesson.objects.all()
     if start is not None:
         qs = qs.filter(date__gte=start)
     if end is not None:
