@@ -3,7 +3,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.generic import CreateView, TemplateView, UpdateView
+from django.views.generic import (
+    CreateView, DeleteView, TemplateView, UpdateView,
+)
 
 from timetable.exports.kinds import all_specs
 from timetable.models import Lesson
@@ -141,3 +143,28 @@ class LessonEdit(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             or self.request.POST.get("next")
             or ""
         )
+
+class LessonDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+    """
+    Удаление занятия.
+
+    Отвечает только на POST. GET возвращает 405.
+    Подтверждение — через JS-confirm в форме.
+    """
+
+    model = Lesson
+    http_method_names = ["post"]
+    success_message = "Занятие удалено."
+
+    def get_success_url(self):
+        next_url = (
+            self.request.GET.get("next")
+            or self.request.POST.get("next")
+            or ""
+        )
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={self.request.get_host()},
+        ):
+            return next_url
+        return reverse("timetable:lesson_list")
+

@@ -58,10 +58,18 @@
     <tbody>
       {% for l in lessons %}
         <tr>
-          <td>
-            <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}">✎</a>
+          <td style="white-space: nowrap;">
+            <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}"
+               title="Редактировать">✎</a>
             <a href="{% url 'timetable:lesson_create' %}?after={{ l.pk }}&next={{ request.get_full_path|urlencode }}"
                title="Добавить занятие после этого">➕</a>
+            <form method="post"
+                  action="{% url 'timetable:lesson_delete' l.pk %}?next={{ request.get_full_path|urlencode }}"
+                  class="inline-form"
+                  data-confirm="Удалить занятие {{ l.date|date:'d.m.Y' }} {{ l.time_start|time:'H:i' }} ({{ l.employee.short_name }})?">
+              {% csrf_token %}
+              <button type="submit" class="link-button danger" title="Удалить">🗑</button>
+            </form>
           </td>
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
@@ -76,4 +84,13 @@
     </tbody>
   </table>
 {% endif %}
+<script>
+document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+  f.addEventListener('submit', function (e) {
+    if (!window.confirm(f.getAttribute('data-confirm'))) {
+      e.preventDefault();
+    }
+  });
+});
+</script>
 {% endblock %}

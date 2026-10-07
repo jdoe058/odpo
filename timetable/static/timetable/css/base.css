@@ -152,12 +152,25 @@ header a:hover { color: var(--color-primary-fg); }
 .link-button {
   background: none;
   border: none;
-  color: var(--color-primary-fg-muted);
+  color: var(--color-text-muted-alt);
   cursor: pointer;
   font: inherit;
   padding: 0;
 }
-.link-button:hover { color: var(--color-primary-fg); }
+.link-button:hover { color: var(--color-text); }
+
+.link-button.danger { color: var(--color-danger); }
+.link-button.danger:hover { color: var(--color-danger); opacity: 0.8; }
+
+.inline-form { display: inline; }
+
+/* В шапке кнопка «Выйти» на тёмном фоне — возвращаем светлый цвет */
+.user-box .link-button {
+  color: var(--color-primary-fg-muted);
+}
+.user-box .link-button:hover {
+  color: var(--color-primary-fg);
+}
 
 /* ===================== Сообщения ===================== */
 ul.messages {
