@@ -22,9 +22,7 @@ from .exports.ped_hours_xlsx import ped_hours_to_xlsx_bytes
 from .forms import CycleImportForm, LessonForm
 from .models import Lesson
 from .services.grid import calculate_grid
-from .services.limits import (
-    find_violations, format_violation,
-)
+
 from .services.ped_hours import MONTH_NAMES_RU, calculate_ped_hours
 from .ped_hours_filter import PedHoursFilterForm, PedHoursFilterMixin
 
@@ -105,22 +103,13 @@ def lesson_edit_view(request, pk):
     if request.method == "POST":
         form = LessonForm(request.POST, instance=lesson)
         if form.is_valid():
-            candidate = form.save(commit=False)
-            violations = find_violations(
-                [candidate],
-                exclude_lesson_ids=(candidate.pk,) if candidate.pk else (),
-            )
-            if violations:
-                for v in violations:
-                    messages.error(request, format_violation(v))
-            else:
-                candidate.save()
-                messages.success(request, "Занятие сохранено.")
-                if next_url and url_has_allowed_host_and_scheme(
-                    next_url, allowed_hosts={request.get_host()}
-                ):
-                    return redirect(next_url)
-                return redirect("timetable:schedule_grid")
+            form.save()
+            messages.success(request, "Занятие сохранено.")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}
+            ):
+                return redirect(next_url)
+            return redirect("timetable:schedule_grid")
     else:
         form = LessonForm(instance=lesson)
 
