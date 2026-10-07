@@ -52,10 +52,12 @@
         <th>Группа</th>
         <th>Отображение</th>
         <th>Часов</th>
+        <th>Перемена</th>
+        <th>База занятия</th>
+        <th>Фактическая база</th>
         <th>Тема</th>
         <th>Преподаватель</th>
         {% if not selected_cycle %}<th>Цикл</th>{% endif %}
-        {% if not base %}<th>База</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -81,10 +83,12 @@
           <td>{{ l.group }}</td>
           <td>{{ l.display_category }}</td>
           <td>{{ l.hours }}</td>
+          <td>{{ l.display_break }}</td>
+          <td>{{ l.display_base }}</td>
+          <td>{{ l.effective_base.name }}</td>
           <td>{{ l.topic }}</td>
           <td>{{ l.employee.short_name }}</td>
           {% if not selected_cycle %}<td>{{ l.cycle.name.name }}</td>{% endif %}
-          {% if not base %}<td>{{ l.effective_base.name }}</td>{% endif %}
         </tr>
       {% endfor %}
     </tbody>

@@ -446,10 +446,27 @@ class Lesson(models.Model):
         """Категория с группой: «Практика 1», «Лекции», «Итоговая аттестация»."""
         if not self.category:
             return ""
-        label = self.get_category_display()
+        label = getattr(self, "get_category_display", lambda: self.category)()
         if self.group:
             return f"{label} {self.group}"
         return label
+
+    @property
+    def display_break(self) -> str:
+        """Перемена, если отличается от стандартной. Иначе — пусто."""
+        default = Lesson._meta.get_field("break_after_minutes").default
+        if self.break_after_minutes == default:
+            return ""
+        return str(self.break_after_minutes)
+
+    @property
+    def display_base(self) -> str:
+        """База занятия, если задана явно. Иначе — пусто."""
+        base_id = getattr(self, "base_id", None)
+        if not base_id:
+            return ""
+        base = getattr(self, "base", None)
+        return getattr(base, "name", "") if base is not None else ""
 
     def __str__(self):
         return f"{self.date:%d.%m.%Y} {self.time_start:%H:%M} — {self.employee}"
