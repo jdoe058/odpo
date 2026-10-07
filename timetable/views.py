@@ -102,10 +102,6 @@ def lesson_edit_view(request, pk):
 
     next_url = request.GET.get("next") or request.POST.get("next") or ""
 
-    if lesson.cycle.in_archive:
-        messages.error(request, "Цикл в архиве — редактирование запрещено.")
-        return redirect(next_url or "timetable:schedule_grid")
-
     if request.method == "POST":
         form = LessonForm(request.POST, instance=lesson)
         if form.is_valid():
