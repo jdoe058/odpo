@@ -48,6 +48,13 @@ def validate_short_name(value: str) -> None:
         )
 
 
+class EducationKind(models.TextChoices):
+    """Вид дополнительной профессиональной программы (273-ФЗ)."""
+
+    PP = "ПП", "Профессиональная переподготовка"
+    PK = "ПК", "Повышение квалификации"
+
+
 class Position(models.Model):
     """Должность сотрудника."""
 
@@ -262,6 +269,17 @@ class Cycle(models.Model):
         CycleName, on_delete=models.PROTECT,
         related_name="cycles", verbose_name="Название цикла",
     )
+    kind = models.CharField(
+        "Вид программы",
+        max_length=2,
+        choices=EducationKind.choices,
+        blank=True,
+        default="",
+        help_text=(
+            "ПП — профессиональная переподготовка, "
+            "ПК — повышение квалификации. "
+        ),
+    )
     funding_type = models.ForeignKey(
         FundingType, on_delete=models.PROTECT,
         related_name="cycles", verbose_name="Вид финансирования",
@@ -410,10 +428,6 @@ class Discipline(models.Model):
 class WorkProgram(models.Model):
     """Рабочая программа: дисциплина + год + вид + часы."""
 
-    class Kind(models.TextChoices):
-        PP = "ПП", "Профессиональная переподготовка"
-        PK = "ПК", "Повышение квалификации"
-
     discipline = models.ForeignKey(
         Discipline,
         on_delete=models.PROTECT,
@@ -421,7 +435,9 @@ class WorkProgram(models.Model):
         verbose_name="Дисциплина",
     )
     academic_year = models.PositiveSmallIntegerField("Год")
-    kind = models.CharField("Вид", max_length=2, choices=Kind.choices)
+    kind = models.CharField(
+        "Вид", max_length=2, choices=EducationKind.choices,
+    )
     hours = models.PositiveSmallIntegerField("Часы")
 
     class Meta:
@@ -451,3 +467,4 @@ class WorkProgram(models.Model):
             f"{self.academic_year} {self.kind} "
             f"{self.discipline.name_short} {self.hours}"
         )
+

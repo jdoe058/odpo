@@ -149,7 +149,7 @@ class LessonAdmin(admin.ModelAdmin):
 @admin.register(Cycle)
 class CycleAdmin(admin.ModelAdmin):
     list_display = (
-        "start_date", "base", "name",
+        "start_date", "base", "name", "kind",
     )
     list_filter = ("name", "base")
     search_fields = ("name__name", "base__name", "compiled_by__short_name")
