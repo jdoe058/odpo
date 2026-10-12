@@ -4,6 +4,7 @@ cd /home/sa/odpo_prod
 source venv/bin/activate
 git pull
 pip install -r requirements.txt
+python manage.py backup
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 sudo systemctl restart gunicorn
