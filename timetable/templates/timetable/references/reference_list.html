@@ -45,7 +45,7 @@
       {% for obj in objects %}
         <tr>
           {% for col in columns %}
-            <td>{{ obj|get_attr:col.name }}</td>
+            {% inline_cell obj col spec %}
           {% endfor %}
           <td>
             <a href="{% url 'timetable:reference_edit' spec.slug obj.pk %}">Изменить</a>

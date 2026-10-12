@@ -21,3 +21,46 @@ table.lessons th {
 table.lessons a { color: var(--color-primary); }
 
 table.lessons td.row-actions { white-space: nowrap; }
+
+/* ===================== Inline-редактирование ячеек ===================== */
+td.editable-cell {
+  position: relative;
+  padding: 2px 4px;
+}
+td.editable-cell input[type="text"],
+td.editable-cell input[type="number"] {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 4px 6px;
+  font: inherit;
+  border-radius: 3px;
+}
+td.editable-cell input[type="text"]:hover,
+td.editable-cell input[type="number"]:hover {
+  border-color: var(--color-border-light);
+}
+td.editable-cell input[type="text"]:focus,
+td.editable-cell input[type="number"]:focus {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  outline: none;
+}
+td.editable-cell input[readonly] {
+  color: var(--color-text-muted-alt);
+  cursor: not-allowed;
+}
+td.editable-cell input[type="checkbox"] {
+  margin: 4px;
+}
+td.editable-cell.has-error {
+  background: var(--color-danger-bg-soft);
+}
+td.editable-cell .cell-error {
+  color: var(--color-danger);
+  font-size: 11px;
+  margin-top: 2px;
+}
+td.editable-cell.htmx-request {
+  opacity: 0.5;
+}

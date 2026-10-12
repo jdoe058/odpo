@@ -5,6 +5,8 @@ from .views import (
     exchange_view, export_view,
 )
 
+from .views.cell import reference_cell_update
+
 urlpatterns = [
     path("", exchange_view, name="references_exchange"),
     path("export/", export_view, name="references_export"),
@@ -12,5 +14,10 @@ urlpatterns = [
     path("<slug:slug>/new/", ReferenceCreate.as_view(), name="reference_create"),
     path("<slug:slug>/<int:pk>/edit/", ReferenceEdit.as_view(), name="reference_edit"),
     path("<slug:slug>/<int:pk>/delete/", ReferenceDelete.as_view(), name="reference_delete"),
+     path(
+        "<slug:slug>/<int:pk>/cell/<str:field>/",
+        reference_cell_update,
+        name="reference_cell_update",
+    ),
     path("<slug:slug>/", ReferenceList.as_view(), name="reference_list"),
 ]

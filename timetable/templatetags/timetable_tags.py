@@ -1,5 +1,6 @@
 from django import template
 
+from timetable.references.inline import get_inline_value
 from timetable.references.registry import all_specs
 
 register = template.Library()
@@ -18,3 +19,14 @@ def get_attr(obj, name: str):
     if isinstance(value, bool):
         return "да" if value else "нет"
     return value
+
+
+@register.inclusion_tag("timetable/references/_inline_cell.html")
+def inline_cell(obj, col, spec):
+    """Рендерит ячейку справочника как редактируемую через HTMX."""
+    return {
+        "obj": obj,
+        "col": col,
+        "spec": spec,
+        "value": get_inline_value(obj, col),
+    }

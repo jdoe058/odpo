@@ -1,0 +1,26 @@
+<td class="editable-cell{% if error %} has-error{% endif %}"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    hx-post="{% url 'timetable:reference_cell_update' spec.slug obj.pk col.name %}"
+    hx-trigger="change"
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-indicator="this">
+    
+  {% if col.kind == "bool" %}
+    <input type="checkbox" name="{{ col.name }}"
+           {% if value %}checked{% endif %}>
+  {% elif col.kind == "int" or col.kind == "int_nullable" %}
+    <input type="number" name="{{ col.name }}"
+           value="{{ value|default_if_none:'' }}">
+  {% elif col.kind == "fk_name" %}
+    <input type="text" name="{{ col.name }}"
+           value="{{ value }}" readonly
+           title="Редактируется через форму">
+  {% else %}
+    <input type="text" name="{{ col.name }}" value="{{ value }}">
+  {% endif %}
+
+  {% if error %}
+    <div class="cell-error">{{ error }}</div>
+  {% endif %}
+</td>
