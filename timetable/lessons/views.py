@@ -1,6 +1,8 @@
-"""CBV для CRUD занятий."""
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
@@ -13,7 +15,7 @@ from timetable.schedule_filter import (
     ScheduleFilterMixin, build_common_context, filter_lessons,
 )
 
-from .forms import LessonForm
+from .forms import LessonForm, LessonInlineForm
 
 
 class LessonList(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
@@ -146,6 +148,7 @@ class LessonEdit(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             or ""
         )
 
+
 class LessonDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """
     Удаление занятия.
@@ -178,3 +181,38 @@ class LessonDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         ):
             return next_url
         return reverse("timetable:lesson_list")
+
+
+INLINE_EDITABLE_FIELDS = frozenset({
+    "date", "time_start", "hours", "break_after_minutes",
+    "category", "group", "topic",
+})
+
+
+@login_required
+def lesson_cell_update(request, pk: int, field: str):
+    """Обновляет одно поле занятия. Отдаёт HTML ячейки для HTMX."""
+    if field not in INLINE_EDITABLE_FIELDS:
+        raise Http404(f"Поле «{field}» нельзя редактировать inline")
+
+    lesson = get_object_or_404(
+        Lesson.objects.select_related("cycle", "cycle__base", "employee"),
+        pk=pk,
+    )
+
+    error = ""
+
+    if request.method == "POST":
+        form = LessonInlineForm(request.POST, instance=lesson, field_name=field)
+        if form.is_valid():
+            lesson = form.save()
+        else:
+            field_errors = form.errors.get(field, [])
+            error = "; ".join(str(e) for e in field_errors)
+            lesson.refresh_from_db()
+
+    return render(request, "timetable/lessons/_inline_cell.html", {
+        "lesson": lesson,
+        "field": field,
+        "error": error,
+    })

@@ -1,0 +1,42 @@
+<td class="editable-cell{% if error %} has-error{% endif %}"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    hx-post="{% url 'timetable:lesson_cell_update' lesson.pk field %}"
+    hx-trigger="change"
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-indicator="this">
+
+  {% if field == "date" %}
+    <input type="date" name="date" value="{{ lesson.date|date:'Y-m-d' }}">
+
+  {% elif field == "time_start" %}
+    <input type="time" name="time_start" value="{{ lesson.time_start|time:'H:i' }}">
+
+  {% elif field == "hours" %}
+    <input type="number" name="hours" min="1" value="{{ lesson.hours }}">
+
+  {% elif field == "break_after_minutes" %}
+    <input type="number" name="break_after_minutes" min="0"
+           value="{{ lesson.display_break }}">
+
+  {% elif field == "category" %}
+    <select name="category">
+      <option value="">— не задано —</option>
+      <option value="lecture"     {% if lesson.category == "lecture" %}selected{% endif %}>Лекции</option>
+      <option value="seminar"     {% if lesson.category == "seminar" %}selected{% endif %}>Занятия семинарского типа</option>
+      <option value="practice"    {% if lesson.category == "practice" %}selected{% endif %}>Практика</option>
+      <option value="attestation" {% if lesson.category == "attestation" %}selected{% endif %}>Итоговая аттестация</option>
+    </select>
+
+  {% elif field == "group" %}
+    <input type="text" name="group" value="{{ lesson.group }}">
+
+  {% elif field == "topic" %}
+    <input type="text" name="topic" value="{{ lesson.topic }}">
+
+  {% endif %}
+
+  {% if error %}
+    <div class="cell-error">{{ error }}</div>
+  {% endif %}
+</td>

@@ -93,3 +93,35 @@ class LessonForm(forms.ModelForm):
         if value is None:
             return Lesson._meta.get_field("break_after_minutes").default
         return value
+
+class LessonInlineForm(forms.ModelForm):
+    """
+    Форма одного поля занятия для inline-редактирования.
+    Оставляет только поле, указанное в поле `field_name`.
+    """
+
+    class Meta:
+        model = Lesson
+        fields = [
+            "date",
+            "time_start",
+            "hours",
+            "break_after_minutes",
+            "category",
+            "group",
+            "topic",
+        ]
+
+    def __init__(self, *args, field_name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if field_name is not None:
+            for name in list(self.fields.keys()):
+                if name != field_name:
+                    del self.fields[name]
+
+    def clean_break_after_minutes(self):
+        value = self.cleaned_data.get("break_after_minutes")
+        if value is None:
+            return Lesson._meta.get_field("break_after_minutes").default
+        return value
+

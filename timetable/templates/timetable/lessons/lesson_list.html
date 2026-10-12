@@ -47,17 +47,16 @@
       <tr>
         <th></th>
         <th>Дата</th>
-        <th>Время</th>
-        <th>Тип</th>
-        <th>Категория</th>
-        <th>Группа</th>
-        <th>Отображение</th>
+        <th>Начало</th>
+        <th>Окончание</th>
         <th>Часов</th>
         <th>Перемена</th>
-        <th>База занятия</th>
-        <th>Фактическая база</th>
+        <th>Категория</th>
+        <th>Группа</th>
         <th>Тема</th>
         <th>Преподаватель</th>
+        <th>База занятия</th>
+        <th>База цикла</th>
         {% if not selected_cycle %}<th>Цикл</th>{% endif %}
       </tr>
     </thead>
@@ -68,18 +67,17 @@
           {% url 'timetable:lesson_create' as add_url %}
           {% url 'timetable:lesson_delete' l.pk as delete_url %}
           {% row_actions edit=edit_url add=add_url add_after=l.pk add_title="Добавить занятие после этого" delete=delete_url %}
-          <td>{{ l.date|date:"d.m.Y" }}</td>
-          <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
-          <td>{{ l.lesson_type.name }}</td>
-          <td>{{ l.get_category_display }}</td>
-          <td>{{ l.group }}</td>
-          <td>{{ l.display_category }}</td>
-          <td>{{ l.hours }}</td>
-          <td>{{ l.display_break }}</td>
-          <td>{{ l.display_base }}</td>
-          <td>{{ l.effective_base.name }}</td>
-          <td>{{ l.topic }}</td>
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="date" %}
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="time_start" %}
+          <td>{{ l.time_end|time:"H:i" }}</td>
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="hours" %}
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="break_after_minutes" %}
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="category" %}
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="group" %}
+          {% include "timetable/lessons/_inline_cell.html" with lesson=l field="topic" %}
           <td>{{ l.employee.short_name }}</td>
+          <td>{{ l.base.name|default:"" }}</td>
+          <td>{{ l.cycle.base.name }}</td>
           {% if not selected_cycle %}<td>{{ l.cycle.name.name }}</td>{% endif %}
         </tr>
       {% endfor %}
