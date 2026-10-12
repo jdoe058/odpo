@@ -33,6 +33,7 @@ def cycle_to_xlsx_bytes(cycle: Cycle) -> bytes:
 
     ws2 = wb.create_sheet(SHEET_LESSONS)
     write_lessons_sheet_header(ws2)
+    ws2.freeze_panes = "A3"
 
     default_break = Lesson._meta.get_field("break_after_minutes").default
 
@@ -40,34 +41,44 @@ def cycle_to_xlsx_bytes(cycle: Cycle) -> bytes:
         Lesson.objects
         .filter(cycle=cycle)
         .select_related("lesson_type", "employee", "base")
-        .order_by("date", "time_start")
+        .order_by("date", "time_start", "group")
     )
     prev_date = None
-    prev_available_from = None
+    # available_from всех уже обработанных занятий по дням.
+    day_pool: dict[object, list] = {}
+
     for lesson in lessons:
         break_after = (
             "" if lesson.break_after_minutes == default_break
             else lesson.break_after_minutes
         )
+
         if lesson.date == prev_date:
             date_cell = ""
         else:
             date_cell = lesson.date.isoformat()
             prev_date = lesson.date
-            prev_available_from = None
 
-        if prev_available_from is not None and lesson.time_start == prev_available_from:
+        # «Встык» — если время начала совпадает с максимумом
+        # available_from уже прошедших занятий того же дня.
+        pool = day_pool.get(lesson.date, [])
+        candidates = [v for v in pool if v <= lesson.time_start]
+        prev_from = max(candidates) if candidates else None
+
+        if prev_from is not None and lesson.time_start == prev_from:
             time_cell = ""
         else:
             time_cell = lesson.time_start.strftime("%H:%M")
 
-        prev_available_from = lesson.available_from
+        day_pool.setdefault(lesson.date, []).append(lesson.available_from)
 
         ws2.append([
             date_cell,
             time_cell,
             lesson.hours,
             lesson.lesson_type.code,
+            lesson.category or "",
+            lesson.group or "",
             lesson.topic or "",
             lesson.employee.short_name,
             break_after,

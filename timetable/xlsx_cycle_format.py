@@ -28,11 +28,16 @@ LESSON_FIELDS = (
     ("time_start", "Начало"),
     ("hours", "Часы"),
     ("lesson_type_code", "Код типа занятия"),
+    ("category", "Категория"),
+    ("group", "Группа"),
     ("topic", "Тема"),
     ("employee", "Преподаватель"),
     ("break_after_minutes", "Перемена после, мин"),
     ("base", "База занятия"),
 )
+
+# Колонки, которые необязательно заполнять при импорте.
+LESSON_OPTIONAL_FIELDS = ("category", "group")
 
 
 # Производные словари для парсера.
