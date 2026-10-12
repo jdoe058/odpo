@@ -210,7 +210,7 @@ class LessonCategory(models.TextChoices):
     """Категория типа занятия. Используется в отчёте «Распределение часов»."""
 
     LECTURE = "lecture", "Лекции"
-    SEMINAR = "seminar", "Занятия семинарского типа"
+    SEMINAR = "seminar", "Занятия сем. типа"
     PRACTICE = "practice", "Практика"
     ATTESTATION = "attestation", "Итоговая аттестация"
 

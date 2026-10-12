@@ -14,7 +14,7 @@ def build_own_context(cycle) -> dict:
             {
                 "date": l.date.strftime("%d.%m.%Y"),
                 "time": f"{l.time_start:%H:%M}-{l.time_end:%H:%M}",
-                "type": l.lesson_type.name,
+                "type": l.display_category,
                 "hours": l.hours,
                 "topic": l.topic,
                 "teacher": l.employee.short_name,

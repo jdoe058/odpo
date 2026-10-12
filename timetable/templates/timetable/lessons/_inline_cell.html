@@ -23,9 +23,9 @@
     <select name="category">
       <option value="">— не задано —</option>
       <option value="lecture"     {% if lesson.category == "lecture" %}selected{% endif %}>Лекции</option>
-      <option value="seminar"     {% if lesson.category == "seminar" %}selected{% endif %}>Занятия семинарского типа</option>
+      <option value="seminar"     {% if lesson.category == "seminar" %}selected{% endif %}>Семинар</option>
       <option value="practice"    {% if lesson.category == "practice" %}selected{% endif %}>Практика</option>
-      <option value="attestation" {% if lesson.category == "attestation" %}selected{% endif %}>Итоговая аттестация</option>
+      <option value="attestation" {% if lesson.category == "attestation" %}selected{% endif %}>Аттестация</option>
     </select>
 
   {% elif field == "group" %}

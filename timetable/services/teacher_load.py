@@ -38,8 +38,8 @@ def calculate_teacher_load(cycle) -> TeacherLoad:
     """
     data = (
         cycle.lessons
-        .exclude(lesson_type__category="")
-        .values("employee_id", "employee__short_name", "lesson_type__category")
+        .exclude(category="")
+        .values("employee_id", "employee__short_name", "category")
         .annotate(h=Sum("hours"))
     )
 
@@ -49,7 +49,7 @@ def calculate_teacher_load(cycle) -> TeacherLoad:
     names: dict[int, str] = {}
 
     for r in data:
-        cat = r["lesson_type__category"]
+        cat = r["category"]
         if cat not in CATEGORY_ORDER:
             continue
         per_emp[r["employee_id"]][cat] += r["h"]
