@@ -13,13 +13,15 @@ CYCLE_FIELDS = (
     ("funding", "Финансирование"),
     ("base", "База"),
     ("name", "Название цикла"),
+    ("discipline", "Дисциплина"),
+    ("kind", "Вид"),
     ("stream", "Поток"),
     ("start_date", "Дата начала"),
     ("end_date", "Дата окончания"),
 )
 
 # Поля, которые необязательно заполнять при импорте.
-CYCLE_OPTIONAL_FIELDS = ("stream",)
+CYCLE_OPTIONAL_FIELDS = ("discipline", "kind", "stream")
 
 LESSON_FIELDS = (
     ("date", "Дата"),
