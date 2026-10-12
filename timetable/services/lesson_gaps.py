@@ -12,6 +12,11 @@ def _group_label(group: str) -> str:
         return f"группа {group}"
     return "без группы"
 
+def _default_break() -> int:
+    """Дефолтная перемена из модели Lesson."""
+    from timetable.models import Lesson
+
+    return Lesson._meta.get_field("break_after_minutes").default
 
 def find_lesson_gaps(lessons) -> list[str]:
     """
@@ -46,3 +51,49 @@ def find_lesson_gaps(lessons) -> list[str]:
 
     messages.sort()
     return messages
+
+def recalculate_breaks(lessons) -> int:
+    """
+    Проставляет break_after_minutes по фактическому промежутку между
+    соседними занятиями одной группы за один день.
+
+    Возвращает количество обновлённых занятий.
+
+    Правила:
+    * последнее занятие дня у группы — перемена 0;
+    * если промежуток отрицательный (накладка) — не трогаем, чтобы
+      ошибка оставалась видна в блоке нестыковок;
+    * если промежуток уже совпадает — не трогаем.
+    """
+    from timetable.models import Lesson
+
+    buckets: dict[tuple, list] = defaultdict(list)
+    for lesson in lessons:
+        buckets[(lesson.date, lesson.group)].append(lesson)
+
+    to_update: list = []
+
+    for items in buckets.values():
+        items.sort(key=lambda l: l.time_start)
+        for i, prev in enumerate(items):
+            if i == len(items) - 1:
+                new_value = _default_break()
+            else:
+                next_ = items[i + 1]
+                gap = (
+                    _to_minutes(next_.time_start)
+                    - _to_minutes(prev.time_end)
+                )
+                if gap < 0:
+                    continue
+                new_value = gap
+
+            if prev.break_after_minutes != new_value:
+                prev.break_after_minutes = new_value
+                to_update.append(prev)
+
+    if to_update:
+        Lesson.objects.bulk_update(to_update, ["break_after_minutes"])
+
+    return len(to_update)
+

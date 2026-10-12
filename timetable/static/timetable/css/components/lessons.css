@@ -64,3 +64,9 @@ td.editable-cell .cell-error {
 td.editable-cell.htmx-request {
   opacity: 0.5;
 }
+
+/* Кнопка «Пересчитать перемены» */
+.recalc-form {
+  display: inline-block;
+  margin-bottom: 16px;
+}

@@ -21,6 +21,19 @@
 
 {% include "timetable/_schedule_filters.html" %}
 
+{% if lessons %}
+  <form method="post"
+        action="{% url 'timetable:lesson_recalculate_breaks' %}"
+        class="recalc-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% for k, v in request.GET.items %}
+      <input type="hidden" name="{{ k }}" value="{{ v }}">
+    {% endfor %}
+    <button type="submit" class="button">Пересчитать перемены</button>
+  </form>
+{% endif %}
+
 {% if selected_cycle %}
 <div class="cycle-actions">
   {% for kind in export_kinds %}

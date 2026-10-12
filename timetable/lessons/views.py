@@ -1,12 +1,23 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 from django.http import Http404
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
     CreateView, DeleteView, TemplateView, UpdateView,
+)
+from django.views.decorators.http import require_POST
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.views.decorators.http import require_POST
+
+from timetable.schedule_filter.form import ScheduleFilterForm
+from timetable.services.lesson_gaps import (
+    find_lesson_gaps, recalculate_breaks,
 )
 
 from timetable.exports.kinds import all_specs
@@ -14,9 +25,43 @@ from timetable.models import Lesson
 from timetable.schedule_filter import (
     ScheduleFilterMixin, build_common_context, filter_lessons,
 )
-from timetable.services.lesson_gaps import find_lesson_gaps
+
+from timetable.services.lesson_gaps import (
+    find_lesson_gaps, recalculate_breaks,
+)
 
 from .forms import LessonForm, LessonInlineForm
+
+
+def _build_lessons(data):
+    """Применяет фильтр расписания и возвращает queryset занятий."""
+    cycle = data.get("cycle")
+    base = data.get("base")
+
+    if cycle is not None:
+        qs = (
+            Lesson.objects
+            .filter(cycle=cycle)
+            .select_related("lesson_type", "employee", "cycle", "cycle__name")
+            .order_by("date", "time_start")
+        )
+        return filter_lessons(qs, data)
+
+    if base is not None or data["employee_query"]:
+        qs = (
+            Lesson.objects
+            .filter(
+                date__gte=data["resolved_start"],
+                date__lte=data["resolved_end"],
+            )
+            .select_related(
+                "lesson_type", "employee", "cycle", "cycle__name", "base",
+            )
+            .order_by("date", "time_start")
+        )
+        return filter_lessons(qs, data)
+
+    return Lesson.objects.none()
 
 
 class LessonList(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
@@ -28,29 +73,7 @@ class LessonList(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         ctx.update(build_common_context(self))
 
-        data = self.filter_data
-        cycle = data.get("cycle")
-        base = data.get("base")
-
-        lessons = []
-        if cycle is not None:
-            qs = (
-                Lesson.objects
-                .filter(cycle=cycle)
-                .select_related("lesson_type", "employee", "cycle", "cycle__name")
-                .order_by("date", "time_start")
-            )
-            lessons = filter_lessons(qs, data)
-        elif base is not None or data["employee_query"]:
-            qs = (
-                Lesson.objects
-                .filter(date__gte=ctx["start"], date__lte=ctx["end"])
-                .select_related(
-                    "lesson_type", "employee", "cycle", "cycle__name", "base",
-                )
-                .order_by("date", "time_start")
-            )
-            lessons = filter_lessons(qs, data)
+        lessons = _build_lessons(self.filter_data)
 
         ctx.update({
             "lessons": lessons,
@@ -225,3 +248,24 @@ def lesson_cell_update(request, pk: int, field: str):
         "field": field,
         "error": error,
     })
+
+
+@login_required
+@require_POST
+def lesson_recalculate_breaks(request):
+    """Проставляет break_after_minutes по фактическим промежуткам."""
+    form = ScheduleFilterForm(request.POST)
+    form.is_valid()
+    data = form.cleaned_data
+
+    lessons = _build_lessons(data)
+    count = recalculate_breaks(lessons)
+
+    if count:
+        messages.success(request, f"{count} перемен обновлено.")
+    else:
+        messages.info(request, "Перемен не требовалось менять.")
+
+    next_url = request.POST.get("next") or reverse("timetable:lesson_list")
+    return redirect(next_url)
+
