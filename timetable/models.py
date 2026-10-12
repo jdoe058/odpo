@@ -284,6 +284,16 @@ class Cycle(models.Model):
         CycleName, on_delete=models.PROTECT,
         related_name="cycles", verbose_name="Название цикла",
     )
+    discipline = models.ForeignKey(
+        "Discipline",
+        on_delete=models.PROTECT,
+        null=True, blank=True,
+        related_name="cycles",
+        verbose_name="Дисциплина",
+        help_text=(
+            "Дисциплина цикла. Оставьте пустым, если не указана."
+        ),
+    )
     stream = models.CharField(
         "Поток",
         max_length=50,

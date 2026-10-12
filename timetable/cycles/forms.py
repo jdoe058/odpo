@@ -2,7 +2,7 @@
 from django import forms
 from django_select2.forms import ModelSelect2Widget
 
-from timetable.models import Base, Cycle, CycleName, Employee
+from timetable.models import Base, Cycle, CycleName, Discipline, Employee
 
 
 _SELECT2_ATTRS = {
@@ -29,13 +29,19 @@ class CycleForm(forms.ModelForm):
     class Meta:
         model = Cycle
         fields = [
-            "name", "stream", "kind", "funding_type", "base",
+            "name", "discipline", "stream", "kind",
+            "funding_type", "base",
             "start_date", "end_date", "compiled_by",
         ]
         widgets = {
             "name": ModelSelect2Widget(
                 model=CycleName,
                 search_fields=["name__icontains"],
+                attrs=_SELECT2_ATTRS,
+            ),
+            "discipline": ModelSelect2Widget(
+                model=Discipline,
+                search_fields=["name_short__icontains", "name_full__icontains"],
                 attrs=_SELECT2_ATTRS,
             ),
             "base": ModelSelect2Widget(

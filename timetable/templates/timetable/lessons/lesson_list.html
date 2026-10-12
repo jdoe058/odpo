@@ -63,19 +63,10 @@
     <tbody>
       {% for l in lessons %}
         <tr>
-          <td style="white-space: nowrap;">
-            <a href="{% url 'timetable:lesson_edit' l.pk %}?next={{ request.get_full_path|urlencode }}"
-               title="Редактировать">✎</a>
-            <a href="{% url 'timetable:lesson_create' %}?after={{ l.pk }}&next={{ request.get_full_path|urlencode }}"
-               title="Добавить занятие после этого">➕</a>
-            <form method="post"
-                  action="{% url 'timetable:lesson_delete' l.pk %}?next={{ request.get_full_path|urlencode }}"
-                  class="inline-form"
-                  data-confirm="Удалить занятие {{ l.date|date:'d.m.Y' }} {{ l.time_start|time:'H:i' }} ({{ l.employee.short_name }})?">
-              {% csrf_token %}
-              <button type="submit" class="link-button danger" title="Удалить">🗑</button>
-            </form>
-          </td>
+          {% url 'timetable:lesson_edit' l.pk as edit_url %}
+          {% url 'timetable:lesson_create' as add_url %}
+          {% url 'timetable:lesson_delete' l.pk as delete_url %}
+          {% include "timetable/_row_actions.html" with edit_url=edit_url edit_next=request.get_full_path|urlencode add_url=add_url add_after=l.pk add_next=request.get_full_path|urlencode add_title="Добавить занятие после этого" delete_url=delete_url delete_next=request.get_full_path|urlencode delete_confirm="Удалить занятие?" %}
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
           <td>{{ l.lesson_type.name }}</td>

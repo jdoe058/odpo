@@ -1,0 +1,21 @@
+<td class="row-actions">
+  {% if edit_url %}
+    <a href="{{ edit_url }}{% if edit_next %}?next={{ edit_next }}{% endif %}"
+       title="Редактировать">✎</a>
+  {% endif %}
+
+  {% if add_url %}
+    <a href="{{ add_url }}{% if add_after %}?after={{ add_after }}{% if add_next %}&next={{ add_next }}{% endif %}{% endif %}"
+       title="{{ add_title|default:'Добавить' }}">➕</a>
+  {% endif %}
+
+  {% if delete_url %}
+    <form method="post"
+          action="{{ delete_url }}{% if delete_next %}?next={{ delete_next }}{% endif %}"
+          class="inline-form"
+          data-confirm="{{ delete_confirm|default:'Удалить?' }}">
+      {% csrf_token %}
+      <button type="submit" class="link-button danger" title="Удалить">🗑</button>
+    </form>
+  {% endif %}
+</td>

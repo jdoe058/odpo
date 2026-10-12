@@ -19,3 +19,5 @@ table.lessons th {
 }
 
 table.lessons a { color: var(--color-primary); }
+
+table.lessons td.row-actions { white-space: nowrap; }

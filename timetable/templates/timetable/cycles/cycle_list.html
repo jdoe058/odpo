@@ -32,27 +32,31 @@
   <table class="lessons">
     <thead>
       <tr>
-        <th>Название</th>
+        <th></th>
+        <th>Период</th>
+        <th>Вид</th>
+        <th>Дисциплина</th>
         <th>Поток</th>
         <th>База</th>
-        <th>Финансирование</th>
-        <th>Период</th>
+        <th>Фин-е</th>
         <th>Составил</th>
-        <th></th>
-        <th></th>
+        <th>Название</th>
       </tr>
     </thead>
     <tbody>
       {% for c in cycles %}
         <tr>
-          <td>{{ c.name.name }}</td>
+          {% url 'timetable:cycle_edit' c.pk as edit_url %}
+          {% url 'timetable:cycle_delete' c.pk as delete_url %}
+          {% include "timetable/_row_actions.html" with edit_url=edit_url delete_url=delete_url delete_confirm="Удалить цикл?" %}
+          <td>{{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }}</td>
+          <td>{{ c.get_kind_display }}</td>
+          <td>{% if c.discipline %}{{ c.discipline.name_short }}{% endif %}</td>
           <td>{{ c.stream }}</td>
           <td>{{ c.base.name }}</td>
           <td>{{ c.funding_type.name }}</td>
-          <td>{{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }}</td>
           <td>{{ c.compiled_by.short_name }}</td>
-          <td><a href="{% url 'timetable:cycle_edit' c.pk %}">Изменить</a></td>
-          <td><a href="{% url 'timetable:cycle_delete' c.pk %}">Удалить</a></td>
+          <td>{{ c.name.name }}</td>
         </tr>
       {% endfor %}
     </tbody>
