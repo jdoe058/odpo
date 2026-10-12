@@ -2,7 +2,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, ListView, UpdateView,
 )
@@ -92,4 +92,7 @@ class CycleDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         ctx["lessons_count"] = Lesson.objects.filter(
             cycle=self.get_object(),
         ).count()
+        ctx["title"] = "Удалить цикл?"
+        next_url = self.request.GET.get("next", "")
+        ctx["cancel_url"] = next_url or reverse("timetable:cycle_list")
         return ctx

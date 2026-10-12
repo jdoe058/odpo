@@ -1,0 +1,19 @@
+{% extends "timetable/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+{% block details %}{% endblock %}
+
+{% block warning %}{% endblock %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="actions">
+    <button type="submit" class="button">Удалить</button>
+    <a class="button" href="{{ cancel_url }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}

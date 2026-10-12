@@ -67,7 +67,7 @@
           {% url 'timetable:lesson_edit' l.pk as edit_url %}
           {% url 'timetable:lesson_create' as add_url %}
           {% url 'timetable:lesson_delete' l.pk as delete_url %}
-          {% row_actions edit=edit_url add=add_url add_after=l.pk add_title="Добавить занятие после этого" delete=delete_url delete_confirm="Удалить занятие?" %}
+          {% row_actions edit=edit_url add=add_url add_after=l.pk add_title="Добавить занятие после этого" delete=delete_url %}
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
           <td>{{ l.lesson_type.name }}</td>
@@ -86,13 +86,4 @@
     </tbody>
   </table>
 {% endif %}
-<script>
-document.querySelectorAll('form[data-confirm]').forEach(function (f) {
-  f.addEventListener('submit', function (e) {
-    if (!window.confirm(f.getAttribute('data-confirm'))) {
-      e.preventDefault();
-    }
-  });
-});
-</script>
 {% endblock %}

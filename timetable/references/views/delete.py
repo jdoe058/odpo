@@ -10,10 +10,20 @@ from .mixins import ReferenceSpecMixin
 
 
 class ReferenceDelete(LoginRequiredMixin, ReferenceSpecMixin, DeleteView):
-    http_method_names = ["post"]
+    template_name = "timetable/references/reference_confirm_delete.html"
 
     def get_queryset(self):
         return self.spec.model.objects.all()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["spec"] = self.spec
+        ctx["title"] = f"Удалить запись?"
+        next_url = self.request.GET.get("next", "")
+        ctx["cancel_url"] = next_url or reverse(
+            "timetable:reference_list", kwargs={"slug": self.kwargs["slug"]},
+        )
+        return ctx
 
     def form_valid(self, form):
         obj = self.get_object()

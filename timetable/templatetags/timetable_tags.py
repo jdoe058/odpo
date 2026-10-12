@@ -45,7 +45,6 @@ def row_actions(
     delete_next=None,
     add_after=None,
     add_title="Добавить",
-    delete_confirm="Удалить?",
 ):
     """
     Кнопки действий в строке таблицы: изменить, добавить после, удалить.
@@ -67,7 +66,6 @@ def row_actions(
             "add_title": add_title,
             "delete_url": delete,
             "delete_next": current if delete_next is None else delete_next,
-            "delete_confirm": delete_confirm,
         },
         request=request,
     )

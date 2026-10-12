@@ -1,0 +1,12 @@
+{% extends "timetable/_confirm_delete.html" %}
+
+{% block details %}
+  <p>
+    Цикл: <b>{{ object.cycle.display_name }}</b><br>
+    Дата: {{ object.date|date:"d.m.Y" }}<br>
+    Время: {{ object.time_start|time:"H:i" }}–{{ object.time_end|time:"H:i" }}<br>
+    Преподаватель: {{ object.employee.short_name }}
+    {% if object.group %}<br>Группа: {{ object.group }}{% endif %}
+    {% if object.topic %}<br>Тема: {{ object.topic }}{% endif %}
+  </p>
+{% endblock %}

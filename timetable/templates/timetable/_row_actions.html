@@ -10,12 +10,7 @@
   {% endif %}
 
   {% if delete_url %}
-    <form method="post"
-          action="{{ delete_url }}{% if delete_next %}?next={{ delete_next }}{% endif %}"
-          class="inline-form"
-          data-confirm="{{ delete_confirm }}">
-      {% csrf_token %}
-      <button type="submit" class="link-button danger" title="Удалить">🗑</button>
-    </form>
+    <a href="{{ delete_url }}{% if delete_next %}?next={{ delete_next }}{% endif %}"
+       title="Удалить">🗑</a>
   {% endif %}
 </td>

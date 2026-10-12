@@ -45,7 +45,7 @@
         <tr>
           {% url 'timetable:reference_edit' spec.slug obj.pk as edit_url %}
           {% url 'timetable:reference_delete' spec.slug obj.pk as delete_url %}
-          {% row_actions edit=edit_url delete=delete_url delete_confirm="Удалить запись?" %}
+          {% row_actions edit=edit_url delete=delete_url %}
           {% for col in columns %}
             {% inline_cell obj col spec %}
           {% endfor %}
@@ -56,14 +56,4 @@
 {% else %}
   <div class="hint">Записей нет. Добавьте первую.</div>
 {% endif %}
-
-<script>
-document.querySelectorAll('form[data-confirm]').forEach(function (f) {
-  f.addEventListener('submit', function (e) {
-    if (!window.confirm(f.getAttribute('data-confirm'))) {
-      e.preventDefault();
-    }
-  });
-});
-</script>
 {% endblock %}

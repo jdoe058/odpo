@@ -150,13 +150,22 @@ class LessonDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     """
     Удаление занятия.
 
-    Отвечает только на POST. GET возвращает 405.
-    Подтверждение — через JS-confirm в форме.
+    GET — страница подтверждения, POST — удаление.
     """
 
     model = Lesson
-    http_method_names = ["post"]
+    template_name = "timetable/lessons/lesson_confirm_delete.html"
     success_message = "Занятие удалено."
+
+    def get_queryset(self):
+        return Lesson.objects.select_related("cycle", "cycle__name", "employee")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Удалить занятие?"
+        next_url = self.request.GET.get("next", "")
+        ctx["cancel_url"] = next_url or reverse("timetable:lesson_list")
+        return ctx
 
     def get_success_url(self):
         next_url = (
@@ -169,4 +178,3 @@ class LessonDelete(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         ):
             return next_url
         return reverse("timetable:lesson_list")
-
