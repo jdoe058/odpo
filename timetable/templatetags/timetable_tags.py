@@ -3,14 +3,14 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from timetable.references.inline import get_inline_value
-from timetable.references.registry import all_specs
+from timetable.references.registry import menu_specs
 
 register = template.Library()
 
 
 @register.simple_tag
 def get_reference_specs():
-    return all_specs()
+    return menu_specs()
 
 @register.filter
 def get_attr(obj, name: str):

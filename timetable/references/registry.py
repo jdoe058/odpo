@@ -36,6 +36,7 @@ class ReferenceSpec:
     list_columns: tuple[str, ...] = ()
     search_fields: tuple[str, ...] = ()
     add_another_prefill: tuple[str, ...] = ()
+    show_in_menu: bool = True
 
     def visible_columns(self) -> tuple[Column, ...]:
         """Колонки для отображения в списке."""
@@ -107,6 +108,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         upsert_key="name",
         import_order=40,
         columns=(Column("name", "str", header="Название"),),
+        show_in_menu=False,
     ),
     ReferenceSpec(
         slug="cycle_names",
@@ -115,6 +117,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         upsert_key="name",
         import_order=50,
         columns=(Column("name", "str", header="Название"),),
+        show_in_menu=False,
     ),
     ReferenceSpec(
         slug="lesson_types",
@@ -131,6 +134,7 @@ SPECS: tuple[ReferenceSpec, ...] = (
         list_columns=("code", "name", "category"),
         search_fields=("name",),
         add_another_prefill=("category",),
+        show_in_menu=False,
     ),
     ReferenceSpec(
         slug="disciplines",
@@ -158,12 +162,18 @@ SPECS: tuple[ReferenceSpec, ...] = (
             Column("kind", "str", header="Вид"),
             Column("hours", "int", header="Часы"),
         ),
+        show_in_menu=False,
     ),
 )
 
 
 def all_specs() -> tuple[ReferenceSpec, ...]:
     return SPECS
+
+
+def menu_specs() -> tuple[ReferenceSpec, ...]:
+    """Справочники для подменю «Справочники ▾»."""
+    return tuple(s for s in SPECS if s.show_in_menu)
 
 
 def get_spec(slug: str) -> ReferenceSpec | None:
