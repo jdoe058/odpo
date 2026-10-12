@@ -1,0 +1,12 @@
+{% if lesson_gaps %}
+<div class="gaps-box">
+  <h2>⚠ Нестыковки в расписании</h2>
+  <ul>
+    {% for gap in lesson_gaps %}<li>{{ gap }}</li>{% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="gaps-box gaps-ok">
+  <h2>✓ Нестыковок нет</h2>
+</div>
+{% endif %}

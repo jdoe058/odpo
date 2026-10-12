@@ -14,6 +14,7 @@ from timetable.models import Lesson
 from timetable.schedule_filter import (
     ScheduleFilterMixin, build_common_context, filter_lessons,
 )
+from timetable.services.lesson_gaps import find_lesson_gaps
 
 from .forms import LessonForm, LessonInlineForm
 
@@ -53,6 +54,7 @@ class LessonList(LoginRequiredMixin, ScheduleFilterMixin, TemplateView):
 
         ctx.update({
             "lessons": lessons,
+            "lesson_gaps": find_lesson_gaps(lessons),
             "export_kinds": all_specs(),
         })
         return ctx
@@ -206,6 +208,13 @@ def lesson_cell_update(request, pk: int, field: str):
         form = LessonInlineForm(request.POST, instance=lesson, field_name=field)
         if form.is_valid():
             lesson = form.save()
+            response = render(request, "timetable/lessons/_inline_cell.html", {
+                "lesson": lesson,
+                "field": field,
+                "error": "",
+            })
+            response["HX-Refresh"] = "true"
+            return response
         else:
             field_errors = form.errors.get(field, [])
             error = "; ".join(str(e) for e in field_errors)

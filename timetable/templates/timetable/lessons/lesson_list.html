@@ -9,10 +9,13 @@
   <link rel="stylesheet" href="{% static 'timetable/css/components/lessons.css' %}">
   <link rel="stylesheet" href="{% static 'timetable/css/components/breakdown.css' %}">
   <link rel="stylesheet" href="{% static 'timetable/css/components/overtime.css' %}">
+  <link rel="stylesheet" href="{% static 'timetable/css/components/lesson-gaps.css' %}">
 {% endblock %}
 
 {% block content %}
 <h1>Занятия: {{ start|date:"d.m.Y" }} — {{ end|date:"d.m.Y" }}</h1>
+
+{% include "timetable/_lesson_gaps_block.html" %}
 
 {% include "timetable/_overtime_block.html" %}
 
