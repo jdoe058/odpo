@@ -1,4 +1,6 @@
 from django import template
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 
 from timetable.references.inline import get_inline_value
 from timetable.references.registry import all_specs
@@ -30,3 +32,43 @@ def inline_cell(obj, col, spec):
         "spec": spec,
         "value": get_inline_value(obj, col),
     }
+
+@register.simple_tag(takes_context=True)
+def row_actions(
+    context,
+    *,
+    edit="",
+    add="",
+    delete="",
+    edit_next=None,
+    add_next=None,
+    delete_next=None,
+    add_after=None,
+    add_title="Добавить",
+    delete_confirm="Удалить?",
+):
+    """
+    Кнопки действий в строке таблицы: изменить, добавить после, удалить.
+
+    URL-ы передаются готовыми (через {% url ... as ... %}).
+    Если *_next не задан — подставляется текущий URL (request.get_full_path).
+    """
+    request = context.get("request")
+    current = request.get_full_path() if request else ""
+
+    html = render_to_string(
+        "timetable/_row_actions.html",
+        {
+            "edit_url": edit,
+            "edit_next": current if edit_next is None else edit_next,
+            "add_url": add,
+            "add_after": add_after,
+            "add_next": current if add_next is None else add_next,
+            "add_title": add_title,
+            "delete_url": delete,
+            "delete_next": current if delete_next is None else delete_next,
+            "delete_confirm": delete_confirm,
+        },
+        request=request,
+    )
+    return mark_safe(html)

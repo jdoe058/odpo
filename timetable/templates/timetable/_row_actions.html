@@ -6,14 +6,14 @@
 
   {% if add_url %}
     <a href="{{ add_url }}{% if add_after %}?after={{ add_after }}{% if add_next %}&next={{ add_next }}{% endif %}{% endif %}"
-       title="{{ add_title|default:'Добавить' }}">➕</a>
+       title="{{ add_title }}">➕</a>
   {% endif %}
 
   {% if delete_url %}
     <form method="post"
           action="{{ delete_url }}{% if delete_next %}?next={{ delete_next }}{% endif %}"
           class="inline-form"
-          data-confirm="{{ delete_confirm|default:'Удалить?' }}">
+          data-confirm="{{ delete_confirm }}">
       {% csrf_token %}
       <button type="submit" class="link-button danger" title="Удалить">🗑</button>
     </form>

@@ -34,31 +34,21 @@
   <table class="lessons">
     <thead>
       <tr>
+        <th></th>
         {% for col in columns %}
           <th>{{ col.header|default:col.name }}</th>
         {% endfor %}
-        <th></th>
-        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for obj in objects %}
         <tr>
+          {% url 'timetable:reference_edit' spec.slug obj.pk as edit_url %}
+          {% url 'timetable:reference_delete' spec.slug obj.pk as delete_url %}
+          {% row_actions edit=edit_url delete=delete_url delete_confirm="Удалить запись?" %}
           {% for col in columns %}
             {% inline_cell obj col spec %}
           {% endfor %}
-          <td>
-            <a href="{% url 'timetable:reference_edit' spec.slug obj.pk %}">Изменить</a>
-          </td>
-          <td>
-            <form method="post"
-                  action="{% url 'timetable:reference_delete' spec.slug obj.pk %}"
-                  class="inline-form"
-                  data-confirm="Удалить «{{ obj }}»?">
-              {% csrf_token %}
-              <button type="submit" class="link-button danger">Удалить</button>
-            </form>
-          </td>
         </tr>
       {% endfor %}
     </tbody>

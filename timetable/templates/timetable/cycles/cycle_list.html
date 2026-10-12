@@ -1,5 +1,6 @@
 {% extends "timetable/base.html" %}
 {% load static %}
+{% load timetable_tags %}
 
 {% block title %}Циклы{% endblock %}
 
@@ -48,7 +49,7 @@
         <tr>
           {% url 'timetable:cycle_edit' c.pk as edit_url %}
           {% url 'timetable:cycle_delete' c.pk as delete_url %}
-          {% include "timetable/_row_actions.html" with edit_url=edit_url delete_url=delete_url delete_confirm="Удалить цикл?" %}
+          {% row_actions edit=edit_url delete=delete_url delete_confirm="Удалить цикл?" %}
           <td>{{ c.start_date|date:"d.m.Y" }} — {{ c.end_date|date:"d.m.Y" }}</td>
           <td>{{ c.get_kind_display }}</td>
           <td>{% if c.discipline %}{{ c.discipline.name_short }}{% endif %}</td>

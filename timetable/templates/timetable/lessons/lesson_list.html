@@ -1,5 +1,6 @@
 {% extends "timetable/base.html" %}
 {% load static %}
+{% load static timetable_tags %}
 
 {% block title %}Занятия — {{ start|date:"d.m.Y" }} — {{ end|date:"d.m.Y" }}{% endblock %}
 
@@ -66,7 +67,7 @@
           {% url 'timetable:lesson_edit' l.pk as edit_url %}
           {% url 'timetable:lesson_create' as add_url %}
           {% url 'timetable:lesson_delete' l.pk as delete_url %}
-          {% include "timetable/_row_actions.html" with edit_url=edit_url edit_next=request.get_full_path|urlencode add_url=add_url add_after=l.pk add_next=request.get_full_path|urlencode add_title="Добавить занятие после этого" delete_url=delete_url delete_next=request.get_full_path|urlencode delete_confirm="Удалить занятие?" %}
+          {% row_actions edit=edit_url add=add_url add_after=l.pk add_title="Добавить занятие после этого" delete=delete_url delete_confirm="Удалить занятие?" %}
           <td>{{ l.date|date:"d.m.Y" }}</td>
           <td>{{ l.time_start|time:"H:i" }}–{{ l.time_end|time:"H:i" }}</td>
           <td>{{ l.lesson_type.name }}</td>
