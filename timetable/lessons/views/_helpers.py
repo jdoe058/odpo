@@ -15,7 +15,11 @@ def build_lessons(data: dict):
     if cycle is not None:
         qs = (
             Lesson.objects
-            .filter(cycle=cycle)
+            .filter(
+                cycle=cycle,
+                date__gte=data["resolved_start"],
+                date__lte=data["resolved_end"],
+            )
             .select_related("lesson_type", "employee", "cycle", "cycle__name")
             .order_by("date", "time_start")
         )
