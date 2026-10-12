@@ -11,7 +11,7 @@ from timetable.models import (
 )
 from timetable.xlsx_cycle_format import (
     CYCLE_FIELDS, CYCLE_LATIN, CYCLE_OPTIONAL_FIELDS, CYCLE_RU_TO_LATIN,
-    LESSON_FIELDS, LESSON_LATIN_TO_INDEX,
+    LESSON_FIELDS, LESSON_LATIN_TO_INDEX, LESSON_OPTIONAL_FIELDS,
     SHEET_CYCLE, SHEET_LESSONS,
 )
 
@@ -105,8 +105,10 @@ def _parse_lessons_sheet(ws, errors: list[str]) -> list[tuple[int, dict]]:
             col_index[name] = idx
 
     missing = [
-        ru for latin, ru in LESSON_FIELDS if latin not in col_index
+        ru for latin, ru in LESSON_FIELDS
+        if latin not in col_index and latin not in LESSON_OPTIONAL_FIELDS
     ]
+    
     if missing:
         errors.append(
             f"лист «{SHEET_LESSONS}»: в шапке нет колонок: {', '.join(missing)}"
@@ -282,7 +284,9 @@ def _build_lessons(rows):
     seen: set[tuple] = set()
 
     prev_date_resolved = None
-    prev_available_from = None
+    # Для каждого дня — список available_from уже разобранных занятий.
+    # Используется при пустом time_start: занятие «встык» к предыдущему.
+    day_pool: dict[object, list] = {}
 
     for row_idx, row in rows:
         # --- дата
@@ -303,26 +307,30 @@ def _build_lessons(rows):
                     f"дата «{raw_date}» не распознана"
                 )
                 continue
+            prev_date_resolved = lesson_date
 
-        if lesson_date != prev_date_resolved:
-            prev_available_from = None
+        # --- группа и категория (необязательные)
+        group = cell_str(row.get("group", ""))
+        category = cell_str(row.get("category", ""))
 
         # --- время
         raw_time = cell_str(row.get("time_start"))
         if raw_time == "":
-            if prev_available_from is None:
+            pool = day_pool.get(lesson_date, [])
+            if not pool:
                 errors.append(
                     f"лист «{SHEET_LESSONS}», строка {row_idx}: "
-                    "в начале дня время начала должно быть заполнено"
+                    "пустое время начала, но нет предыдущих "
+                    "занятий в этот день"
                 )
                 continue
-            lesson_time = prev_available_from
+            lesson_time = max(pool)
         else:
             lesson_time = _parse_time_cell(raw_time)
             if lesson_time is None:
                 errors.append(
                     f"лист «{SHEET_LESSONS}», строка {row_idx}: "
-                    f"время {raw_time!r} не распознано"
+                    f"время «{raw_time}» не распознано"
                 )
                 continue
 
@@ -340,12 +348,13 @@ def _build_lessons(rows):
         if break_after is None:
             break_after = 10
 
-        # обновляем границы для следующей строки
+        # --- обновляем pool для следующих строк этого дня
         end_dt = datetime.combine(lesson_date, lesson_time) + timedelta(
             minutes=MINUTES_PER_HOUR * hours
         )
-        prev_available_from = (end_dt + timedelta(minutes=break_after)).time()
-        prev_date_resolved = lesson_date
+        day_pool.setdefault(lesson_date, []).append(
+            (end_dt + timedelta(minutes=break_after)).time()
+        )
 
         # --- тип занятия
         type_code = cell_str(row.get("lesson_type_code"))
@@ -380,21 +389,24 @@ def _build_lessons(rows):
                 continue
 
         # --- дубли
-        key = (lesson_date, lesson_time, employee.pk)
-        if key in seen:
+        dup_key = (lesson_date, lesson_time, employee.pk, group)
+        if dup_key in seen:
             errors.append(
                 f"лист «{SHEET_LESSONS}», строка {row_idx}: конфликт — "
                 f"у {employee.short_name} {lesson_date:%d.%m.%Y} "
-                f"{lesson_time:%H:%M} занятие уже есть в файле"
+                f"{lesson_time:%H:%M} (группа «{group}») "
+                "занятие уже есть в файле"
             )
             continue
-        seen.add(key)
+        seen.add(dup_key)
 
         lessons.append(Lesson(
             date=lesson_date,
             time_start=lesson_time,
             hours=hours,
             lesson_type=lesson_type,
+            category=category,
+            group=group,
             topic=cell_str(row.get("topic")),
             employee=employee,
             break_after_minutes=break_after,
