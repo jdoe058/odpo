@@ -3,17 +3,11 @@
 from datetime import datetime, timedelta, time
 
 from django.db import transaction
-from openpyxl import load_workbook
 
 from timetable.models import (
     MINUTES_PER_HOUR,
-    Base,
-    Cycle,
-    CycleName,
-    Employee,
-    FundingType,
-    Lesson,
-    LessonType,
+    Base, Cycle, CycleName, Discipline, EducationKind,
+    Employee, FundingType, Lesson, LessonType,
 )
 from timetable.xlsx_cycle_format import (
     CYCLE_FIELDS, CYCLE_LATIN, CYCLE_OPTIONAL_FIELDS, CYCLE_RU_TO_LATIN,
@@ -25,7 +19,6 @@ from timetable.xlsx_utils import (
     cell_date,
     cell_int,
     cell_str,
-    cell_time,
     load_from_upload,
 )
 
@@ -142,6 +135,27 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
             f"лист «{SHEET_CYCLE}»: название цикла «{cycle_data['name']}» не найдено"
         )
 
+    # --- дисциплина (необязательно) ---
+    discipline = None
+    discipline_value = cell_str(cycle_data.get("discipline", ""))
+    if discipline_value:
+        discipline = Discipline.objects.filter(
+            name_short=discipline_value,
+        ).first()
+        if discipline is None:
+            errors.append(
+                f"лист «{SHEET_CYCLE}»: дисциплина «{discipline_value}» "
+                "не найдена"
+            )
+
+    # --- вид (необязательно) ---
+    kind = cell_str(cycle_data.get("kind", "")).strip()
+    if kind and kind not in EducationKind.values:
+        errors.append(
+            f"лист «{SHEET_CYCLE}»: вид «{kind}» не распознан, "
+            f"ожидается {' или '.join(EducationKind.values)}"
+        )
+
     funding = FundingType.objects.filter(
         name=cell_str(cycle_data["funding"])
     ).first()
@@ -204,7 +218,9 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
     with transaction.atomic():
         cycle = Cycle.objects.create(
             name=cycle_name,
+            discipline=discipline,
             stream=stream,
+            kind=kind,
             funding_type=funding,
             base=base,
             start_date=start_date,
