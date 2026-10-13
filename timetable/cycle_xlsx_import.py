@@ -22,6 +22,8 @@ from timetable.xlsx_utils import (
     load_from_upload,
 )
 
+from timetable.services.lesson_defaults import fill_empty_defaults
+
 class CycleImportError(Exception):
     def __init__(self, errors: list[str]):
         self.errors = errors
@@ -216,6 +218,10 @@ def _persist(cycle_data: dict, lesson_rows: list[tuple[int, dict]]) -> Cycle:
     lesson_objects, lesson_errors = _build_lessons(lesson_rows)
     if lesson_errors:
         raise CycleImportError(lesson_errors)
+
+    # Заполняем группы и категории по коду типа занятия в памяти,
+    # до записи в БД. Пустые поля в файле → значения из таблиц.
+    fill_empty_defaults(lesson_objects)
 
     with transaction.atomic():
         cycle = Cycle.objects.create(
